@@ -19,7 +19,7 @@ export function DocTable({
   mono?: number[];
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-line bg-surface" tabIndex={0} role="region" aria-label={caption}>
+    <div className="overflow-x-auto rounded-lg border border-line bg-surface shadow-hard-sm" tabIndex={0} role="region" aria-label={caption}>
       <table className="w-full border-collapse text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
@@ -55,12 +55,12 @@ export function DocTable({
 
 /** Numbered tutorial steps. Each step has a short title and its instructions. */
 export function Steps({ children }: { children: ReactNode }) {
-  return <ol className="ml-4 list-none border-l border-line pl-0 [counter-reset:step]">{children}</ol>;
+  return <ol className="ml-4 list-none border-l-2 border-peach-strong pl-0 [counter-reset:step]">{children}</ol>;
 }
 
 export function Step({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <li className="relative pb-10 pl-10 last:pb-0 [counter-increment:step] before:absolute before:-left-4 before:top-0 before:grid before:size-8 before:place-items-center before:rounded-full before:border before:border-accent-line before:bg-accent-soft before:text-sm before:font-semibold before:text-accent-text before:content-[counter(step)]">
+    <li className="relative pb-10 pl-10 last:pb-0 [counter-increment:step] before:absolute before:-left-[1.0625rem] before:top-0 before:grid before:size-8 before:place-items-center before:rounded-full before:bg-orange before:font-display before:text-sm before:font-bold before:text-night before:shadow-hard-sm before:ring-4 before:ring-bg before:content-[counter(step)]">
       <h3 className="mt-0 pt-1 font-display text-lg font-semibold text-ink">{title}</h3>
       <div className="mt-3 space-y-3 text-muted [&_a]:font-medium [&_a]:text-accent-text [&_a]:underline [&_a]:decoration-accent-line [&_a]:underline-offset-4 [&_code]:rounded-sm [&_code]:bg-sunken [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.875em] [&_code]:text-ink [&_strong]:font-semibold [&_strong]:text-ink">
         {children}
@@ -69,15 +69,20 @@ export function Step({ title, children }: { title: string; children: ReactNode }
   );
 }
 
-/** A boxed aside. `cost` marks money: what something spends, or how to stop it spending. */
-export function Callout({ tone = 'note', title, children }: { tone?: 'note' | 'cost'; title: string; children: ReactNode }) {
+const calloutTone = {
+  note: { box: 'border-accent bg-accent-soft text-ink', title: 'text-accent-text' },
+  cost: { box: 'border-orange bg-peach text-ink', title: 'text-orange-text' },
+  important: { box: 'band-night border-orange', title: 'text-orange-text' },
+};
+
+/**
+ * A boxed aside with a coloured left edge. `note` (blue) for tips, `cost` (peach) for money: what something spends,
+ * or how to stop it spending; `important` (night) for the one thing a reader must not miss.
+ */
+export function Callout({ tone = 'note', title, children }: { tone?: keyof typeof calloutTone; title: string; children: ReactNode }) {
   return (
-    <aside
-      className={`rounded-md border-l-[3px] px-5 py-4 text-[0.9375rem] leading-relaxed ${
-        tone === 'cost' ? 'border-accent bg-accent-soft text-ink' : 'border-edge bg-sunken text-muted'
-      }`}
-    >
-      <p className={`text-sm font-semibold ${tone === 'cost' ? 'text-accent-text' : 'text-ink'}`}>{title}</p>
+    <aside className={`rounded-lg border-l-4 px-5 py-4 text-[0.9375rem] leading-relaxed ${calloutTone[tone].box}`}>
+      <p className={`text-sm font-bold tracking-wide uppercase ${calloutTone[tone].title}`}>{title}</p>
       <div className="mt-2 space-y-2 [&_code]:font-mono [&_li]:[color:inherit] [&_p]:[color:inherit] [&_strong]:font-semibold [&_strong]:[color:inherit]">{children}</div>
     </aside>
   );

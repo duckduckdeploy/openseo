@@ -40,7 +40,8 @@ export async function generateMetadata({ params }: TermPageProps): Promise<Metad
     title: glossaryTitles[term.slug] ?? (question.length + suffix.length <= 50 ? `${question}${suffix}` : question),
     description: plainText(term.short),
     path: `/glossary/${term.slug}`,
-    image: glossaryImages[term.slug] ? { url: glossaryImages[term.slug]!.src, width: glossaryImages[term.slug]!.width, height: glossaryImages[term.slug]!.height, alt: glossaryImages[term.slug]!.alt } : undefined,
+    ogTitle: whatIs(term),
+    ogIllustration: glossaryImages[term.slug] ? term.slug : undefined,
   });
 }
 

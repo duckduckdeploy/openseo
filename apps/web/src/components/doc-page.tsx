@@ -49,7 +49,7 @@ export function DocArticle({ slug, children, brands }: DocArticleProps) {
         <span className="mx-2 text-faint" aria-hidden="true">
           /
         </span>
-        <span className="font-medium text-accent-text">{doc.section}</span>
+        <span className="rounded-full bg-peach px-2.5 py-0.5 text-xs font-semibold tracking-wide text-peach-text uppercase">{doc.section}</span>
       </p>
       <h1 className="text-title mt-5 max-w-3xl text-balance">{doc.h1}</h1>
       <p className="text-lede mt-5 max-w-2xl text-pretty">{doc.description}</p>

@@ -7,8 +7,8 @@ import { docSections, docsIn } from '@/content/docs';
 const linkClass = (active: boolean) =>
   `inline-flex h-10 items-center rounded-md border px-3.5 text-sm whitespace-nowrap transition-colors duration-150 lg:flex lg:h-auto lg:border-0 lg:px-3 lg:py-2 lg:whitespace-normal ${
     active
-      ? 'border-accent-line bg-accent-soft font-medium text-accent-text'
-      : 'border-line text-muted hover:bg-sunken hover:text-ink'
+      ? 'border-accent-line bg-accent-soft font-semibold text-accent-text lg:shadow-[inset_3px_0_0_var(--color-accent)]'
+      : 'border-line bg-surface text-muted hover:bg-sunken hover:text-ink lg:bg-transparent'
   }`;
 
 /** Docs navigation by section: a horizontal scroller on small screens, a grouped sidebar from lg up. */
@@ -30,7 +30,7 @@ export function DocsNav() {
         </li>
         {docSections.map((section) => (
           <li key={section} className="contents lg:block">
-            <p className="hidden px-3 text-xs font-semibold tracking-wide text-faint uppercase lg:mb-2 lg:block">{section}</p>
+            <p className="hidden px-3 text-xs font-bold tracking-wide text-orange-text uppercase lg:mb-2 lg:block">{section}</p>
             <ul className="contents lg:block lg:space-y-0.5">
               {docsIn(section).map((doc) => {
                 const href = `/docs/${doc.slug}`;

@@ -479,12 +479,24 @@
   }
 
   .prose-doc h2 {
-    font-size: 1.625rem;
-    line-height: 1.2;
-    margin-top: 3.5rem;
-    padding-top: 2.25rem;
-    border-top: 1px solid var(--color-line);
+    position: relative;
+    font-size: 1.75rem;
+    line-height: 1.18;
+    margin-top: 3.75rem;
+    padding-top: 1.75rem;
     scroll-margin-top: 6rem;
+  }
+
+  /* A short orange bar above each docs section, instead of a full grey rule */
+  .prose-doc h2::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2.5rem;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--color-orange);
   }
 
   .prose-doc h3 {
