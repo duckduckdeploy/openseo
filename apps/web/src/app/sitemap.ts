@@ -23,9 +23,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...glossary.map((term) => ({ path: `/glossary/${term.slug}`, priority: 0.6 })),
   ];
 
-  return paths.map(({ path, priority }) => ({
-    url: `${SITE_URL}${path === '/' ? '' : path}`,
-    changeFrequency: 'weekly',
-    priority,
-  }));
+  return paths.map(({ path, priority }) => {
+    const url = `${SITE_URL}${path === '/' ? '' : path}`;
+    return { url, changeFrequency: 'weekly', priority, alternates: { languages: { en: url, 'x-default': url } } };
+  });
 }

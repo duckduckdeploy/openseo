@@ -47,7 +47,8 @@ export function pageMeta({ title, description, path, absoluteTitle, noIndex, ogI
   return {
     title: absoluteTitle ? { absolute: title } : title,
     description,
-    alternates: { canonical: path },
+    // English only for now: each page is its own en and x-default alternate. Translations add languages here.
+    alternates: { canonical: path, languages: { en: path, 'x-default': path } },
     robots: noIndex ? { index: false, follow: true } : undefined,
     openGraph: {
       type: 'website',
