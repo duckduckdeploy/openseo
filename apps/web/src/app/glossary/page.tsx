@@ -124,7 +124,7 @@ export default function GlossaryPage() {
         <h2 id="az-title" className="text-title text-center">
           SEO terms A to Z
         </h2>
-        <nav aria-label="Letters" className="sticky top-16 z-10 mx-auto mt-10 max-w-4xl bg-bg/90 py-3 backdrop-blur">
+        <nav aria-label="Letters" className="sticky top-[4.25rem] z-10 mx-auto mt-10 max-w-4xl bg-bg/90 py-3 backdrop-blur">
           <ul className="flex flex-wrap justify-center gap-1.5">
             {letters.map((letter) => (
               <li key={letter}>
