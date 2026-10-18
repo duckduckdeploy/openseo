@@ -8,7 +8,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/local-seo';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function LocalSeoTutorial() {
   return (
@@ -18,7 +18,7 @@ export default function LocalSeoTutorial() {
         its reviews, and map how well it ranks across the area you serve.
       </p>
 
-      <h2 id="find">Find your business</h2>
+      <h2 id="find">Find your Google Business Profile</h2>
       <Steps>
         <Step title="Search Google Maps">
           <p>
@@ -36,7 +36,7 @@ export default function LocalSeoTutorial() {
         </Step>
       </Steps>
 
-      <h2 id="profile">Check the profile</h2>
+      <h2 id="profile">Check the business profile</h2>
       <p>
         On <strong>Profile</strong>, click <Ui>Load profile</Ui> ($0.05). OpenSEO checks it against what a complete
         listing needs:
@@ -54,7 +54,7 @@ export default function LocalSeoTutorial() {
         ]}
       />
 
-      <h2 id="reviews">Read the reviews</h2>
+      <h2 id="reviews">Read Google reviews</h2>
       <p>
         On <strong>Reviews</strong>, choose how many (10 to 150) and the order, then click <Ui>Get reviews</Ui>. It costs
         $0.015 per 100 reviews, at least $0.01. You get the rating breakdown, the average of the sample and the owner

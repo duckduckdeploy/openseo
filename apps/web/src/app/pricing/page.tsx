@@ -11,9 +11,9 @@ import { pageMeta } from '@/lib/metadata';
 import { SIGN_UP_URL, YEPAPI_URL } from '@/lib/site';
 
 export const metadata = pageMeta({
-  title: 'Pricing',
+  title: 'Pricing: Pay Per Lookup, Free to Self-Host',
   description:
-    'OpenSEO is open source and free to self-host. Search data is billed per lookup, shown before it runs: a rank check of the top 100 $0.10, keyword research about $0.08.',
+    'OpenSEO is open source and free to self-host. Data is billed per lookup, priced before it runs: $0.10 for a top-100 rank check, about $0.08 for keyword ideas.',
   path: '/pricing',
 });
 
@@ -41,8 +41,9 @@ export default function PricingPage() {
           <div className="max-w-3xl">
             <p className="eyebrow">Pricing</p>
             <h1 id="pricing-title" className="text-display mt-5 text-balance">
-              Open source. You pay only for the <span className="mark">data you use</span>.
+              OpenSEO <span className="mark">pricing</span>
             </h1>
+            <p className="mt-6 font-display text-2xl font-semibold text-balance text-ink md:text-[1.75rem]">Open source. You pay only for the data you use.</p>
             <p className="mx-auto mt-7 max-w-2xl text-xl leading-relaxed text-pretty text-muted">
               The software is open source and free to self-host. Search data comes from our data provider, YepAPI: you add
               your own key, and each lookup is billed per call at the price the app shows before it runs. The crawler,
@@ -80,7 +81,7 @@ export default function PricingPage() {
         <SectionHeader
           eyebrow="Cost per action"
           id="table-title"
-          title="What lookups cost"
+          title="SEO data cost per lookup"
           lede="Examples for common actions. The app shows the price of every action before it runs, including the ones not listed here."
         />
         <div className="mx-auto mt-14 max-w-4xl md:mt-16">
@@ -107,7 +108,7 @@ export default function PricingPage() {
           <SectionHeader
             eyebrow="Free credits"
             id="credit-title"
-            title="What $5 covers"
+            title="What $5 of free credit covers"
             lede="New data accounts start with $5 in free credit. Spent on one kind of lookup, that is roughly:"
           />
           <ul className="mt-14 grid grid-cols-1 gap-5 md:mt-16 md:grid-cols-3 lg:gap-6">
@@ -131,7 +132,7 @@ export default function PricingPage() {
 
       {/* FAQ */}
       <section aria-labelledby="faq-title" className="container-page py-20 md:py-28 xl:py-32">
-        <SectionHeader eyebrow="FAQ" id="faq-title" title="Questions about the model" />
+        <SectionHeader eyebrow="FAQ" id="faq-title" title="Pricing FAQ" />
         <div className="mx-auto mt-12 max-w-3xl">
           <FaqList faqs={pricingFaqs} />
           <p className="mt-6 text-muted">

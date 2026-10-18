@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react';
 import type { Faq } from '@/content/pricing';
+import { RichText } from './rich-text';
 
 /** Native disclosure widgets: keyboard accessible and no client JavaScript. */
 export function FaqList({ faqs }: { faqs: Faq[] }) {
@@ -16,7 +17,7 @@ export function FaqList({ faqs }: { faqs: Faq[] }) {
           <div className="space-y-3 pr-12 pb-7 text-muted">
             {faq.answer.map((paragraph) => (
               <p key={paragraph} className="max-w-2xl">
-                {paragraph}
+                <RichText text={paragraph} />
               </p>
             ))}
           </div>

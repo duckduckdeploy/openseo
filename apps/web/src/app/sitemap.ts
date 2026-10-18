@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { docPages } from '@/content/docs';
 import { comparisons } from '@/content/compare';
 import { features } from '@/content/features';
+import { glossary, glossaryCategories } from '@/content/glossary';
 import { tools } from '@/content/tools';
 import { SITE_URL } from '@/lib/site';
 
@@ -17,6 +18,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...features.map((feature) => ({ path: `/features/${feature.slug}`, priority: 0.8 })),
     ...docPages.map((doc) => ({ path: `/docs/${doc.slug}`, priority: 0.6 })),
     ...comparisons.map((c) => ({ path: `/compare/${c.slug}`, priority: 0.6 })),
+    { path: '/glossary', priority: 0.8 },
+    ...glossaryCategories.map((category) => ({ path: `/glossary/topics/${category.id}`, priority: 0.6 })),
+    ...glossary.map((term) => ({ path: `/glossary/${term.slug}`, priority: 0.6 })),
   ];
 
   return paths.map(({ path, priority }) => ({

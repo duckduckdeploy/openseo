@@ -67,6 +67,24 @@ export function SiteFooter() {
               </Link>
             </li>
           </ul>
+          <h2 className="mt-9 mb-5 text-sm font-semibold text-ink">Learn SEO</h2>
+          <ul className="space-y-3">
+            <li>
+              <Link href="/glossary" className={linkClass}>
+                SEO glossary
+              </Link>
+            </li>
+            <li>
+              <Link href="/glossary/white-vs-grey-vs-black-hat-seo" className={linkClass}>
+                White vs black hat SEO
+              </Link>
+            </li>
+            <li>
+              <Link href="/glossary/black-hat-seo" className={linkClass}>
+                Black hat SEO risks
+              </Link>
+            </li>
+          </ul>
         </nav>
 
         <nav aria-label="Project">

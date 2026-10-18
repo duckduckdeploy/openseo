@@ -7,10 +7,14 @@ import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
 import { FaqList } from '@/components/faq';
 import { JsonLd } from '@/components/json-ld';
+import { RelatedTerms } from '@/components/related-terms';
+import { RichText } from '@/components/rich-text';
 import { Screenshot } from '@/components/screenshot';
 import { ToolCards } from '@/components/tool-cards';
+import { getTerm, whatIs } from '@/content/glossary';
 import { getTool, tools } from '@/content/tools';
 import { pageMeta } from '@/lib/metadata';
+import { breadcrumbList, faqPage } from '@/lib/schema';
 import { APP_URL, inSentence, SITE_NAME, SITE_URL } from '@/lib/site';
 
 interface ToolPageProps {
@@ -27,7 +31,7 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
   const { slug } = await params;
   const tool = getTool(slug);
   if (!tool) return {};
-  return pageMeta({ title: tool.name, description: tool.summary, path: `/tools/${tool.slug}` });
+  return pageMeta({ title: tool.seoTitle, description: tool.description, path: `/tools/${tool.slug}` });
 }
 
 const textLink = 'inline-flex items-center gap-1.5 font-medium text-accent-text underline-offset-4 hover:underline';
@@ -49,6 +53,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
   const Icon = tool.icon;
   const others = tools.filter((other) => other.slug !== tool.slug);
   const open = `${APP_URL}${tool.appPath}`;
+  const concept = getTerm(tool.glossary[0] ?? '');
 
   return (
     <>
@@ -60,15 +65,15 @@ export default async function ToolPage({ params }: ToolPageProps) {
               '@type': 'SoftwareApplication',
               name: `${SITE_NAME} ${tool.name}`,
               url: `${SITE_URL}/tools/${tool.slug}`,
-              description: tool.summary,
+              description: tool.description,
               applicationCategory: 'BusinessApplication',
               operatingSystem: 'Web',
-              isAccessibleForFree: true,
             },
-            {
-              '@type': 'FAQPage',
-              mainEntity: tool.faqs.map((faq) => ({ '@type': 'Question', name: faq.question, acceptedAnswer: { '@type': 'Answer', text: faq.answer.join(' ') } })),
-            },
+            faqPage(tool.faqs),
+            breadcrumbList([
+              { name: 'SEO tools', path: '/tools' },
+              { name: tool.name, path: `/tools/${tool.slug}` },
+            ]),
           ],
         }}
       />
@@ -93,8 +98,9 @@ export default async function ToolPage({ params }: ToolPageProps) {
               <span className="inline-flex size-12 items-center justify-center rounded-md bg-accent-soft text-accent-text">
                 <Icon className="size-6" aria-hidden="true" strokeWidth={1.75} />
               </span>
-              <h1 className="text-display mt-7 text-balance">{tool.headline}</h1>
-              <p className="mt-7 text-xl leading-relaxed text-pretty text-muted md:text-[1.375rem]">{tool.lede}</p>
+              <h1 className="text-display mt-7 text-balance">{tool.h1}</h1>
+              <p className="mt-6 font-display text-2xl font-semibold text-balance text-ink md:text-[1.75rem]">{tool.headline}</p>
+              <p className="mt-5 text-xl leading-relaxed text-pretty text-muted md:text-[1.375rem]">{tool.lede}</p>
               {tool.worksWith ? (
                 <BrandRow className="mt-8" items={tool.worksWith.map((brand) => ({ brand, name: brandName(brand) }))} />
               ) : null}
@@ -152,7 +158,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">How it works</p>
             <h2 id="how-title" className="text-title mt-4">
-              One search, the whole picture
+              How to use the {inSentence(tool.name)}
             </h2>
           </div>
           <ol className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-10 md:grid-cols-3">
@@ -172,7 +178,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
             <div className="mx-auto max-w-3xl text-center">
               <p className="eyebrow">Use it to</p>
               <h2 id="uses-title" className="text-title mt-4">
-                What people use the {inSentence(tool.name)} for
+                {tool.name} use cases
               </h2>
             </div>
             <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2">
@@ -191,10 +197,10 @@ export default async function ToolPage({ params }: ToolPageProps) {
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">What it costs</p>
             <h2 id="costs-title" className="text-title mt-4">
-              {tool.total}
+              {tool.name} pricing
             </h2>
             <p className="mt-6 text-xl leading-relaxed text-pretty text-muted">
-              You pay the data provider for the lookups a search runs, from your own key, and see the price before it runs. {tool.costNote}
+              <strong className="font-semibold text-ink">{tool.total}.</strong> You pay the data provider for the lookups a search runs, from your own key, and see the price before it runs. {tool.costNote}
             </p>
           </div>
           <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-lg border border-line">
@@ -228,12 +234,38 @@ export default async function ToolPage({ params }: ToolPageProps) {
           </p>
         </section>
 
+        {/* The concept behind the tool, from the glossary */}
+        {concept ? (
+          <section aria-labelledby="concept-title" className="border-t border-line">
+            <div className="container-page py-20 md:py-28">
+              <div className="mx-auto max-w-3xl text-center">
+                <p className="eyebrow">SEO glossary</p>
+                <h2 id="concept-title" className="text-title mt-4">
+                  {whatIs(concept)}
+                </h2>
+                <p className="mt-6 text-xl leading-relaxed text-pretty text-muted">
+                  <RichText text={concept.definition[0] ?? concept.short} />
+                </p>
+                <p className="mt-8">
+                  <Link href={`/glossary/${concept.slug}`} className={textLink}>
+                    {concept.term}, explained
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </Link>
+                </p>
+              </div>
+              <div className="mt-16 md:mt-20">
+                <RelatedTerms slugs={tool.glossary.slice(1)} />
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         {/* Questions */}
         <section aria-labelledby="faq-title" className="border-t border-line bg-surface">
           <div className="container-page py-20 md:py-28">
             <div className="mx-auto max-w-3xl">
               <h2 id="faq-title" className="text-title text-center">
-                Questions
+                {tool.name} FAQ
               </h2>
               <div className="mt-12">
                 <FaqList faqs={tool.faqs} />
@@ -245,7 +277,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
         {/* The other tools */}
         <section aria-labelledby="more-title" className="container-page py-20 md:py-28">
           <h2 id="more-title" className="text-title text-center">
-            The other SEO tools
+            More SEO tools
           </h2>
           <div className="mt-12">
             <ToolCards tools={others} />

@@ -8,7 +8,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'rest-api';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 const example = `# Price a lookup (free), then run it with a ceiling
 curl -X POST "$API_URL/api/projects/$PROJECT/lookups/keyword_ideas?dryRun=1" \\

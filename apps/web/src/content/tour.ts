@@ -16,7 +16,7 @@ export const tour: TourStop[] = [
   {
     id: 'keyword-overview',
     eyebrow: 'Keyword overview',
-    title: 'Everything about a keyword, from one search',
+    title: 'Keyword research: difficulty, volume and the top 10',
     lede: 'Type a keyword, pick a market, press Enter. Difficulty, volume, traffic potential, volume in other countries, ideas, questions and the live top 10 load together.',
     points: ['Difficulty with the links you need', 'Volume by country', 'Live top 10 with DR, links and traffic'],
     href: '/tools/keyword-overview',
@@ -50,7 +50,7 @@ export const tour: TourStop[] = [
   {
     id: 'local',
     eyebrow: 'Local search',
-    title: 'Down to the city',
+    title: 'Local keyword research by city',
     lede: 'Pick a city, state or region inside the country. Volume becomes local, and the results and suggestions are the ones people there see.',
     points: ['Local volume next to the national figure', 'Results from that place', 'Remembered across every tool'],
     href: '/features/local-seo',
@@ -72,7 +72,7 @@ export const tour: TourStop[] = [
   {
     id: 'keyword-ideas',
     eyebrow: 'Keyword ideas',
-    title: 'Hundreds of keywords around a topic',
+    title: 'Keyword ideas around any topic',
     lede: 'Matching terms, related searches, questions and Google suggestions in one list, with volume, difficulty, intent and trend. Filter for free on what is loaded.',
     points: ['Filter by words, intent, volume and difficulty', 'Save to a project in one click', 'Export to CSV'],
     href: '/tools/keyword-ideas',
@@ -88,7 +88,7 @@ export const tour: TourStop[] = [
   {
     id: 'serp-checker',
     eyebrow: 'SERP checker',
-    title: 'The live results page, measured',
+    title: 'SERP checker for any location',
     lede: 'The top 10 for any keyword on desktop or mobile, in any country, state or city, with every result’s authority, links and traffic.',
     points: ['Desktop or mobile', 'SERP features in place', 'Open any page or its backlinks'],
     href: '/tools/serp-checker',
@@ -104,7 +104,7 @@ export const tour: TourStop[] = [
   {
     id: 'domain-overview',
     eyebrow: 'Domain overview',
-    title: 'Any website’s search traffic at a glance',
+    title: 'Website traffic and domain overview',
     lede: 'Traffic and what it is worth, keywords, links and authority, how rankings are spread and moving, its top keywords and pages, and who it competes with.',
     points: ['Top 100 keywords by traffic', 'Top 100 pages', 'Competitors one click away'],
     href: '/tools/domain-overview',
@@ -132,7 +132,7 @@ export const tour: TourStop[] = [
   {
     id: 'page-analyser',
     eyebrow: 'Page analyser',
-    title: 'One page, inside and out',
+    title: 'On-page SEO analysis of any URL',
     lede: 'Paste a URL: its authority, links and traffic, its title, description and headings checked, the keywords it ranks for and its strongest backlinks.',
     points: ['On-page checks', 'Keywords the page ranks for', 'Strongest backlinks'],
     href: '/tools/page-analyser',
@@ -160,7 +160,7 @@ export const tour: TourStop[] = [
   {
     id: 'backlinks',
     eyebrow: 'Backlink checker',
-    title: 'Who links to a site, and how that is changing',
+    title: 'Backlink checker with link history',
     lede: 'For a domain or one page: totals, the monthly history of links gained and lost, the strongest backlinks, referring domains, anchors and the most linked pages.',
     points: ['Monthly history', 'Strongest links first', 'Link intersect with competitors'],
     href: '/tools/backlink-checker',
@@ -188,7 +188,7 @@ export const tour: TourStop[] = [
   {
     id: 'competitors',
     eyebrow: 'Competitors',
-    title: 'Find who you compete with, then what they have that you do not',
+    title: 'Competitor analysis and keyword gap',
     lede: 'Your organic competitors, then the keyword gap with any of them: the keywords only they rank for, and the ones you share, side by side.',
     points: ['Organic and SERP competitors', 'Keyword gap in one click', 'Save the opportunities'],
     href: '/tools/competitors',
@@ -210,7 +210,7 @@ export const tour: TourStop[] = [
   {
     id: 'ai-visibility',
     eyebrow: 'AI visibility checker',
-    title: 'See which sites AI assistants cite',
+    title: 'AI visibility checker for ChatGPT and Gemini',
     lede: 'Ask ChatGPT, Gemini, Claude and Perplexity the same question with web search on. Every source each one cites, in order, and whether your site is among them.',
     points: ['Four assistants, one question', 'Citations in order', 'Your site cited and named'],
     href: '/tools/ai-visibility-checker',
@@ -232,7 +232,7 @@ export const tour: TourStop[] = [
   {
     id: 'local-rank',
     eyebrow: 'Local rank checker',
-    title: 'Who ranks on Google Maps, block by block',
+    title: 'Google Maps local rank checker',
     lede: 'A grid of Maps searches across any city shows who holds the top places in each part of town, for every business at once.',
     points: ['3 × 3 to 7 × 7 grids', 'Every business ranked', 'Any business’s grid, free'],
     href: '/tools/local-rank-checker',
@@ -252,7 +252,7 @@ export const projectTour: TourStop[] = [
   {
     id: 'rank-tracking',
     eyebrow: 'Rank tracker',
-    title: 'Your positions in the top 100, checked on schedule',
+    title: 'Rank tracker for the Google top 100',
     lede: 'Add keywords once. Every check reads the top 100 Google results for each, on the schedule you pick or when you press “Check rankings now”, and keeps the history.',
     points: ['Top 100 for every keyword', 'Daily, weekly or monthly', 'Competitors found for you'],
     href: '/docs/tutorials/rank-tracking',
@@ -286,7 +286,7 @@ export const projectTour: TourStop[] = [
   {
     id: 'site-audit',
     eyebrow: 'Site audit',
-    title: 'Crawl your site and get a list of what to fix',
+    title: 'Technical SEO site audit',
     lede: 'Crawl up to 5,000 pages. You get a health score, the pages that could not be fetched or indexed, and every issue grouped by how much it matters.',
     points: ['Health score', 'Issues grouped by severity', 'Every affected URL'],
     href: '/docs/tutorials/site-audit',
@@ -308,7 +308,7 @@ export const projectTour: TourStop[] = [
   {
     id: 'ai-tracking',
     eyebrow: 'AI visibility tracking',
-    title: 'How often AI assistants name and cite you, over time',
+    title: 'AI visibility tracking over time',
     lede: 'Save the questions your customers ask. Each run asks every assistant all of them and measures how often your brand is named, how often your site is cited, and how you compare with competitors.',
     points: ['Mention and citation rate', 'Share of voice', 'Runs on a schedule'],
     href: '/docs/tutorials/ai-visibility',
@@ -348,7 +348,7 @@ export const projectTour: TourStop[] = [
   {
     id: 'local-grid',
     eyebrow: 'Geo-grid tracking',
-    title: 'Your Google Maps rank across your area',
+    title: 'Geo-grid rank tracking on Google Maps',
     lede: 'Pick your business and a keyword. A grid of Maps searches around it shows your position at every point, saved so you can run it again and compare.',
     points: ['3 × 3 to 9 × 9 grids', 'Your position at every point', 'Who outranks you there'],
     href: '/docs/tutorials/local-seo',

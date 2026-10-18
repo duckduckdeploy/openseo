@@ -7,7 +7,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'costs-and-limits';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function CostsPage() {
   return (

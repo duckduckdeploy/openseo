@@ -8,7 +8,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/agents';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 const firstAsk = `Using OpenSEO, find keyword ideas for "emergency plumber" in my project.
 Keep it under $0.20. Save the 20 with the highest volume and difficulty
@@ -31,7 +31,7 @@ export default function AgentsTutorial() {
         prices and keeps under the ceiling you set.
       </p>
 
-      <h2 id="connect">Connect once</h2>
+      <h2 id="connect">Connect an AI agent over MCP</h2>
       <p>
         Create an API key under Settings, then paste the setup prompt from Settings into your agent: it connects
         itself. For the skills, the Claude Code plugin and the config for each client, see{' '}
@@ -39,7 +39,7 @@ export default function AgentsTutorial() {
         seo-coach skill.
       </p>
 
-      <h2 id="money">How agents handle money</h2>
+      <h2 id="money">Spending limits for AI agents</h2>
       <p>Before the examples, the rules every OpenSEO tool follows:</p>
       <ul>
         <li>
@@ -64,7 +64,7 @@ export default function AgentsTutorial() {
         </p>
       </Callout>
 
-      <h2 id="examples">Three workflows</h2>
+      <h2 id="examples">Three AI SEO workflows</h2>
       <h3 id="keywords">Research and save keywords</h3>
       <CodeBlock label="You ask" code={firstAsk} />
       <Steps>
@@ -100,7 +100,7 @@ export default function AgentsTutorial() {
         session starts from the same understanding.
       </p>
 
-      <h2 id="ideas">More things to ask for</h2>
+      <h2 id="ideas">More SEO tasks for your agent</h2>
       <DocTable
         caption="Example requests"
         head={['Ask', 'Tools the agent uses']}

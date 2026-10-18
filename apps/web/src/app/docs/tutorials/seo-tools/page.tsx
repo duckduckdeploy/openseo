@@ -8,7 +8,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/seo-tools';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function SeoToolsGuide() {
   return (

@@ -40,7 +40,7 @@ export function AgentFold() {
         align="center"
         eyebrow="Agents and MCP"
         id="agents-title"
-        title="Give your AI agent SEO skills"
+        title="SEO MCP server for your AI agent"
         lede="Connect your agent in two minutes, then use ready-made skills or just ask. Every paid call shows its price first and stays under the limit you set."
       />
 

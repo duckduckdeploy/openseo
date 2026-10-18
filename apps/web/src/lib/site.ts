@@ -20,14 +20,17 @@ export const YEPAPI_URL = 'https://yepapi.com?ref=openseo';
 
 export const SITE_NAME = 'OpenSEO';
 export const SITE_TAGLINE = 'The open-source SEO suite you control.';
+/** Homepage title tag: keyword first. */
+export const SITE_TITLE = 'OpenSEO: Open-Source SEO Tools You Can Self-Host';
 export const SITE_DESCRIPTION =
-  'OpenSEO is an open-source SEO suite for you and your AI agent: keyword research, rank tracking, backlinks, site audits, AI visibility and your own Search Console data. Self-host it with Docker or use it online, and see the cost of every action before it runs.';
+  'Open-source SEO tools for keyword research, rank tracking, backlinks, site audits and AI visibility. Self-host with Docker or use it online. MIT licensed.';
 
 export const NAV_LINKS = [
   { href: '/tools', label: 'SEO tools' },
   { href: '/features', label: 'Features' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/docs', label: 'Docs' },
+  { href: '/glossary', label: 'Glossary' },
 ] as const;
 
 /** A name inside a sentence: "Keyword overview" becomes "keyword overview"; "AI" and "SERP" keep their capitals. */

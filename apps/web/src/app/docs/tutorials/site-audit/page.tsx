@@ -9,7 +9,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/site-audit';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 const count = (severity: string) => ISSUE_TYPES.filter((type) => ISSUE_CATALOG[type].severity === severity).length;
 
@@ -22,7 +22,7 @@ export default function SiteAuditTutorial() {
         {count('info')} notices) and sums them up as a health score.
       </p>
 
-      <h2 id="run">Run an audit</h2>
+      <h2 id="run">Run a site audit</h2>
       <Steps>
         <Step title="Start it">
           <p>
@@ -46,7 +46,7 @@ export default function SiteAuditTutorial() {
         </Step>
       </Steps>
 
-      <h2 id="read">Read the results</h2>
+      <h2 id="read">Read the site audit report</h2>
       <p>
         The top of the audit shows the health score, pages crawled, how many are indexable, how many were blocked or
         failed, the issue counts by severity, and whether a <code>robots.txt</code> and sitemaps were found.

@@ -5,7 +5,7 @@ import { docSections, docsIn } from '@/content/docs';
 import { pageMeta } from '@/lib/metadata';
 
 export const metadata = pageMeta({
-  title: 'Docs',
+  title: 'Docs: SEO Tutorials, Self-Hosting and API Reference',
   description: 'How OpenSEO works, step-by-step tutorials for every feature, self-hosting, and the REST API, MCP and audit references.',
   path: '/docs',
 });
@@ -21,7 +21,7 @@ export default function DocsIndexPage() {
   return (
     <div className="min-w-0">
       <p className="eyebrow">Docs</p>
-      <h1 className="text-title mt-5">Documentation</h1>
+      <h1 className="text-title mt-5">OpenSEO docs and SEO tutorials</h1>
       <p className="text-lede mt-5 max-w-2xl text-pretty">
         Start with how OpenSEO works and what it costs, then follow a tutorial for the feature you need. The reference
         pages cover the REST API, the MCP server and every audit check.

@@ -7,7 +7,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'mcp-tools';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 const head = ['Tool', 'What it does', 'Cost'];
 

@@ -2,7 +2,10 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { docPages, getDoc } from '@/content/docs';
+import { breadcrumbList } from '@/lib/schema';
+import { SITE_NAME, SITE_URL } from '@/lib/site';
 import { BrandRow, brandName, type Brand } from './brand-icon';
+import { JsonLd } from './json-ld';
 
 interface DocArticleProps {
   slug: string;
@@ -20,6 +23,25 @@ export function DocArticle({ slug, children, brands }: DocArticleProps) {
 
   return (
     <article className="min-w-0">
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'TechArticle',
+              headline: doc.h1,
+              description: doc.description,
+              url: `${SITE_URL}/docs/${doc.slug}`,
+              author: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+              publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+            },
+            breadcrumbList([
+              { name: 'Docs', path: '/docs' },
+              { name: doc.title, path: `/docs/${doc.slug}` },
+            ]),
+          ],
+        }}
+      />
       <p className="text-sm text-muted">
         <Link href="/docs" className="hover:text-ink">
           Docs
@@ -29,7 +51,7 @@ export function DocArticle({ slug, children, brands }: DocArticleProps) {
         </span>
         <span className="font-medium text-accent-text">{doc.section}</span>
       </p>
-      <h1 className="text-title mt-5 max-w-3xl text-balance">{doc.title}</h1>
+      <h1 className="text-title mt-5 max-w-3xl text-balance">{doc.h1}</h1>
       <p className="text-lede mt-5 max-w-2xl text-pretty">{doc.description}</p>
       {brands ? <BrandRow className="mt-6 justify-start" items={brands.map((brand) => ({ brand, name: brandName(brand) }))} /> : null}
 

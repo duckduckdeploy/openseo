@@ -19,6 +19,13 @@ export interface Comparison {
   faqs: Faq[];
 }
 
+const freeAlternative = (name: string): Faq => ({
+  question: `Is OpenSEO a free ${name} alternative?`,
+  answer: [
+    `The software is: OpenSEO is open source under the MIT licence and free to self-host, with no seats and no plan. Search data, like keyword volumes, rankings and backlinks, is paid per lookup at the price shown before it runs, so a quiet month costs little. The crawler, the site audit and your Search Console data cost nothing.`,
+  ],
+});
+
 const sharedFaqs: Faq[] = [
   {
     question: 'Is the data as good?',
@@ -63,6 +70,7 @@ export const comparisons: Comparison[] = [
       'You want to own the software and your data.',
     ],
     faqs: [
+      freeAlternative('Ahrefs'),
       ...sharedFaqs,
       {
         question: 'Can I move from Ahrefs?',
@@ -97,7 +105,7 @@ export const comparisons: Comparison[] = [
       'Your usage is uneven: some busy weeks, many quiet ones.',
       'You want an AI agent to work with your SEO data under a spending cap.',
     ],
-    faqs: sharedFaqs,
+    faqs: [freeAlternative('Semrush'), ...sharedFaqs],
   },
 ];
 

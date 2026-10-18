@@ -3,9 +3,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CtaBand } from '@/components/cta-band';
 import { FaqList } from '@/components/faq';
+import { JsonLd } from '@/components/json-ld';
 import { SectionHeader } from '@/components/section';
 import { comparisons, getComparison } from '@/content/compare';
 import { pageMeta } from '@/lib/metadata';
+import { breadcrumbList, faqPage } from '@/lib/schema';
 
 interface ComparePageProps {
   params: Promise<{ slug: string }>;
@@ -21,7 +23,12 @@ export async function generateMetadata({ params }: ComparePageProps): Promise<Me
   const { slug } = await params;
   const c = getComparison(slug);
   if (!c) return {};
-  return pageMeta({ title: `OpenSEO vs ${c.name}`, description: c.summary, path: `/compare/${c.slug}` });
+  return pageMeta({
+    title: `OpenSEO vs ${c.name}: An Open-Source ${c.name} Alternative`,
+    description: `Compare OpenSEO vs ${c.name}: features, pricing and data. An open-source ${c.name} alternative you can self-host, billed per lookup, not per month.`,
+    path: `/compare/${c.slug}`,
+    absoluteTitle: true,
+  });
 }
 
 const th = 'border-b border-line bg-sunken px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-faint uppercase';
@@ -34,6 +41,12 @@ export default async function ComparePage({ params }: ComparePageProps) {
 
   return (
     <>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@graph': [faqPage(c.faqs), breadcrumbList([{ name: `OpenSEO vs ${c.name}`, path: `/compare/${c.slug}` }])],
+        }}
+      />
       <article>
         <header className="relative overflow-hidden border-b border-line">
           <div className="bg-glow pointer-events-none absolute inset-0" aria-hidden="true" />
@@ -45,7 +58,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
         </header>
 
         <section aria-labelledby="entry-title" className="container-page py-20 md:py-28">
-          <SectionHeader eyebrow="Starting price" id="entry-title" title={`${c.name} ${c.entry.plan}: ${c.entry.price}`} />
+          <SectionHeader eyebrow="Starting price" id="entry-title" title={`${c.name} pricing vs OpenSEO`} lede={`${c.name} ${c.entry.plan}: ${c.entry.price}.`} />
           <ul className="mx-auto mt-8 max-w-2xl list-disc space-y-2 pl-5 text-lg text-muted marker:text-accent">
             {c.entry.notes.map((note) => (
               <li key={note}>{note}</li>
@@ -60,7 +73,10 @@ export default async function ComparePage({ params }: ComparePageProps) {
             .
           </p>
 
-          <div className="mx-auto mt-14 max-w-5xl overflow-x-auto rounded-lg border border-line bg-surface shadow-hard-sm">
+          <h2 id="table-title" className="text-title mt-20 text-center text-balance">
+            OpenSEO vs {c.name}: feature comparison
+          </h2>
+          <div className="mx-auto mt-10 max-w-5xl overflow-x-auto rounded-lg border border-line bg-surface shadow-hard-sm">
             <table className="w-full min-w-[40rem] border-collapse text-sm">
               <caption className="sr-only">
                 OpenSEO compared with {c.name}
@@ -97,7 +113,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
           <div className="container-page mx-auto grid max-w-5xl gap-6 py-20 md:grid-cols-2 md:py-28 lg:gap-8">
             <div className="rounded-lg border border-line bg-bg p-8">
               <h2 id="choose-title" className="text-heading">
-                Choose {c.name} if
+                When to choose {c.name}
               </h2>
               <ul className="mt-5 list-disc space-y-2.5 pl-5 text-muted marker:text-accent">
                 {c.chooseThem.map((item) => (
@@ -106,7 +122,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
               </ul>
             </div>
             <div className="rounded-lg border border-accent-line bg-accent-soft p-8">
-              <h2 className="text-heading">Choose OpenSEO if</h2>
+              <h2 className="text-heading">When to choose OpenSEO</h2>
               <ul className="mt-5 list-disc space-y-2.5 pl-5 text-muted marker:text-accent">
                 {c.chooseUs.map((item) => (
                   <li key={item}>{item}</li>
@@ -117,7 +133,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
         </section>
 
         <section aria-labelledby="faq-title" className="container-page py-20 md:py-28">
-          <SectionHeader eyebrow="FAQ" id="faq-title" title="Questions" />
+          <SectionHeader eyebrow="FAQ" id="faq-title" title={`OpenSEO vs ${c.name} FAQ`} />
           <div className="mx-auto mt-12 max-w-3xl">
             <FaqList faqs={c.faqs} />
           </div>

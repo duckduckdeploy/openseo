@@ -9,7 +9,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/ai-visibility';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function AiVisibilityTutorial() {
   return (
@@ -19,7 +19,7 @@ export default function AiVisibilityTutorial() {
         answer mentions your brand, whether it cites your site, and where you come compared with your competitors.
       </p>
 
-      <h2 id="setup">Set it up</h2>
+      <h2 id="setup">Set up AI visibility tracking</h2>
       <Steps>
         <Step title="Describe your brand">
           <p>
@@ -54,7 +54,7 @@ export default function AiVisibilityTutorial() {
         </Step>
       </Steps>
 
-      <h2 id="prompts">Add prompts</h2>
+      <h2 id="prompts">Add prompts to track</h2>
       <p>
         On the <strong>Prompts</strong> tab, add the questions a buyer might type into an assistant, one per line, for
         example <code>What is the best invoicing software for plumbers?</code>. Leave your brand name out: the point is
@@ -66,14 +66,14 @@ export default function AiVisibilityTutorial() {
         history.
       </p>
 
-      <h2 id="run">Run it</h2>
+      <h2 id="run">Run the prompts across AI models</h2>
       <p>
         The bar at the top shows one run (prompts × models answers), the minimum price ($0.01 per answer), and, once
         every model has answered before, the expected price from your history. Click <Ui>Run now</Ui> and confirm. You
         can cancel a run that is going; answers already collected are kept.
       </p>
 
-      <h2 id="read">Read the results</h2>
+      <h2 id="read">Read AI mentions and citations</h2>
       <Screenshot
         name="ai-tracking"
         window
@@ -128,7 +128,7 @@ export default function AiVisibilityTutorial() {
         </p>
       </Callout>
 
-      <h2 id="explorer">Try a question first</h2>
+      <h2 id="explorer">Try the AI visibility checker first</h2>
       <p>
         The <strong>Explorer</strong> tab asks one prompt to up to 8 models side by side, without adding it to your
         tracked prompts or your trend. It is a quick way to test a question before you track it. It is priced by tokens,

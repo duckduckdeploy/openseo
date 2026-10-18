@@ -8,7 +8,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/rank-tracking';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function RankTrackingTutorial() {
   return (
@@ -18,7 +18,7 @@ export default function RankTrackingTutorial() {
         you pay each time a check runs. This tutorial sets one up, runs a first check and shows you how to read it.
       </p>
 
-      <h2 id="create">Create a tracker</h2>
+      <h2 id="create">Create a rank tracker</h2>
       <Steps>
         <Step title="Start a new tracker">
           <p>
@@ -55,14 +55,14 @@ export default function RankTrackingTutorial() {
         </p>
       </Callout>
 
-      <h2 id="run">Run a check</h2>
+      <h2 id="run">Run a rank check</h2>
       <p>
         On the tracker, click <Ui>Check rankings now</Ui> and confirm the price. Progress and spend so far are shown while it
         runs, and you can cancel it; finished checks stay stored. If YepAPI rejects your key or your balance or monthly
         limit runs out, the check stops and says why.
       </p>
 
-      <h2 id="read">Read the results</h2>
+      <h2 id="read">Read ranking positions and changes</h2>
       <p>
         The <strong>Keywords</strong> tab has a summary (average position, top 3, top 10, top 20, improved and
         declined), a chart of positions, and one row per keyword. Switch device with the toggle above the tabs.
@@ -95,7 +95,7 @@ export default function RankTrackingTutorial() {
         from the latest check. It costs nothing extra: it comes from the results you already paid for.
       </p>
 
-      <h2 id="manage">Change and maintain a tracker</h2>
+      <h2 id="manage">Edit and maintain a rank tracker</h2>
       <ul>
         <li>
           <strong>Add keywords</strong> on the Keywords tab is free. New keywords are checked on the next run, and the

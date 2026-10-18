@@ -16,10 +16,10 @@ import { selfHostDocker } from '@/content/snippets';
 import { AgentFold } from '@/components/agent-fold';
 import { BrandIcon } from '@/components/brand-icon';
 import { pageMeta } from '@/lib/metadata';
-import { GITHUB_URL, SIGN_UP_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL, YEPAPI_URL } from '@/lib/site';
+import { GITHUB_URL, SIGN_UP_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL, YEPAPI_URL } from '@/lib/site';
 
 export const metadata = pageMeta({
-  title: `${SITE_NAME}: ${SITE_TAGLINE}`,
+  title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   path: '/',
   absoluteTitle: true,
@@ -88,7 +88,7 @@ export default function HomePage() {
             </p>
 
             <h1 id="hero-title" className="text-display animate-rise mt-8 text-balance [animation-delay:60ms]">
-              The <span className="mark">open&#8209;source</span> SEO suite you control
+              <span className="mark">Open&#8209;source</span> SEO tools you control
             </h1>
 
             <p className="text-lede animate-rise mx-auto mt-7 max-w-2xl text-pretty [animation-delay:120ms]">
@@ -151,7 +151,7 @@ export default function HomePage() {
             align="center"
             eyebrow="Features"
             id="features-title"
-            title="And the rest of the workspace"
+            title="Rank tracking, site audits and AI visibility"
             lede="Rank tracking, Search Console, site audits, AI visibility, local SEO and the agent tools, each with its own page on what it does and what it costs."
           />
           <div className="mt-14 md:mt-16">
@@ -173,7 +173,7 @@ export default function HomePage() {
             align="center"
             eyebrow="You are in control"
             id="control-title"
-            title="Your SEO tool should answer to you"
+            title="Why open-source SEO software"
             lede="Closed suites decide what you see, where your data goes and what you pay. OpenSEO is built the other way round."
           />
           <ul className="mx-auto mt-14 max-w-3xl space-y-12 md:mt-16">
@@ -196,7 +196,7 @@ export default function HomePage() {
             align="center"
             eyebrow="Self-host"
             id="selfhost-title"
-            title="Run the whole thing yourself"
+            title="Self-hosted SEO tools with Docker"
             lede="Everything this site runs is in the repository. Start it on your own machine or server with Docker, and it is yours."
           />
           <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-muted">
@@ -239,7 +239,7 @@ export default function HomePage() {
           align="center"
           eyebrow="Search data"
           id="data-title"
-          title="Where the data comes from"
+          title="SEO data, priced per lookup"
           lede="The crawler, the site audit and your Search Console data are free. Search data, like keyword volumes, rankings and backlinks, needs a data provider, and you pay only for the lookups you run."
         />
         <p className="mx-auto mt-8 max-w-2xl text-center text-lg leading-relaxed text-muted">

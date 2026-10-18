@@ -8,7 +8,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/competitor-research';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function CompetitorTutorial() {
   return (
@@ -18,7 +18,7 @@ export default function CompetitorTutorial() {
         Each step is a separate lookup with its own price, so you can stop wherever you have what you need.
       </p>
 
-      <h2 id="who">1. Find who you compete with</h2>
+      <h2 id="who">1. Find your SEO competitors</h2>
       <Steps>
         <Step title="Organic competitors">
           <p>
@@ -36,7 +36,7 @@ export default function CompetitorTutorial() {
         </Step>
       </Steps>
 
-      <h2 id="size">2. Size them up</h2>
+      <h2 id="size">2. Compare competitor traffic and authority</h2>
       <p>
         Open <Ui>Domain overview</Ui>, enter a competitor and press Enter. One search loads everything below; the
         price shows before it runs. You get:
@@ -66,7 +66,7 @@ export default function CompetitorTutorial() {
         caption="Top keywords: what brings a competitor the most traffic."
       />
 
-      <h2 id="gap">3. Find the keyword gap</h2>
+      <h2 id="gap">3. Run a keyword gap analysis</h2>
       <Steps>
         <Step title="Pick a competitor">
           <p>
@@ -91,7 +91,7 @@ export default function CompetitorTutorial() {
 
       <Screenshot name="keyword-gap" alt="Keyword gap between todoist.com and ticktick.com" caption="The keyword gap: keywords only the competitor ranks for, with volume, difficulty and intent." />
 
-      <h2 id="links">4. See where their links come from</h2>
+      <h2 id="links">4. Analyse competitor backlinks</h2>
       <p>
         Open <Ui>Backlinks</Ui>, enter the competitor (a domain, a subdomain, or one exact page as a full URL) and
         press Enter. One search loads the totals, a monthly chart of links gained and lost, and every list below; the

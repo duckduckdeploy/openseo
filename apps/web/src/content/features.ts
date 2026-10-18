@@ -35,10 +35,20 @@ export interface Feature {
   slug: string;
   /** Short name used in navigation, cards and tables. */
   name: string;
-  /** Page headline. */
+  /** Title tag, keyword first. The " · OpenSEO" suffix is added by the template. */
+  seoTitle: string;
+  /** Page H1: the exact head keyword, 2 to 5 words. */
+  h1: string;
+  /** Short line under the H1. */
   headline: string;
-  /** One sentence, used on cards and as the meta description. */
+  /** One sentence, used on cards and under the headline. */
   summary: string;
+  /** Meta description, 120 to 155 characters. */
+  description: string;
+  /** H2 of the "what it does" section, keyword-led. */
+  whatTitle: string;
+  /** Glossary slugs shown as "Related SEO terms". */
+  glossary: string[];
   icon: LucideIcon;
   /** "What it does": one or two short paragraphs. */
   what: string[];
@@ -58,6 +68,11 @@ export const UNLISTED_PRICE_LABEL = 'Shown in the app before it runs';
 export const features: Feature[] = [
   {
     slug: 'rank-tracking',
+    seoTitle: 'Open-Source Rank Tracker: Track Google Rankings',
+    h1: 'Open-source rank tracker',
+    description: 'Track Google rankings on desktop and mobile by country, city or exact coordinates. Every check reads the top 100, on your schedule or on demand.',
+    whatTitle: 'How rank tracking works',
+    glossary: ['rank-tracking', 'keyword-ranking', 'serp-features', 'serp-volatility', 'average-position', 'share-of-voice'],
     name: 'Rank tracking',
     headline: 'Rank tracking that stops paying when it finds you',
     summary:
@@ -110,6 +125,11 @@ export const features: Feature[] = [
   },
   {
     slug: 'search-performance',
+    seoTitle: 'Search Console Dashboard with GA4 Data',
+    h1: 'Search Console dashboard',
+    description: 'Connect Google Search Console and GA4 read-only. Find striking-distance queries at positions 5 to 20 and the pages most worth improving. Free.',
+    whatTitle: 'How the Search Console dashboard works',
+    glossary: ['google-search-console', 'google-analytics-4', 'striking-distance-keywords', 'impressions', 'click-through-rate', 'average-position'],
     worksWith: ['googlesearchconsole', 'googleanalytics'],
     name: 'Search performance',
     headline: 'Your own Google data, turned into a to-do list',
@@ -151,6 +171,11 @@ export const features: Feature[] = [
   },
   {
     slug: 'site-audit',
+    seoTitle: `Site Audit Tool: ${AUDIT_CHECKS} Technical SEO Checks`,
+    h1: 'Technical SEO site audit',
+    description: `Crawl your site for free with ${AUDIT_CHECKS} technical SEO checks and a health score: redirects, canonicals, indexability, sitemaps, hreflang. Plus Lighthouse.`,
+    whatTitle: 'How the site audit works',
+    glossary: ['seo-audit', 'technical-seo', 'crawling', 'canonical-tag', 'redirect-chain', 'core-web-vitals'],
     name: 'Site audit',
     headline: 'Technical audits from our own crawler, plus Lighthouse',
     summary:
@@ -190,6 +215,11 @@ export const features: Feature[] = [
   },
   {
     slug: 'ai-visibility',
+    seoTitle: 'AI Visibility Tracker for ChatGPT, Gemini and Claude',
+    h1: 'AI visibility tracker',
+    description: 'Track whether ChatGPT, Gemini, Claude, Perplexity and 120+ AI models mention your brand and cite your site, prompt by prompt, over time.',
+    whatTitle: 'How AI visibility tracking works',
+    glossary: ['ai-visibility', 'generative-engine-optimization', 'ai-citations', 'prompt-tracking', 'brand-mentions', 'share-of-voice'],
     worksWith: ASSISTANT_BRANDS,
     name: 'AI visibility',
     headline: 'Find out what AI models say about your brand',
@@ -231,6 +261,11 @@ export const features: Feature[] = [
   },
   {
     slug: 'local-seo',
+    seoTitle: 'Local SEO Tool with Geo-Grid Rank Tracking',
+    h1: 'Local SEO and geo-grid tracker',
+    description: 'Map your Google Maps rankings street by street with geo-grids, look up Google Business profiles and pull reviews with owner reply rates.',
+    whatTitle: 'How geo-grid tracking works',
+    glossary: ['geo-grid', 'local-pack', 'google-business-profile', 'local-ranking-factors', 'online-reviews', 'nap'],
     name: 'Local SEO',
     headline: 'Local rankings, mapped street by street',
     summary: 'Google Business profile lookups, reviews and geo-grid rank maps.',
@@ -265,6 +300,11 @@ export const features: Feature[] = [
   },
   {
     slug: 'mcp-and-api',
+    seoTitle: 'SEO MCP Server and REST API for AI Agents',
+    h1: 'SEO MCP server and API',
+    description: 'An SEO MCP server with 63 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
+    whatTitle: 'How the MCP server works',
+    glossary: ['mcp', 'ai-seo-agent', 'llm', 'keyword-research', 'rank-tracking'],
     worksWith: ['mcp', 'claude', 'chatgpt', 'claudecode', 'cursor', 'codex', 'geminicli'],
     name: 'MCP server and REST API',
     headline: 'SEO your AI agent can do, with a spending cap',

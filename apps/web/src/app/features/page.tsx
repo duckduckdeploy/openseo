@@ -5,9 +5,9 @@ import { features } from '@/content/features';
 import { pageMeta } from '@/lib/metadata';
 
 export const metadata = pageMeta({
-  title: 'Features',
+  title: 'SEO Software Features: Rank Tracking to AI Visibility',
   description:
-    'Keyword research, rank tracking, domain overview, backlinks, competitor research, site audit, AI visibility, local SEO, and an MCP server and REST API for agents.',
+    'OpenSEO features: rank tracking, Search Console reports, technical site audits, AI visibility tracking, local geo-grids and an SEO MCP server.',
   path: '/features',
 });
 
@@ -19,7 +19,7 @@ export default function FeaturesPage() {
           as="h1"
           eyebrow={`${features.length} features`}
           id="features-title"
-          title="Everything in the workspace"
+          title="OpenSEO features"
           lede="Each feature has its own page: what it does, what you can do with it, and what each action costs."
         />
         <div className="mx-auto mt-10 max-w-2xl">

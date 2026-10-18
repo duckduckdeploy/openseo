@@ -8,7 +8,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/keyword-research';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function KeywordResearchTutorial() {
   return (
@@ -19,7 +19,7 @@ export default function KeywordResearchTutorial() {
         <Link href="/docs/getting-started">Getting started</Link> if you have neither.
       </p>
 
-      <h2 id="find">Find keywords</h2>
+      <h2 id="find">Find keyword ideas from a seed keyword</h2>
       <Steps>
         <Step title="Open Keyword research">
           <p>
@@ -58,7 +58,7 @@ export default function KeywordResearchTutorial() {
         caption="Keyword ideas for standing desk. The same view is under SEO tools, outside any project."
       />
 
-      <h2 id="read">Read the results</h2>
+      <h2 id="read">Read search volume, difficulty and intent</h2>
       <DocTable
         caption="Keyword research columns"
         head={['Column', 'What it tells you']}
@@ -80,7 +80,7 @@ export default function KeywordResearchTutorial() {
         more ideas and the live top 10 with each result&apos;s authority, all for the same market.
       </p>
 
-      <h2 id="save">Save the keywords worth targeting</h2>
+      <h2 id="save">Save target keywords to a project</h2>
       <Steps>
         <Step title="Select rows">
           <p>Tick the keywords you want. The header checkbox selects every row shown.</p>
@@ -100,7 +100,7 @@ export default function KeywordResearchTutorial() {
         </Step>
       </Steps>
 
-      <h2 id="maintain">Keep the list fresh</h2>
+      <h2 id="maintain">Keep keyword data fresh</h2>
       <p>
         Saved keywords keep the figures they were saved with. To refresh them, click <Ui>Update metrics</Ui> on the
         Saved keywords page. It shows how many keywords it will update and the most it will cost ($0.03 plus $0.03 per

@@ -7,7 +7,7 @@ import { pageMeta } from '@/lib/metadata';
 const slug = 'tutorials/search-console';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function SearchConsoleTutorial() {
   return (
@@ -18,7 +18,7 @@ export default function SearchConsoleTutorial() {
         site. OpenSEO reads both, read-only, and nothing here spends from your YepAPI balance.
       </p>
 
-      <h2 id="connect">Connect Google</h2>
+      <h2 id="connect">Connect Google Search Console</h2>
       <Steps>
         <Step title="Open Search performance">
           <p>
@@ -58,7 +58,7 @@ export default function SearchConsoleTutorial() {
         </p>
       </Callout>
 
-      <h2 id="read">Read the report</h2>
+      <h2 id="read">Read the Search Console report</h2>
       <p>
         Pick a period (7 days, 28 days or 3 months) and optionally a device. Search Console data lags by about three
         days, so periods end three days ago. Each total is compared with the period of the same length just before it.
@@ -73,7 +73,7 @@ export default function SearchConsoleTutorial() {
         ]}
       />
 
-      <h2 id="striking">Striking distance</h2>
+      <h2 id="striking">Find striking-distance keywords</h2>
       <p>
         The default tab lists queries one push from the top of page one. For each query OpenSEO takes the page of yours
         that ranks best for it, and keeps it when that page sits at positions 5 to 20. They are sorted by impressions,
@@ -82,13 +82,13 @@ export default function SearchConsoleTutorial() {
         tracker.
       </p>
 
-      <h2 id="tables">Queries and pages</h2>
+      <h2 id="tables">Top queries and pages</h2>
       <p>
         The Queries and Pages tabs page through everything Search Console has, by clicks, 50 rows at a time, with CSV
         export of the page you are on.
       </p>
 
-      <h2 id="opportunities">Opportunities</h2>
+      <h2 id="opportunities">Page opportunity scores</h2>
       <p>Opportunities ranks pages at positions 4 to 20 by where a push is most worth it. Each page gets a score from 0 to 100:</p>
       <DocTable
         caption="Opportunity score"
@@ -106,7 +106,7 @@ export default function SearchConsoleTutorial() {
         property&apos;s time zone, so the two line up only roughly; the page warns when they differ.
       </p>
 
-      <h2 id="analytics">Organic traffic</h2>
+      <h2 id="analytics">Organic traffic from GA4</h2>
       <p>
         With Google Analytics connected, the page also shows organic-search sessions, engagement rate, key events and
         revenue against the previous period, and the landing pages search visitors arrive on. Periods are complete days

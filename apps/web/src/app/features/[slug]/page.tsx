@@ -5,13 +5,16 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { BrandRow, brandName } from '@/components/brand-icon';
 import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
+import { JsonLd } from '@/components/json-ld';
+import { RelatedTerms } from '@/components/related-terms';
 import { PriceTable, rowsFromFeatureCosts } from '@/components/price-table';
 import { StatusNote } from '@/components/section';
 import { features, getFeature } from '@/content/features';
 import { TourShots } from '@/components/tour-section';
 import { featureTour, tourStop } from '@/content/tour';
 import { pageMeta } from '@/lib/metadata';
-import { inSentence, SIGN_UP_URL } from '@/lib/site';
+import { breadcrumbList } from '@/lib/schema';
+import { SIGN_UP_URL, SITE_NAME, SITE_URL } from '@/lib/site';
 
 interface FeaturePageProps {
   params: Promise<{ slug: string }>;
@@ -29,8 +32,8 @@ export async function generateMetadata({ params }: FeaturePageProps): Promise<Me
   if (!feature) return {};
 
   return pageMeta({
-    title: feature.name,
-    description: feature.summary,
+    title: feature.seoTitle,
+    description: feature.description,
     path: `/features/${feature.slug}`,
   });
 }
@@ -47,6 +50,26 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
 
   return (
     <>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'SoftwareApplication',
+              name: `${SITE_NAME} ${feature.name}`,
+              url: `${SITE_URL}/features/${feature.slug}`,
+              description: feature.description,
+              applicationCategory: 'BusinessApplication',
+              operatingSystem: 'Web, Linux, Windows, macOS (Docker)',
+              license: 'https://opensource.org/license/mit',
+            },
+            breadcrumbList([
+              { name: 'Features', path: '/features' },
+              { name: feature.name, path: `/features/${feature.slug}` },
+            ]),
+          ],
+        }}
+      />
       <article>
         {/* Header */}
         <header className="relative overflow-hidden border-b border-line">
@@ -68,8 +91,9 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
               <span className="inline-flex size-12 items-center justify-center rounded-md bg-accent-soft text-accent-text">
                 <Icon className="size-6" aria-hidden="true" strokeWidth={1.75} />
               </span>
-              <h1 className="text-display mt-7 text-balance">{feature.headline}</h1>
-              <p className="mt-7 text-xl leading-relaxed text-pretty text-muted md:text-[1.375rem]">{feature.summary}</p>
+              <h1 className="text-display mt-7 text-balance">{feature.h1}</h1>
+              <p className="mt-6 font-display text-2xl font-semibold text-balance text-ink md:text-[1.75rem]">{feature.headline}</p>
+              <p className="mt-5 text-xl leading-relaxed text-pretty text-muted md:text-[1.375rem]">{feature.summary}</p>
               {feature.worksWith ? (
                 <BrandRow className="mt-8" items={feature.worksWith.map((brand) => ({ brand, name: brandName(brand) }))} />
               ) : null}
@@ -121,7 +145,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">What it does</p>
             <h2 id="what-title" className="text-title mt-4">
-              {feature.name}
+              {feature.whatTitle}
             </h2>
             <div className="mt-8 space-y-6 text-xl leading-relaxed text-pretty text-muted">
               {feature.what.map((paragraph) => (
@@ -137,7 +161,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             <div className="mx-auto max-w-3xl text-center">
               <p className="eyebrow">What you can do</p>
               <h2 id="can-title" className="text-title mt-4">
-                Everything {inSentence(feature.name)} covers
+                {feature.name} features
               </h2>
             </div>
             <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2">
@@ -156,7 +180,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">What it costs</p>
             <h2 id="costs-title" className="text-title mt-4">
-              What each action costs
+              {feature.name} pricing
             </h2>
             <p className="mt-6 text-xl leading-relaxed text-pretty text-muted">
               Prices at the time of writing, billed by the data provider to your own key. The app shows the price of every action before it runs.
@@ -177,6 +201,11 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             </div>
           </div>
         </section>
+
+        {/* Glossary */}
+        <div className="container-page border-t border-line py-20 md:py-28">
+          <RelatedTerms slugs={feature.glossary} title={`${feature.name}: SEO terms explained`} />
+        </div>
 
         {/* Previous / next */}
         <nav aria-label="More features" className="container-page pb-20 md:pb-28">

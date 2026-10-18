@@ -7,7 +7,7 @@ import { SIGN_UP_URL, YEPAPI_URL } from '@/lib/site';
 const slug = 'getting-started';
 const doc = getDoc(slug);
 
-export const metadata = pageMeta({ title: doc.title, description: doc.description, path: `/docs/${slug}` });
+export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 export default function GettingStartedPage() {
   return (

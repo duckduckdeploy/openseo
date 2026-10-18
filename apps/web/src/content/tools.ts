@@ -27,10 +27,18 @@ export interface ResearchTool {
   slug: string;
   name: string;
   icon: LucideIcon;
-  /** Page headline. */
+  /** Title tag, keyword first. The " · OpenSEO" suffix is added by the template. */
+  seoTitle: string;
+  /** Page H1: the exact head keyword, 2 to 5 words. */
+  h1: string;
+  /** Short line under the H1. */
   headline: string;
-  /** One sentence for cards and the meta description. */
+  /** One sentence for cards. */
   summary: string;
+  /** Meta description, 120 to 155 characters. */
+  description: string;
+  /** Glossary slugs: the first is the tool's core concept, shown as "What is …?". */
+  glossary: string[];
   /** The paragraph under the headline. */
   lede: string;
   /** Three short things it gives you, shown under the lede. */
@@ -67,6 +75,10 @@ const shared: Faq[] = [
 export const tools: ResearchTool[] = [
   {
     slug: 'keyword-overview',
+    seoTitle: 'Keyword Overview: Check Difficulty and Search Volume',
+    h1: 'Keyword difficulty and volume checker',
+    description: 'Check keyword difficulty, search volume, traffic potential and the live top 10 for any keyword, in any country, state or city. Price shown first.',
+    glossary: ['keyword-difficulty', 'search-volume', 'traffic-potential', 'search-intent', 'cost-per-click', 'keyword-research'],
     name: 'Keyword overview',
     icon: Search,
     headline: 'Everything about a keyword, from one search',
@@ -79,25 +91,25 @@ export const tools: ResearchTool[] = [
       {
         shot: 'search-bar',
         alt: 'The search row: keyword, country, city or state, language and the Analyse button, with the price of the search',
-        title: 'One search, one row',
+        title: 'Keyword metrics in one search',
         body: 'Keyword, country, city or state, and language sit side by side. The price of the whole search shows before it runs, and the market you pick is remembered for every other tool.',
       },
       {
         shot: 'keyword-overview-cards',
         alt: 'Four cards: keyword difficulty 38, search volume 135K, traffic potential 37.8K and search volume across six countries',
-        title: 'The four numbers that decide a keyword',
+        title: 'Keyword difficulty, volume and traffic potential',
         body: 'Difficulty from 0 to 100 with roughly how many linking sites the top 10 have. Monthly volume with its trend, the cost per click and how much advertisers compete. Traffic potential: what the top result earns from all its keywords. And volume in five other large markets, so you see where the demand is.',
       },
       {
         shot: 'keyword-overview-ideas',
         alt: 'Four columns of keyword ideas: terms that match, questions, keywords the top pages also rank for, and Google suggestions',
-        title: 'Ideas, questions and suggestions',
+        title: 'Keyword ideas and questions',
         body: 'Terms that match the topic, the questions people ask, what the ranking pages also rank for, and Google’s own autocomplete. Click any of them to open its overview, or View all for the full list.',
       },
       {
         shot: 'keyword-overview-serp',
         alt: 'The top Google results with product, image and question blocks in place, and the words, DR, UR, backlinks, linking domains, traffic and value of each page',
-        title: 'Who ranks, and how strong they are',
+        title: 'Top 10 SERP analysis',
         body: 'The results page as Google lays it out, features in their places, with how many visits this keyword sends each result. Turn on authority metrics for each page’s Domain Rating, URL Rating, backlinks, linking domains, traffic and its value.',
       },
     ],
@@ -135,6 +147,10 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'keyword-ideas',
+    seoTitle: 'Keyword Ideas Generator: Find Long-Tail Keywords',
+    h1: 'Keyword ideas generator',
+    description: 'Generate up to 600 keyword ideas from one seed: matching terms, related searches, questions and suggestions, with volume, difficulty and intent.',
+    glossary: ['long-tail-keywords', 'seed-keyword', 'question-keywords', 'keyword-clustering', 'search-intent', 'keyword-trend'],
     name: 'Keyword ideas',
     icon: Lightbulb,
     headline: 'Hundreds of keywords around any topic',
@@ -147,7 +163,7 @@ export const tools: ResearchTool[] = [
       {
         shot: 'keyword-ideas-questions',
         alt: 'The questions view of keyword ideas with tabs for all ideas, matching terms, related terms, questions and suggestions',
-        title: 'Every kind of idea, one tab away',
+        title: 'Matching terms, related keywords and questions',
         body: 'All ideas, matching terms, related terms, questions and search suggestions each have a tab with their count. Words to include, intent, minimum volume, maximum difficulty and minimum words narrow the list for free.',
       },
     ],
@@ -176,6 +192,10 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'serp-checker',
+    seoTitle: 'SERP Checker: See Live Google Results in Any Location',
+    h1: 'SERP checker',
+    description: 'Check the live Google top 10 for any keyword on desktop or mobile, in any country, state or city, with each result’s authority, links and traffic.',
+    glossary: ['serp', 'serp-features', 'featured-snippet', 'people-also-ask', 'ai-overviews', 'domain-rating'],
     name: 'SERP checker',
     icon: ListOrdered,
     headline: 'The live results page, measured',
@@ -188,13 +208,13 @@ export const tools: ResearchTool[] = [
       {
         shot: 'serp-checker-table',
         alt: 'The SERP checker table: volume, difficulty and intent, the SERP features, and each result with words, DR, UR, backlinks, linking domains, traffic, value and keywords',
-        title: 'Every result, with what makes it rank',
+        title: 'SERP analysis with authority and links',
         body: 'Volume, difficulty and intent sit above the results. AI overviews, People also ask, local packs and product blocks take their place in the numbering, so you see where the organic results really start.',
       },
       {
         shot: 'serp-checker-mobile',
         alt: 'The mobile results for standing desk',
-        title: 'Mobile is its own results page',
+        title: 'Mobile SERP checker',
         body: 'Switch the device to mobile and compare. Features and order often differ from desktop.',
       },
     ],
@@ -222,6 +242,10 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'domain-overview',
+    seoTitle: 'Website Traffic Checker and Domain Overview',
+    h1: 'Website traffic checker',
+    description: 'Check any website’s organic traffic and its value, keywords, backlinks, authority, top pages and competitors, in any market. Price shown first.',
+    glossary: ['organic-traffic', 'traffic-value', 'domain-rating', 'ranking-distribution', 'referring-domain', 'keyword-gap'],
     name: 'Domain overview',
     icon: Globe,
     headline: 'Any website’s search traffic at a glance',
@@ -234,25 +258,25 @@ export const tools: ResearchTool[] = [
       {
         shot: 'domain-overview-positions',
         alt: 'A bar chart of how many keywords rank in each position range, with new, improved, declined and lost counts',
-        title: 'Where its rankings sit, and where they are moving',
+        title: 'Ranking distribution and keyword movement',
         body: 'How many keywords rank in each position range, with the top 10 in blue, and how many are new, improved, declined or lost since the last update.',
       },
       {
         shot: 'domain-overview-keywords',
         alt: 'A table of the keywords that bring the most traffic, with position, volume, traffic, share, CPC and ranking URL',
-        title: 'The keywords that bring the traffic',
+        title: 'Top organic keywords',
         body: 'The 100 keywords that bring the most traffic, with position, volume, share of traffic, cost per click and the ranking page. Filter by text or position, save to a project or export.',
       },
       {
         shot: 'domain-overview-pages',
         alt: 'The top pages of zapier.com by organic traffic with traffic value, keywords, top 3 and top 10 counts',
-        title: 'The pages that earn it',
+        title: 'Top pages by organic traffic',
         body: 'The 100 pages with the most organic traffic, what it is worth, and how many keywords each ranks for in the top 3 and top 10. Open any page in the page analyser.',
       },
       {
         shot: 'domain-overview-competitors',
         alt: 'Competitors of zapier.com with common keywords, average position, their keywords and traffic',
-        title: 'Who it competes with',
+        title: 'Organic competitors',
         body: 'Sites that rank for the same keywords, with how many they share. One click opens the keyword gap.',
       },
     ],
@@ -281,6 +305,10 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'page-analyser',
+    seoTitle: 'On-Page SEO Checker: Analyse Any URL',
+    h1: 'On-page SEO checker',
+    description: 'Check any page’s title, meta description and headings, its URL Rating, backlinks and traffic, and every keyword it ranks for, in one search.',
+    glossary: ['on-page-seo', 'title-tag', 'meta-description', 'header-tags', 'url-rating', 'backlink'],
     name: 'Page analyser',
     icon: FileSearch,
     headline: 'One page, inside and out',
@@ -293,19 +321,19 @@ export const tools: ResearchTool[] = [
       {
         shot: 'page-analyser-onpage',
         alt: 'On-page checks: status, title and description with their length, H1 and word count',
-        title: 'What search engines read first',
+        title: 'Title, meta description and headings check',
         body: 'Status, title and meta description with their length checked against what results show in full, the H1 headings and the size of the content.',
       },
       {
         shot: 'page-analyser-keywords',
         alt: 'A table of the keywords the page ranks for with position, volume, traffic and CPC',
-        title: 'Every keyword it ranks for',
+        title: 'Keywords the page ranks for',
         body: 'The keywords this page ranks for in the top 20, with position, volume and the traffic each brings. Save the ones worth tracking.',
       },
       {
         shot: 'page-analyser-links',
         alt: 'The strongest backlinks to the page, one per linking site, with anchor, type and rank',
-        title: 'The links behind it',
+        title: 'Backlinks to the page',
         body: 'Its strongest backlinks, one from each linking site, with the anchor text and whether they pass authority.',
       },
     ],
@@ -328,6 +356,10 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'backlink-checker',
+    seoTitle: 'Backlink Checker: Check Backlinks to Any Website',
+    h1: 'Backlink checker',
+    description: 'Check backlinks to any site or page: referring domains, anchor text, new and lost links by month, top linked pages and link intersect.',
+    glossary: ['backlink', 'referring-domain', 'anchor-text', 'dofollow-link', 'lost-backlinks', 'link-intersect'],
     name: 'Backlink checker',
     icon: Link2,
     headline: 'Who links to a site, and how that is changing',
@@ -340,31 +372,31 @@ export const tools: ResearchTool[] = [
       {
         shot: 'backlinks-history',
         alt: 'Charts of backlinks and referring domains over time, and new against lost links each month',
-        title: 'How the profile grew',
+        title: 'Backlink history: new and lost links',
         body: 'Backlinks and referring domains over the years, and the links gained and lost every month, to spot a campaign, a penalty or a lost partner.',
       },
       {
         shot: 'backlinks-list',
         alt: 'A table of the strongest backlinks with linking page, anchor, target, type, authority and dates',
-        title: 'The strongest links first',
+        title: 'Strongest backlinks first',
         body: 'The 100 strongest live links, one from each linking site, with the anchor, the page they point to, dofollow or nofollow, authority and when they were first seen.',
       },
       {
         shot: 'backlinks-domains',
         alt: 'Referring domains of zapier.com with rank, backlinks, dofollow links, linking pages and spam score',
-        title: 'Every site that links',
+        title: 'Referring domains',
         body: 'The referring domains with their authority, how many links each sends and their spam score.',
       },
       {
         shot: 'backlinks-anchors',
         alt: 'Anchor texts used in links to zapier.com with referring domains and backlinks',
-        title: 'The words they link with',
+        title: 'Anchor text distribution',
         body: 'Anchor texts and how many sites use each, to see how others describe the site.',
       },
       {
         shot: 'backlinks-intersect',
         alt: 'Link intersect: sites that link to zapier.com, make.com and ifttt.com',
-        title: 'Sites that link to your competitors',
+        title: 'Link intersect with competitors',
         body: 'Link intersect takes competitors and lists the sites that link to all of them: the likeliest to link to you next.',
       },
     ],
@@ -396,6 +428,10 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'competitors',
+    seoTitle: 'Competitor Analysis Tool with Keyword Gap',
+    h1: 'Competitor analysis and keyword gap',
+    description: 'Find your organic competitors in Google, run a keyword gap against any of them, and see which sites rank most for a list of keywords.',
+    glossary: ['keyword-gap', 'content-gap', 'share-of-voice', 'organic-search', 'keyword-research', 'topical-authority'],
     name: 'Competitors',
     icon: Swords,
     headline: 'Find who you compete with, then what they have that you do not',
@@ -408,13 +444,13 @@ export const tools: ResearchTool[] = [
       {
         shot: 'keyword-gap',
         alt: 'Keyword gap between todoist.com and ticktick.com listing keywords only the competitor ranks for',
-        title: 'The keyword gap',
+        title: 'Keyword gap analysis',
         body: 'Keywords only they rank for, and keywords you both rank for, load together. Sort by volume or difficulty, select the opportunities and save them to a project.',
       },
       {
         shot: 'competitors-serp',
         alt: 'SERP competitors: the domains that rank most for five keywords, with average position, visibility and traffic',
-        title: 'Who ranks for your keywords',
+        title: 'SERP competitors for your keywords',
         body: 'Paste up to 200 keywords to see which domains show up most for them, often a different list from the one you would write from memory.',
       },
     ],
@@ -437,6 +473,10 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'ai-visibility-checker',
+    seoTitle: 'AI Visibility Checker: See What ChatGPT and Gemini Cite',
+    h1: 'AI visibility checker',
+    description: 'Ask ChatGPT, Gemini, Claude and Perplexity one question with web search on and compare the sites each one cites, in order. Is your site there?',
+    glossary: ['ai-visibility', 'ai-citations', 'generative-engine-optimization', 'answer-engine-optimization', 'brand-mentions', 'chatgpt-search'],
     worksWith: ASSISTANT_BRANDS,
     name: 'AI visibility checker',
     icon: Bot,
@@ -450,13 +490,13 @@ export const tools: ResearchTool[] = [
       {
         shot: 'ai-visibility-sites',
         alt: 'The most cited sites, with the assistants that cite each one and their place in each list',
-        title: 'The sites the assistants trust',
+        title: 'Most cited sites in AI answers',
         body: 'Every site any assistant cited, ranked by how many assistants cite it and how high. Each one shows which assistants cite it and at which place in their list of sources.',
       },
       {
         shot: 'ai-visibility-order',
         alt: 'Four columns, one per assistant, listing the sources each cited in order',
-        title: 'Citations in order, side by side',
+        title: 'AI citations by assistant',
         body: 'One column per assistant with its sources numbered as it gave them. Hover a site to see where else it appears; your own site is highlighted. Each answer is underneath, with whether it names you.',
       },
     ],
@@ -496,6 +536,10 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'local-rank-checker',
+    seoTitle: 'Local Rank Checker: Google Maps Rankings by Grid',
+    h1: 'Local rank checker',
+    description: 'Check Google Maps rankings for any keyword across a grid around a city: the top 20 businesses at every point and any business’s rank in each cell.',
+    glossary: ['geo-grid', 'local-pack', 'google-maps-seo', 'local-ranking-factors', 'google-business-profile', 'near-me-searches'],
     name: 'Local rank checker',
     icon: Grid3x3,
     headline: 'Who ranks on Google Maps, block by block',
@@ -508,7 +552,7 @@ export const tools: ResearchTool[] = [
       {
         shot: 'local-rank-grid',
         alt: 'A grid of rank numbers coloured green to red, next to a table of businesses with top 3 coverage, average rank, rating and reviews',
-        title: 'The grid and who owns it',
+        title: 'Google Maps rank grid',
         body: 'Each cell is a Maps search from that spot: green for the top 3, amber for 4 to 10, red for 11 to 20. Next to it, every business ranked by how many points it holds a top-3 place. Click one to see its grid; the data is already there, so it costs nothing.',
       },
     ],
