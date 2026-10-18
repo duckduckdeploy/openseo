@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Fragment } from 'react';
 import { ArrowLeft, ArrowRight, TriangleAlert } from 'lucide-react';
 import { CodeBlock } from '@/components/code-block';
 import { CtaBand } from '@/components/cta-band';
@@ -10,6 +12,8 @@ import { JsonLd } from '@/components/json-ld';
 import { RelatedTerms } from '@/components/related-terms';
 import { plainText, RichText } from '@/components/rich-text';
 import { categoryName, getTerm, glossary, glossaryCategories, hatLabels, nameInSentence, shortName, titleCaseName, whatIs, whyHeading } from '@/content/glossary';
+import { glossaryImages } from '@/content/glossary/images';
+import { glossaryTitles } from '@/content/glossary/titles';
 import { pageMeta } from '@/lib/metadata';
 import { breadcrumbList, faqPage } from '@/lib/schema';
 import { NEWS_URL, SITE_URL } from '@/lib/site';
@@ -33,9 +37,10 @@ export async function generateMetadata({ params }: TermPageProps): Promise<Metad
   const question = whatIs(term, titleCaseName(term)).replace(/^What (is|are)/, (_, verb: string) => `What ${verb === 'is' ? 'Is' : 'Are'}`);
   const suffix = term.hat === 'black' ? ' Risks and Examples' : ' Definition and Examples';
   return pageMeta({
-    title: question.length + suffix.length <= 50 ? `${question}${suffix}` : question,
+    title: glossaryTitles[term.slug] ?? (question.length + suffix.length <= 50 ? `${question}${suffix}` : question),
     description: plainText(term.short),
     path: `/glossary/${term.slug}`,
+    image: glossaryImages[term.slug] ? { url: glossaryImages[term.slug]!.src, width: glossaryImages[term.slug]!.width, height: glossaryImages[term.slug]!.height, alt: glossaryImages[term.slug]!.alt } : undefined,
   });
 }
 
@@ -58,6 +63,7 @@ export default async function GlossaryTermPage({ params }: TermPageProps) {
   const index = glossary.indexOf(term);
   const previous = glossary[index - 1];
   const next = glossary[index + 1];
+  const image = glossaryImages[term.slug];
 
   return (
     <>
@@ -71,6 +77,7 @@ export default async function GlossaryTermPage({ params }: TermPageProps) {
               alternateName: term.aka,
               description: plainText(term.definition[0] ?? term.short),
               url: `${SITE_URL}/glossary/${term.slug}`,
+              ...(image ? { image: { '@type': 'ImageObject', url: `${SITE_URL}${image.src}`, width: image.width, height: image.height, caption: image.alt } } : {}),
               inDefinedTermSet: { '@type': 'DefinedTermSet', name: 'OpenSEO SEO glossary', url: `${SITE_URL}/glossary` },
             },
             ...(term.faqs?.length ? [faqPage(term.faqs)] : []),
@@ -121,10 +128,25 @@ export default async function GlossaryTermPage({ params }: TermPageProps) {
 
           <div className="prose-doc mt-10">
             <h2 id="definition">{whatIs(term)}</h2>
-            {term.definition.map((paragraph) => (
-              <p key={paragraph}>
-                <RichText text={paragraph} />
-              </p>
+            {term.definition.map((paragraph, i) => (
+              <Fragment key={paragraph}>
+                <p>
+                  <RichText text={paragraph} />
+                </p>
+                {i === 0 && image ? (
+                  <figure>
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      width={image.width}
+                      height={image.height}
+                      sizes="(min-width: 768px) 44rem, 100vw"
+                      priority
+                      className="h-auto w-full rounded-lg border border-line"
+                    />
+                  </figure>
+                ) : null}
+              </Fragment>
             ))}
 
             <h2 id="why">{whyHeading(term)}</h2>

@@ -26,7 +26,7 @@ export function faqPage(faqs: { question: string; answer: string[] }[]) {
     mainEntity: faqs.map((faq) => ({
       '@type': 'Question',
       name: faq.question,
-      acceptedAnswer: { '@type': 'Answer', text: faq.answer.join(' ').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') },
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer.join(' ').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/`([^`]+)`/g, '$1') },
     })),
   };
 }

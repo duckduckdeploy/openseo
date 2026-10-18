@@ -68,10 +68,10 @@ export const UNLISTED_PRICE_LABEL = 'Shown in the app before it runs';
 export const features: Feature[] = [
   {
     slug: 'rank-tracking',
-    seoTitle: 'Open-Source Rank Tracker: Track Google Rankings',
-    h1: 'Open-source rank tracker',
+    seoTitle: 'Keyword Rank Tracker: Open-Source Google Rank Tracking',
+    h1: 'Keyword rank tracker',
     description: 'Track Google rankings on desktop and mobile by country, city or exact coordinates. Every check reads the top 100, on your schedule or on demand.',
-    whatTitle: 'How rank tracking works',
+    whatTitle: 'How keyword rank tracking works',
     glossary: ['rank-tracking', 'keyword-ranking', 'serp-features', 'serp-volatility', 'average-position', 'share-of-voice'],
     name: 'Rank tracking',
     headline: 'Rank tracking that stops paying when it finds you',
@@ -125,8 +125,8 @@ export const features: Feature[] = [
   },
   {
     slug: 'search-performance',
-    seoTitle: 'Search Console Dashboard with GA4 Data',
-    h1: 'Search Console dashboard',
+    seoTitle: 'Google Search Console Dashboard with GA4 Data',
+    h1: 'Google Search Console dashboard',
     description: 'Connect Google Search Console and GA4 read-only. Find striking-distance queries at positions 5 to 20 and the pages most worth improving. Free.',
     whatTitle: 'How the Search Console dashboard works',
     glossary: ['google-search-console', 'google-analytics-4', 'striking-distance-keywords', 'impressions', 'click-through-rate', 'average-position'],
@@ -171,7 +171,7 @@ export const features: Feature[] = [
   },
   {
     slug: 'site-audit',
-    seoTitle: `Site Audit Tool: ${AUDIT_CHECKS} Technical SEO Checks`,
+    seoTitle: `SEO Site Audit Tool: ${AUDIT_CHECKS} Technical SEO Checks`,
     h1: 'Technical SEO site audit',
     description: `Crawl your site for free with ${AUDIT_CHECKS} technical SEO checks and a health score: redirects, canonicals, indexability, sitemaps, hreflang. Plus Lighthouse.`,
     whatTitle: 'How the site audit works',
@@ -215,7 +215,7 @@ export const features: Feature[] = [
   },
   {
     slug: 'ai-visibility',
-    seoTitle: 'AI Visibility Tracker for ChatGPT, Gemini and Claude',
+    seoTitle: 'AI Visibility Tracker: GEO Tool for ChatGPT and Gemini',
     h1: 'AI visibility tracker',
     description: 'Track whether ChatGPT, Gemini, Claude, Perplexity and 120+ AI models mention your brand and cite your site, prompt by prompt, over time.',
     whatTitle: 'How AI visibility tracking works',
@@ -262,9 +262,9 @@ export const features: Feature[] = [
   {
     slug: 'local-seo',
     seoTitle: 'Local SEO Tool with Geo-Grid Rank Tracking',
-    h1: 'Local SEO and geo-grid tracker',
+    h1: 'Local SEO tool',
     description: 'Map your Google Maps rankings street by street with geo-grids, look up Google Business profiles and pull reviews with owner reply rates.',
-    whatTitle: 'How geo-grid tracking works',
+    whatTitle: 'How the local SEO tool works',
     glossary: ['geo-grid', 'local-pack', 'google-business-profile', 'local-ranking-factors', 'online-reviews', 'nap'],
     name: 'Local SEO',
     headline: 'Local rankings, mapped street by street',
@@ -300,7 +300,7 @@ export const features: Feature[] = [
   },
   {
     slug: 'mcp-and-api',
-    seoTitle: 'SEO MCP Server and REST API for AI Agents',
+    seoTitle: 'SEO MCP Server and SEO API for AI Agents',
     h1: 'SEO MCP server and API',
     description: 'An SEO MCP server with 63 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
     whatTitle: 'How the MCP server works',

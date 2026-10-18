@@ -9,12 +9,14 @@ interface PageMetaInput {
   /** Use the title as-is instead of applying the "%s · OpenSEO" template. */
   absoluteTitle?: boolean;
   noIndex?: boolean;
+  /** A page-specific social image, instead of the site-wide one. */
+  image?: { url: string; width: number; height: number; alt: string };
 }
 
 /** Per-page metadata: title, description, canonical, Open Graph and Twitter tags. */
-export function pageMeta({ title, description, path, absoluteTitle, noIndex }: PageMetaInput): Metadata {
+export function pageMeta({ title, description, path, absoluteTitle, noIndex, image }: PageMetaInput): Metadata {
   const socialTitle = absoluteTitle ? title : `${title} · ${SITE_NAME}`;
-  const images = [{ url: '/opengraph-image', width: 1200, height: 630, alt: `${SITE_NAME}: open-source SEO workspace` }];
+  const images = image ? [image] : [{ url: '/opengraph-image', width: 1200, height: 630, alt: `${SITE_NAME}: open-source SEO workspace` }];
 
   return {
     title: absoluteTitle ? { absolute: title } : title,

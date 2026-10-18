@@ -24,8 +24,8 @@ export async function generateMetadata({ params }: ComparePageProps): Promise<Me
   const c = getComparison(slug);
   if (!c) return {};
   return pageMeta({
-    title: `OpenSEO vs ${c.name}: An Open-Source ${c.name} Alternative`,
-    description: `Compare OpenSEO vs ${c.name}: features, pricing and data. An open-source ${c.name} alternative you can self-host, billed per lookup, not per month.`,
+    title: `${c.name} Alternative: OpenSEO vs ${c.name} (Open Source)`,
+    description: `Looking for a free ${c.name} alternative? Compare OpenSEO vs ${c.name}: features, pricing and data. Open source, self-hostable, billed per lookup.`,
     path: `/compare/${c.slug}`,
     absoluteTitle: true,
   });
@@ -52,7 +52,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
           <div className="bg-glow pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="container-page relative py-20 text-center md:py-28">
             <p className="eyebrow">Comparison</p>
-            <h1 className="text-display mx-auto mt-5 max-w-4xl text-balance">OpenSEO vs {c.name}</h1>
+            <h1 className="text-display mx-auto mt-5 max-w-4xl text-balance">{c.name} alternative: OpenSEO vs {c.name}</h1>
             <p className="mx-auto mt-7 max-w-3xl text-xl leading-relaxed text-pretty text-muted">{c.summary}</p>
           </div>
         </header>
