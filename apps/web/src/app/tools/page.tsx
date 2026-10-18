@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
+import { YepapiOffer } from '@/components/yepapi-offer';
 import { ToolCards } from '@/components/tool-cards';
 import { tools } from '@/content/tools';
 import { pageMeta } from '@/lib/metadata';
@@ -39,6 +40,9 @@ export default function ToolsPage() {
           </div>
         </div>
       </section>
+      <div className="mb-20 md:mb-28">
+        <YepapiOffer />
+      </div>
       <CtaBand />
     </>
   );

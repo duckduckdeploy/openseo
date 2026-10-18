@@ -1,4 +1,5 @@
 import { CtaBand } from '@/components/cta-band';
+import { YepapiOffer } from '@/components/yepapi-offer';
 import { FeatureGrid } from '@/components/feature-grid';
 import { SectionHeader, StatusNote } from '@/components/section';
 import { features } from '@/content/features';
@@ -32,6 +33,9 @@ export default function FeaturesPage() {
           <FeatureGrid headingLevel="h2" />
         </div>
       </section>
+      <div className="mb-20 md:mb-28">
+        <YepapiOffer />
+      </div>
       <CtaBand />
     </>
   );

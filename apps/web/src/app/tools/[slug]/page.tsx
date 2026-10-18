@@ -10,6 +10,7 @@ import { JsonLd } from '@/components/json-ld';
 import { RelatedTerms } from '@/components/related-terms';
 import { RichText } from '@/components/rich-text';
 import { Screenshot } from '@/components/screenshot';
+import { YepapiOffer } from '@/components/yepapi-offer';
 import { ToolCards } from '@/components/tool-cards';
 import { getTerm, whatIs } from '@/content/glossary';
 import { getTool, tools } from '@/content/tools';
@@ -233,6 +234,8 @@ export default async function ToolPage({ params }: ToolPageProps) {
             </Link>
           </p>
         </section>
+
+        <YepapiOffer />
 
         {/* The concept behind the tool, from the glossary */}
         {concept ? (

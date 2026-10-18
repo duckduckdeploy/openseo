@@ -42,15 +42,21 @@ export const pricingFaqs: Faq[] = [
   {
     question: 'Is OpenSEO free?',
     answer: [
-      'The software is. OpenSEO is open source under the MIT licence: run it on your own computer or server, change it, and keep it, at no cost.',
+      'Yes. The hosted app at openseo.gg costs nothing and every feature is unlimited today. The self-hosted version is free for good: open source under the MIT licence, with every feature unlocked.',
       'What costs money is search data, such as keyword volumes, rankings and backlinks. You pay for the lookups you run, at the price the app shows first. A quiet month costs very little.',
     ],
   },
   {
-    question: 'Will openseo.gg stay free to use?',
+    question: 'Will the hosted app always be unlimited?',
     answer: [
-      'It is free while OpenSEO is in early access. Running it for everyone takes servers and storage, so the online version may later get fair-use limits or a small monthly fee to cover them.',
-      'Self-hosting will always be free: everything openseo.gg runs is in the open-source repository.',
+      'We can’t promise that, and we would rather say so now. Running openseo.gg for everyone costs servers and storage. Depending on how OpenSEO is funded, the hosted app may get usage limits later. It may never happen. If it does, we will announce it well in advance and nothing you have saved is lost.',
+      'The self-hosted version is not affected: it stays complete, unlimited and free to run.',
+    ],
+  },
+  {
+    question: 'Is the self-hosted version limited in any way?',
+    answer: [
+      'No. Every feature of the hosted app is in the open-source code, with no feature gates, licence keys or usage caps. Run it on your own server for as long as you like.',
     ],
   },
   {
@@ -70,7 +76,7 @@ export const pricingFaqs: Faq[] = [
     question: 'What happens when my credits run out?',
     answer: [
       'Lookups that need search data stop until you add credit with the data provider. Everything else, including the crawler, audits and your saved work, keeps working.',
-      'New data accounts start with $5 in free credit. After that you add credit whenever you want to keep going.',
+      'For a limited time, new YepAPI accounts start with $5 in free credit. After that you add credit whenever you want to keep going.',
     ],
   },
   {

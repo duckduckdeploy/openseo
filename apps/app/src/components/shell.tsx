@@ -185,7 +185,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {needsKey && !pathname.startsWith("/settings") && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-ink bg-accent px-4 py-2 text-[13px] text-accent-fg lg:px-8">
             <KeyRound className="size-4" aria-hidden />
-            <span>Add your YepAPI key to run research. New YepAPI accounts get $5 in free credits.</span>
+            <span>Add your YepAPI key to run research. For a limited time, new YepAPI accounts get $5 in free credit.</span>
             <Link href="/settings" className="font-semibold underline underline-offset-2">
               Add key
             </Link>

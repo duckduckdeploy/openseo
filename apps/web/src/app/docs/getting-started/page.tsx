@@ -28,7 +28,7 @@ export default function GettingStartedPage() {
         <a href={YEPAPI_URL} rel="noopener">
           yepapi.com
         </a>
-        . New accounts get <strong>$5 in free API credits</strong>, so you can try OpenSEO before adding any money.
+        . For a limited time, new accounts get <strong>$5 in free credit</strong>, so you can try every OpenSEO tool before adding any money.
         Then create an API key in your YepAPI account.
       </p>
 

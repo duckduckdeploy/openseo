@@ -9,6 +9,7 @@ import { JsonLd } from '@/components/json-ld';
 import { RelatedTerms } from '@/components/related-terms';
 import { PriceTable, rowsFromFeatureCosts } from '@/components/price-table';
 import { StatusNote } from '@/components/section';
+import { YepapiOffer } from '@/components/yepapi-offer';
 import { features, getFeature } from '@/content/features';
 import { TourShots } from '@/components/tour-section';
 import { featureTour, tourStop } from '@/content/tour';
@@ -201,6 +202,8 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             </div>
           </div>
         </section>
+
+        {feature.slug === 'search-performance' ? null : <YepapiOffer />}
 
         {/* Glossary */}
         <div className="container-page border-t border-line py-20 md:py-28">

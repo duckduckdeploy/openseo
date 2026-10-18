@@ -12,7 +12,7 @@ import { plainText, RichText } from '@/components/rich-text';
 import { categoryName, getTerm, glossary, glossaryCategories, hatLabels, nameInSentence, shortName, titleCaseName, whatIs, whyHeading } from '@/content/glossary';
 import { pageMeta } from '@/lib/metadata';
 import { breadcrumbList, faqPage } from '@/lib/schema';
-import { SITE_URL } from '@/lib/site';
+import { NEWS_URL, SITE_URL } from '@/lib/site';
 
 interface TermPageProps {
   params: Promise<{ slug: string }>;
@@ -38,6 +38,12 @@ export async function generateMetadata({ params }: TermPageProps): Promise<Metad
     path: `/glossary/${term.slug}`,
   });
 }
+
+/** Terms about Google's updates and penalties link to the update tracker on news.openseo.gg. */
+const NEWS_TERMS = new Set([
+  'core-update', 'google-algorithm-update', 'search-algorithm', 'serp-volatility', 'ranking-factors', 'helpful-content',
+  'spambrain', 'google-spam-policies', 'algorithmic-penalty', 'manual-action', 'google-penalty-recovery', 'rank-tracking',
+]);
 
 const textLink = 'inline-flex items-center gap-1.5 font-medium text-accent-text underline-offset-4 hover:underline';
 
@@ -191,6 +197,17 @@ export default async function GlossaryTermPage({ params }: TermPageProps) {
                 </Link>
               </p>
             </aside>
+          ) : null}
+
+          {NEWS_TERMS.has(term.slug) ? (
+            <p className="mt-8 rounded-lg border border-line bg-surface p-5 text-[0.9375rem] text-muted">
+              <strong className="font-semibold text-ink">Is Google updating right now?</strong> Every confirmed core and spam update,
+              with rollout dates and daily ranking volatility, is on{' '}
+              <a href={NEWS_URL} className="font-medium text-accent-text underline underline-offset-4">
+                the OpenSEO Google algorithm update tracker
+              </a>
+              .
+            </p>
           ) : null}
 
           {term.faqs?.length ? (

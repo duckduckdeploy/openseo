@@ -5,18 +5,17 @@ import { CodeBlock } from '@/components/code-block';
 import { CtaBand } from '@/components/cta-band';
 import { FeatureGrid } from '@/components/feature-grid';
 import { JsonLd } from '@/components/json-ld';
-import { PriceTable, rowsFromPricing } from '@/components/price-table';
 import { Screenshot } from '@/components/screenshot';
 import { SectionHeader } from '@/components/section';
 import { TourSection } from '@/components/tour-section';
 import { tour } from '@/content/tour';
 import { AUDIT_CHECKS } from '@/content/features';
-import { priceRows } from '@/content/pricing';
 import { selfHostDocker } from '@/content/snippets';
 import { AgentFold } from '@/components/agent-fold';
+import { YepapiOffer } from '@/components/yepapi-offer';
 import { BrandIcon } from '@/components/brand-icon';
 import { pageMeta } from '@/lib/metadata';
-import { GITHUB_URL, SIGN_UP_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL, YEPAPI_URL } from '@/lib/site';
+import { GITHUB_URL, SIGN_UP_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from '@/lib/site';
 
 export const metadata = pageMeta({
   title: SITE_TITLE,
@@ -233,34 +232,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Where the data comes from: the one place the provider is introduced */}
-      <section aria-labelledby="data-title" className="container-page py-20 md:py-28 xl:py-32">
-        <SectionHeader
-          align="center"
-          eyebrow="Search data"
-          id="data-title"
-          title="SEO data, priced per lookup"
-          lede="The crawler, the site audit and your Search Console data are free. Search data, like keyword volumes, rankings and backlinks, needs a data provider, and you pay only for the lookups you run."
-        />
-        <p className="mx-auto mt-8 max-w-2xl text-center text-lg leading-relaxed text-muted">
-          OpenSEO uses{' '}
-          <a href={YEPAPI_URL} rel="noopener" className={textLink}>
-            YepAPI
-          </a>{' '}
-          for search data. You add your own key when you set up your account, new accounts start with free credit, and the
-          app shows the cost of every lookup before it runs.
-        </p>
-        <div className="mx-auto mt-12 max-w-3xl">
-          <PriceTable caption="Example costs per lookup" rows={rowsFromPricing(priceRows)} />
-          <p className="mt-5 text-center text-sm text-faint">Example costs at the time of writing. A rank check reads the top 100 results.</p>
-        </div>
-        <p className="mt-10 text-center">
-          <Link href="/pricing" className={textLink}>
-            Costs in detail
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </Link>
-        </p>
-      </section>
+      <YepapiOffer tinted={false} />
 
       <CtaBand />
     </>

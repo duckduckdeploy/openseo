@@ -70,13 +70,16 @@ function YepKeyCard({ settings }: { settings: Me["settings"] }) {
           )}
         </form>
         <ErrorNote error={save.error ?? remove.error} />
-        <p className="text-xs text-muted">
-          No key yet?{" "}
-          <a href="https://yepapi.com?ref=openseo" target="_blank" rel="noreferrer" className="font-medium text-ink underline underline-offset-2">
-            Create a YepAPI account
-          </a>{" "}
-          and get $5 in free credits. The key is encrypted at rest and never shown again.
-        </p>
+        <div className="rounded-md border border-line bg-sunken px-3 py-2.5 text-xs leading-relaxed text-muted">
+          <p className="font-semibold text-ink">No key yet? Start with $5 of free credit.</p>
+          <p className="mt-1">
+            <a href="https://yepapi.com?ref=openseo" target="_blank" rel="noreferrer" className="font-medium text-ink underline underline-offset-2">
+              Sign up at YepAPI
+            </a>
+            : for a limited time, new accounts get $5 in free credit, enough to try every tool. Copy the API key from your YepAPI dashboard and paste it above.
+          </p>
+        </div>
+        <p className="text-xs text-muted">The key is encrypted at rest and never shown again.</p>
       </div>
     </Card>
   );

@@ -3,7 +3,7 @@ import { comparisons } from '@/content/compare';
 import { docPages, docsIn } from '@/content/docs';
 import { features } from '@/content/features';
 import { tools } from '@/content/tools';
-import { GITHUB_URL, SIGN_IN_URL, SIGN_UP_URL } from '@/lib/site';
+import { GITHUB_URL, NEWS_URL, SIGN_IN_URL, SIGN_UP_URL } from '@/lib/site';
 import { BrandIcon } from './brand-icon';
 import { Logo } from './logo';
 
@@ -83,6 +83,11 @@ export function SiteFooter() {
               <Link href="/glossary/black-hat-seo" className={linkClass}>
                 Black hat SEO risks
               </Link>
+            </li>
+            <li>
+              <a href={NEWS_URL} className={linkClass}>
+                Google algorithm update tracker
+              </a>
             </li>
           </ul>
         </nav>
