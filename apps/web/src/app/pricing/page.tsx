@@ -38,7 +38,7 @@ export default function PricingPage() {
       <JsonLd data={{ '@context': 'https://schema.org', ...faqPage(pricingFaqs) }} />
 
       {/* Header */}
-      <section aria-labelledby="pricing-title" className="relative overflow-hidden border-b border-line">
+      <section aria-labelledby="pricing-title" className="band-cream relative overflow-hidden">
         <div className="bg-glow pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="container-page relative py-20 text-center md:py-28">
           <p className="eyebrow">Pricing</p>
@@ -54,13 +54,13 @@ export default function PricingPage() {
       </section>
 
       {/* Hosted vs self-hosted */}
-      <section aria-labelledby="plans-title" className="container-page py-20 md:py-28">
+      <section aria-labelledby="plans-title" className="band-cream container-page pb-20 md:pb-28">
         <h2 id="plans-title" className="sr-only">
           Hosted and self-hosted plans
         </h2>
         <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Hosted */}
-          <article aria-labelledby="hosted-title" className="flex flex-col rounded-xl border border-line bg-surface p-8 shadow-hard">
+          <article aria-labelledby="hosted-title" className="card flex flex-col rounded-xl p-8 shadow-hard md:p-10">
             <p className="text-sm font-medium text-muted">openseo.gg</p>
             <h3 id="hosted-title" className="text-heading mt-1">Hosted</h3>
             <p className="mt-5 font-display text-5xl font-bold tracking-tight">$0</p>
@@ -91,7 +91,8 @@ export default function PricingPage() {
           </article>
 
           {/* Self-hosted */}
-          <article aria-labelledby="self-title" className="flex flex-col rounded-xl border border-accent-line bg-surface p-8 shadow-hard">
+          <article aria-labelledby="self-title" className="card card-featured relative flex flex-col rounded-xl p-8 md:p-10">
+            <span className="absolute -top-3.5 left-8 rounded-full bg-orange px-3 py-1 text-xs font-bold tracking-wide text-night uppercase">Every feature, forever</span>
             <p className="text-sm font-medium text-muted">Your own server</p>
             <h3 id="self-title" className="text-heading mt-1">Self-hosted</h3>
             <p className="mt-5 font-display text-5xl font-bold tracking-tight">$0, always</p>
@@ -132,10 +133,10 @@ export default function PricingPage() {
         </p>
       </section>
 
-      <YepapiOffer examples />
+      <YepapiOffer examples tone="peach" />
 
       {/* Price table */}
-      <section aria-labelledby="table-title" className="container-page py-20 md:py-28">
+      <section aria-labelledby="table-title" className="band-cream container-page py-20 md:py-28">
         <SectionHeader
           eyebrow="Cost per action"
           id="table-title"
@@ -153,7 +154,7 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section aria-labelledby="faq-title" className="border-t border-line bg-surface">
+      <section aria-labelledby="faq-title" className="band-night">
         <div className="container-page py-20 md:py-28">
           <SectionHeader eyebrow="FAQ" id="faq-title" title="Pricing FAQ" />
           <div className="mx-auto mt-12 max-w-3xl">

@@ -15,7 +15,7 @@ function FooterHeading({ children }: { children: string }) {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line bg-surface">
+    <footer className="band-night">
       <div className="container-page grid grid-cols-2 gap-x-8 gap-y-12 py-16 md:grid-cols-[1.6fr_1fr_1fr_1fr] md:py-20">
         <div className="col-span-2 max-w-xs md:col-span-1">
           <Logo />

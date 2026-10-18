@@ -1,5 +1,8 @@
 import Link from 'next/link';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Bot, Check, Code2, Server, ShieldCheck } from 'lucide-react';
+import { AgentFold } from '@/components/agent-fold';
+import { Band, type Tone } from '@/components/band';
+import { BrandIcon } from '@/components/brand-icon';
 import { ButtonLink } from '@/components/button';
 import { CodeBlock } from '@/components/code-block';
 import { CtaBand } from '@/components/cta-band';
@@ -8,12 +11,10 @@ import { JsonLd } from '@/components/json-ld';
 import { Screenshot } from '@/components/screenshot';
 import { SectionHeader } from '@/components/section';
 import { TourSection } from '@/components/tour-section';
-import { tour } from '@/content/tour';
+import { YepapiOffer } from '@/components/yepapi-offer';
 import { AUDIT_CHECKS } from '@/content/features';
 import { selfHostDocker } from '@/content/snippets';
-import { AgentFold } from '@/components/agent-fold';
-import { YepapiOffer } from '@/components/yepapi-offer';
-import { BrandIcon } from '@/components/brand-icon';
+import { tour } from '@/content/tour';
 import { pageMeta } from '@/lib/metadata';
 import { GITHUB_URL, SIGN_UP_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from '@/lib/site';
 
@@ -24,9 +25,6 @@ export const metadata = pageMeta({
   absoluteTitle: true,
 });
 
-const textLink =
-  'inline-flex items-center gap-1.5 font-medium text-accent-text underline-offset-4 hover:underline';
-
 const ledger = [
   { value: 'MIT', label: 'Open-source licence' },
   { value: '1', label: 'Docker command to self-host' },
@@ -36,18 +34,22 @@ const ledger = [
 
 const control = [
   {
+    icon: Code2,
     title: 'Open source, all of it',
     body: 'The app, the API, the crawler and the agent server are MIT licensed. Read every line, change what you need, and keep your changes.',
   },
   {
+    icon: Server,
     title: 'Your server, your data',
     body: 'Run it on your own computer or server with Docker. Your keywords, rankings and audits live in your own database, and you decide what leaves it.',
   },
   {
+    icon: ShieldCheck,
     title: 'No surprise bills',
     body: 'Every action shows its cost before it runs. Set a monthly limit and nothing is spent past it, by you or by any agent.',
   },
   {
+    icon: Bot,
     title: 'Agents on a leash',
     body: 'Sixty-three MCP tools give your agent the whole workspace, and every paid call takes a ceiling: a call that could cost more than you agreed is refused before it starts.',
   },
@@ -58,6 +60,9 @@ const selfHostPoints = [
   'Any machine that runs Docker: your PC, a home server or a $10 cloud server',
   'Automatic HTTPS for your own domain',
 ];
+
+/** Tour stops alternate tone and side, so no two neighbouring sections look alike. */
+const TOUR_TONES: Tone[] = ['white', 'cream', 'peach'];
 
 export default function HomePage() {
   return (
@@ -76,13 +81,14 @@ export default function HomePage() {
         }}
       />
 
-      {/* Hero */}
-      <section aria-labelledby="hero-title" className="relative overflow-hidden">
+      {/* Hero: cream with a blue and peach glow, the product on its gradient frame */}
+      <section aria-labelledby="hero-title" className="band-cream relative overflow-hidden">
         <div className="bg-glow pointer-events-none absolute inset-0" aria-hidden="true" />
-        <div className="container-page relative pt-20 pb-20 md:pt-28 md:pb-24 xl:pt-32">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-accent-line bg-surface px-3.5 py-1.5 text-sm font-medium text-accent-text">
-              <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
+        <div className="hatch pointer-events-none absolute -top-24 left-1/2 h-[34rem] w-[60rem] -translate-x-1/2 opacity-60" aria-hidden="true" />
+        <div className="container-page relative pt-16 pb-20 md:pt-24 md:pb-24 xl:pt-28">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-peach-strong bg-surface/80 px-4 py-1.5 text-sm font-medium text-ink shadow-hard-sm backdrop-blur">
+              <span className="size-2 rounded-full bg-orange" aria-hidden="true" />
               Open source · MIT licence · Self-hostable
             </p>
 
@@ -90,7 +96,7 @@ export default function HomePage() {
               <span className="mark">Open&#8209;source</span> SEO tools you control
             </h1>
 
-            <p className="text-lede animate-rise mx-auto mt-7 max-w-2xl text-pretty [animation-delay:120ms]">
+            <p className="text-lede animate-rise mx-auto mt-7 max-w-2xl [animation-delay:120ms]">
               Keyword research, rank tracking, backlinks, site audits, AI visibility and your Search Console data, in one
               workspace you can run yourself, read every line of, and hand to your AI agent.
             </p>
@@ -98,26 +104,28 @@ export default function HomePage() {
             <div className="animate-rise mt-10 flex flex-col justify-center gap-3 [animation-delay:180ms] sm:flex-row">
               <ButtonLink href={SIGN_UP_URL} size="lg">
                 Get started
-                <ArrowRight className="size-4" aria-hidden="true" />
+                <ArrowRight className="size-4 transition-transform duration-150 group-hover/button:translate-x-0.5" aria-hidden="true" />
               </ButtonLink>
               <ButtonLink href="/docs/self-hosting" variant="secondary" size="lg">
+                <BrandIcon brand="docker" className="size-5" />
                 Self-host with Docker
               </ButtonLink>
             </div>
 
             <p className="animate-rise mt-6 text-[0.9375rem] text-muted [animation-delay:240ms]">
               Or{' '}
-              <Link href="/tools" className="font-medium text-accent-text underline-offset-4 hover:underline">
+              <Link href="/tools" className="font-semibold text-accent-text underline-offset-4 hover:underline">
                 see every SEO tool
               </Link>
               , with real screenshots.
             </p>
           </div>
 
-          <div className="animate-rise mx-auto mt-16 max-w-6xl [animation-delay:200ms] md:mt-20">
+          <div className="animate-rise mx-auto mt-14 max-w-6xl [animation-delay:200ms] md:mt-16">
             <Screenshot
               name="keyword-overview"
               window
+              glow
               label="app.openseo.gg/tools/keyword-overview?q=standing+desk&country=us"
               priority
               alt="The Keyword overview for standing desk: difficulty 38, 135K searches a month, traffic potential, volume in six countries and keyword ideas"
@@ -126,113 +134,114 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Ledger strip */}
-      <section aria-label="OpenSEO in four numbers" className="border-y border-line bg-surface">
-        <dl className="container-page grid grid-cols-2 gap-y-10 py-12 md:py-14 lg:grid-cols-4">
+      {/* Stat strip: the night band, figures in orange */}
+      <Band tone="night" space="sm" label="OpenSEO in four numbers">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
           {ledger.map((item) => (
-            <div key={item.label} className="flex flex-col-reverse items-center justify-end gap-2 px-2 text-center">
-              <dt className="text-sm text-balance text-muted">{item.label}</dt>
-              <dd className="font-display text-4xl font-bold tracking-tight text-ink tabular-nums sm:text-5xl">{item.value}</dd>
+            <div key={item.label} className="flex flex-col-reverse items-center gap-3 text-center lg:border-l lg:border-line lg:first:border-l-0">
+              <dt className="max-w-[14rem] text-sm text-balance text-muted">{item.label}</dt>
+              <dd className="figure text-orange">{item.value}</dd>
             </div>
           ))}
         </dl>
-      </section>
+      </Band>
 
-      {/* The research tools, one centred section each with their real screens */}
+      {/* The research tools, one split section each, alternating side and tone */}
       {tour.map((stop, index) => (
-        <TourSection key={stop.id} stop={stop} tinted={index % 2 === 1} />
+        <TourSection key={stop.id} stop={stop} tone={TOUR_TONES[index % TOUR_TONES.length]} flip={index % 2 === 1} />
       ))}
 
       {/* Everything else */}
-      <section aria-labelledby="features-title" className="border-y border-line bg-surface">
-        <div className="container-page py-20 md:py-28 xl:py-32">
-          <SectionHeader
-            align="center"
-            eyebrow="Features"
-            id="features-title"
-            title="Rank tracking, site audits and AI visibility"
-            lede="Rank tracking, Search Console, site audits, AI visibility, local SEO and the agent tools, each with its own page on what it does and what it costs."
-          />
-          <div className="mt-14 md:mt-16">
-            <FeatureGrid />
-          </div>
-          <p className="mt-12 text-center">
-            <Link href="/features" className={textLink}>
-              All features
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </p>
+      <Band tone="white" labelledBy="features-title" className="border-t border-line">
+        <SectionHeader
+          align="center"
+          eyebrow="Features"
+          id="features-title"
+          title="Rank tracking, site audits and AI visibility"
+          lede="Rank tracking, Search Console, site audits, AI visibility, local SEO and the agent tools, each with its own page on what it does and what it costs."
+        />
+        <div className="mt-14 md:mt-16">
+          <FeatureGrid />
         </div>
-      </section>
+        <p className="mt-12 text-center">
+          <ButtonLink href="/features" variant="secondary">
+            All features
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </ButtonLink>
+        </p>
+      </Band>
 
       {/* You are in control */}
-      <section aria-labelledby="control-title">
-        <div className="container-page py-20 md:py-28 xl:py-32">
-          <SectionHeader
-            align="center"
-            eyebrow="You are in control"
-            id="control-title"
-            title="Why open-source SEO software"
-            lede="Closed suites decide what you see, where your data goes and what you pay. OpenSEO is built the other way round."
-          />
-          <ul className="mx-auto mt-14 max-w-3xl space-y-12 md:mt-16">
-            {control.map((item) => (
-              <li key={item.title} className="text-center">
-                <h3 className="text-heading">{item.title}</h3>
-                <p className="mt-3 text-lg leading-relaxed text-pretty text-muted">{item.body}</p>
+      <Band tone="peach" labelledBy="control-title">
+        <SectionHeader
+          align="center"
+          eyebrow="You are in control"
+          id="control-title"
+          title="Why open-source SEO software"
+          lede="Closed suites decide what you see, where your data goes and what you pay. OpenSEO is built the other way round."
+        />
+        <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-5 md:mt-16 md:grid-cols-2 lg:gap-6">
+          {control.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.title} className="card p-8">
+                <span className={`tile ${index % 2 === 1 ? 'tile-peach' : ''}`}>
+                  <Icon className="size-5" aria-hidden="true" strokeWidth={1.75} />
+                </span>
+                <h3 className="text-heading mt-6">{item.title}</h3>
+                <p className="mt-3 leading-relaxed text-muted">{item.body}</p>
               </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+            );
+          })}
+        </ul>
+      </Band>
 
       <AgentFold />
 
-      {/* Self-host */}
-      <section aria-labelledby="selfhost-title" className="border-y border-line bg-surface">
-        <div className="container-page py-20 md:py-28 xl:py-32">
-          <SectionHeader
-            align="center"
-            eyebrow="Self-host"
-            id="selfhost-title"
-            title="Self-hosted SEO tools with Docker"
-            lede="Everything this site runs is in the repository. Start it on your own machine or server with Docker, and it is yours."
-          />
-          <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-muted">
-            <span className="inline-flex items-center gap-2"><BrandIcon brand="docker" className="size-5" />Docker</span>
-            <span className="inline-flex items-center gap-2"><BrandIcon brand="postgresql" className="size-5" />PostgreSQL</span>
-            <span className="inline-flex items-center gap-2"><BrandIcon brand="github" className="size-5" />Open source</span>
-          </p>
-          <ul className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-4">
-            {selfHostPoints.map((point) => (
-              <li key={point} className="flex items-start gap-3 text-muted">
-                <span className="mt-1 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-text">
-                  <Check className="size-3.5" aria-hidden="true" strokeWidth={3} />
-                </span>
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mx-auto mt-12 max-w-3xl min-w-0">
-            <CodeBlock label="Terminal" code={selfHostDocker} />
-            {GITHUB_URL ? null : <p className="mt-4 text-sm text-muted">The public repository link is not published yet. It will appear here when it is.</p>}
+      {/* Self-host: copy on one side, the command on the other */}
+      <Band tone="cream" labelledBy="selfhost-title">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
+          <div className="max-w-xl">
+            <p className="eyebrow">Self-host</p>
+            <h2 id="selfhost-title" className="text-title mt-4">
+              Self-hosted SEO tools with Docker
+            </h2>
+            <p className="text-lede mt-6">Everything this site runs is in the repository. Start it on your own machine or server with Docker, and it is yours.</p>
+            <ul className="mt-8 space-y-3">
+              {selfHostPoints.map((point) => (
+                <li key={point} className="flex items-start gap-3 text-ink">
+                  <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
+                    <Check className="size-3" aria-hidden="true" strokeWidth={3} />
+                  </span>
+                  <span className="text-[0.9375rem]">{point}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <ButtonLink href="/docs/self-hosting" variant="night">
+                Self-hosting guide
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </ButtonLink>
+              {GITHUB_URL ? (
+                <ButtonLink href={GITHUB_URL} variant="secondary">
+                  <BrandIcon brand="github" />
+                  Source on GitHub
+                </ButtonLink>
+              ) : null}
+            </div>
+            <p className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-muted">
+              <span className="inline-flex items-center gap-2"><BrandIcon brand="docker" className="size-5" />Docker</span>
+              <span className="inline-flex items-center gap-2"><BrandIcon brand="postgresql" className="size-5" />PostgreSQL</span>
+              <span className="inline-flex items-center gap-2"><BrandIcon brand="github" className="size-5" />Open source</span>
+            </p>
           </div>
-          <p className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-3">
-            <Link href="/docs/self-hosting" className={textLink}>
-              Self-hosting guide
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-            {GITHUB_URL ? (
-              <a href={GITHUB_URL} rel="noopener" className={textLink}>
-                <BrandIcon brand="github" />
-                Source on GitHub
-              </a>
-            ) : null}
-          </p>
+          <div className="frame-glow min-w-0">
+            <CodeBlock label="Terminal" code={selfHostDocker} />
+          </div>
         </div>
-      </section>
+      </Band>
 
-      <YepapiOffer tinted={false} />
+      <YepapiOffer />
 
       <CtaBand />
     </>

@@ -109,9 +109,9 @@ export default async function ComparePage({ params }: ComparePageProps) {
           </div>
         </section>
 
-        <section aria-labelledby="choose-title" className="border-y border-line bg-surface">
+        <section aria-labelledby="choose-title" className="band-peach">
           <div className="container-page mx-auto grid max-w-5xl gap-6 py-20 md:grid-cols-2 md:py-28 lg:gap-8">
-            <div className="rounded-lg border border-line bg-bg p-8">
+            <div className="card p-8">
               <h2 id="choose-title" className="text-heading">
                 When to choose {c.name}
               </h2>
@@ -121,7 +121,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
                 ))}
               </ul>
             </div>
-            <div className="rounded-lg border border-accent-line bg-accent-soft p-8">
+            <div className="card card-featured p-8">
               <h2 className="text-heading">When to choose OpenSEO</h2>
               <ul className="mt-5 list-disc space-y-2.5 pl-5 text-muted marker:text-accent">
                 {c.chooseUs.map((item) => (
@@ -132,7 +132,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
           </div>
         </section>
 
-        <section aria-labelledby="faq-title" className="container-page py-20 md:py-28">
+        <section aria-labelledby="faq-title" className="band-cream container-page py-20 md:py-28">
           <SectionHeader eyebrow="FAQ" id="faq-title" title={`OpenSEO vs ${c.name} FAQ`} />
           <div className="mx-auto mt-12 max-w-3xl">
             <FaqList faqs={c.faqs} />

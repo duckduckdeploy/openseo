@@ -15,14 +15,14 @@ export function FeatureGrid({ headingLevel = 'h3' }: { headingLevel?: 'h2' | 'h3
         return (
           <li
             key={feature.slug}
-            className={`group relative flex flex-col rounded-lg border border-line bg-surface p-7 transition-[border-color,box-shadow] duration-200 focus-within:border-accent-line hover:border-accent-line hover:shadow-hard ${
+            className={`card card-link group flex flex-col p-7 ${
               wide ? 'lg:col-span-3 lg:grid lg:grid-cols-[auto_minmax(0,16rem)_minmax(0,1fr)_auto] lg:items-center lg:gap-x-8' : ''
             }`}
           >
-            <span className="inline-flex size-11 items-center justify-center rounded-md bg-accent-soft text-accent-text">
+            <span className={`tile ${index % 2 === 1 ? 'tile-peach' : ''}`}>
               <Icon className="size-5" aria-hidden="true" strokeWidth={1.75} />
             </span>
-            <Heading className={`text-heading mt-6 ${wide ? 'lg:mt-0' : ''}`}>
+            <Heading className={`card-title mt-6 ${wide ? 'lg:mt-0' : ''}`}>
               <Link href={`/features/${feature.slug}`} className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none">
                 {feature.name}
               </Link>

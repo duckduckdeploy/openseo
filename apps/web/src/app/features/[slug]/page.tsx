@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { BrandRow, brandName } from '@/components/brand-icon';
 import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
@@ -73,7 +73,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
       />
       <article>
         {/* Header */}
-        <header className="relative overflow-hidden border-b border-line">
+        <header className="band-cream relative overflow-hidden">
           <div className="bg-glow pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="container-page relative py-20 md:py-28">
             <nav aria-label="Breadcrumb" className="text-center text-sm text-muted">
@@ -89,8 +89,8 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             </nav>
 
             <div className="mx-auto mt-10 max-w-3xl text-center">
-              <span className="inline-flex size-12 items-center justify-center rounded-md bg-accent-soft text-accent-text">
-                <Icon className="size-6" aria-hidden="true" strokeWidth={1.75} />
+              <span className="tile size-14 rounded-lg shadow-hard-sm">
+                <Icon className="size-7" aria-hidden="true" strokeWidth={1.75} />
               </span>
               <h1 className="text-display mt-7 text-balance">{feature.h1}</h1>
               <p className="mt-6 font-display text-2xl font-semibold text-balance text-ink md:text-[1.75rem]">{feature.headline}</p>
@@ -110,11 +110,11 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             </div>
 
             {feature.facts ? (
-              <dl className="mx-auto mt-16 flex max-w-4xl flex-wrap justify-center gap-x-16 gap-y-8 border-t border-line pt-10">
+              <dl className="card card-night mx-auto mt-16 flex max-w-4xl flex-wrap justify-center gap-x-16 gap-y-8 px-8 py-9">
                 {feature.facts.map((fact) => (
-                  <div key={fact.label} className="flex flex-col-reverse items-center gap-1 text-center">
-                    <dt className="text-sm text-muted">{fact.label}</dt>
-                    <dd className="font-display text-4xl font-bold tracking-tight tabular-nums">{fact.value}</dd>
+                  <div key={fact.label} className="flex flex-col-reverse items-center gap-2 text-center">
+                    <dt className="text-sm text-[#c6b9ab]">{fact.label}</dt>
+                    <dd className="figure text-[#ff8a3d]">{fact.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -123,10 +123,11 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
         </header>
 
         {/* See it: the real screens, one tool after another */}
-        {(featureTour[feature.slug] ?? []).map((id) => {
+        {(featureTour[feature.slug] ?? []).map((id, index) => {
           const stop = tourStop(id);
           return (
-            <section key={id} aria-labelledby={`see-${id}`} className="container-page border-b border-line py-20 md:py-28">
+            <section key={id} aria-labelledby={`see-${id}`} className={index % 2 === 0 ? 'band-white border-y border-line' : 'band-cream'}>
+              <div className="container-page py-20 md:py-28">
               <div className="mx-auto max-w-3xl text-center">
                 <p className="eyebrow">See it</p>
                 <h2 id={`see-${id}`} className="text-title mt-4">
@@ -135,14 +136,16 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
                 <p className="mt-6 text-xl leading-relaxed text-pretty text-muted">{stop.lede}</p>
               </div>
               <div className="mx-auto mt-14 max-w-6xl">
-                <TourShots stop={stop} />
+                <TourShots stop={stop} glow />
+              </div>
               </div>
             </section>
           );
         })}
 
         {/* What it does */}
-        <section aria-labelledby="what-title" className="container-page py-20 md:py-28">
+        <section aria-labelledby="what-title" className="band-peach">
+          <div className="container-page py-20 md:py-28">
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">What it does</p>
             <h2 id="what-title" className="text-title mt-4">
@@ -154,10 +157,11 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
               ))}
             </div>
           </div>
+          </div>
         </section>
 
         {/* What you can do */}
-        <section aria-labelledby="can-title" className="border-y border-line bg-surface">
+        <section aria-labelledby="can-title" className="band-night">
           <div className="container-page py-20 md:py-28">
             <div className="mx-auto max-w-3xl text-center">
               <p className="eyebrow">What you can do</p>
@@ -167,9 +171,14 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             </div>
             <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2">
               {feature.capabilities.map((capability) => (
-                <li key={capability.title} className="rounded-lg border border-line bg-bg p-7">
-                  <h3 className="text-heading">{capability.title}</h3>
-                  <p className="mt-3 leading-relaxed text-muted [overflow-wrap:anywhere]">{capability.body}</p>
+                <li key={capability.title} className="card flex gap-5 p-7">
+                  <span className="tile size-10 shrink-0">
+                    <Check className="size-4" aria-hidden="true" strokeWidth={2.5} />
+                  </span>
+                  <div>
+                  <h3 className="card-title">{capability.title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted [overflow-wrap:anywhere]">{capability.body}</p>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -177,7 +186,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
         </section>
 
         {/* What each action costs */}
-        <section id="costs" aria-labelledby="costs-title" className="container-page scroll-mt-20 py-20 md:py-28">
+        <section id="costs" aria-labelledby="costs-title" className="band-cream container-page scroll-mt-20 py-20 md:py-28">
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">What it costs</p>
             <h2 id="costs-title" className="text-title mt-4">
@@ -214,7 +223,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
         <nav aria-label="More features" className="container-page pb-20 md:pb-28">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {previous ? (
-              <Link href={`/features/${previous.slug}`} className="group flex flex-col gap-2 rounded-lg border border-line bg-surface p-6 transition-colors hover:border-accent-line">
+              <Link href={`/features/${previous.slug}`} className="card card-link group flex flex-col gap-2 p-6">
                 <span className="inline-flex items-center gap-2 text-sm text-muted">
                   <ArrowLeft className="size-3.5 transition-transform duration-150 group-hover:-translate-x-0.5" aria-hidden="true" />
                   Previous
@@ -229,7 +238,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             {next ? (
               <Link
                 href={`/features/${next.slug}`}
-                className="group flex flex-col gap-2 rounded-lg border border-line bg-surface p-6 transition-colors hover:border-accent-line sm:items-end sm:text-right"
+                className="card card-link group flex flex-col gap-2 p-6 sm:items-end sm:text-right"
               >
                 <span className="inline-flex items-center gap-2 text-sm text-muted">
                   Next

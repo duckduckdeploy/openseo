@@ -22,7 +22,7 @@ export function RelatedTerms({ slugs, title = 'Related SEO terms', id = 'terms-t
       </h2>
       <ul className={`mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 ${centered ? 'lg:grid-cols-3' : ''}`}>
         {terms.map((term) => (
-          <li key={term.slug} className="group relative rounded-lg border border-line bg-bg p-5 transition-colors duration-150 hover:border-accent-line">
+          <li key={term.slug} className="card card-link group block p-5">
             <p className="flex flex-wrap items-center gap-2 font-semibold">
               <Link href={`/glossary/${term.slug}`} className="after:absolute after:inset-0 group-hover:text-accent-text focus-visible:outline-none">
                 {term.term}

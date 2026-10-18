@@ -20,7 +20,7 @@ const INTERVAL = 7000;
  * and what that part tells you. Moves on by itself until the reader takes over (or prefers
  * reduced motion); pauses while hovered or focused.
  */
-export function ShotSlides({ slides, label }: { slides: Slide[]; label: string }) {
+export function ShotSlides({ slides, label, glow = false }: { slides: Slide[]; label: string; glow?: boolean }) {
   const id = useId();
   const [index, setIndex] = useState(0);
   const [auto, setAuto] = useState(true);
@@ -102,12 +102,14 @@ export function ShotSlides({ slides, label }: { slides: Slide[]; label: string }
           {slide.body}
         </p>
         <div className="relative mt-8">
-          <WindowFrame>
-            {/* Keyed by slide, so each one fades in as it is shown. */}
-            <div key={slide.name} className="animate-fade">
-              <ScreenImage name={slide.name} alt={slide.alt} />
-            </div>
-          </WindowFrame>
+          <div className={glow ? 'frame-glow' : undefined}>
+            <WindowFrame>
+              {/* Keyed by slide, so each one fades in as it is shown. */}
+              <div key={slide.name} className="animate-fade">
+                <ScreenImage name={slide.name} alt={slide.alt} />
+              </div>
+            </WindowFrame>
+          </div>
           {slides.length > 1 ? (
             <div className="mt-5 flex justify-center gap-3">
               <button type="button" onClick={() => go(index - 1)} aria-label="Previous" className="inline-grid size-10 place-items-center rounded-full border border-line bg-surface text-muted hover:border-accent-line hover:text-ink">

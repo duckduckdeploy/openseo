@@ -10,12 +10,12 @@ export function ToolCards({ tools }: { tools: ResearchTool[] }) {
       {tools.map((tool) => {
         const Icon = tool.icon;
         return (
-          <li key={tool.slug} className="group relative flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-[border-color,box-shadow] duration-200 focus-within:border-accent-line hover:border-accent-line hover:shadow-hard">
+          <li key={tool.slug} className="card card-link group flex flex-col overflow-hidden rounded-xl p-0">
             <div className="aspect-[16/10] overflow-hidden border-b border-line bg-sunken" aria-hidden="true">
               <ScreenImage name={tool.hero.shot} alt="" thumbnail />
             </div>
             <div className="flex flex-1 flex-col p-6">
-              <h3 className="text-heading flex items-center gap-2.5">
+              <h3 className="card-title flex items-center gap-2.5">
                 <Icon className="size-5 shrink-0 text-accent-text" aria-hidden="true" strokeWidth={1.75} />
                 <Link href={`/tools/${tool.slug}`} className="after:absolute after:inset-0 focus-visible:outline-none">
                   {tool.name}

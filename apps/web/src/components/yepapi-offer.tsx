@@ -13,16 +13,17 @@ const steps = [
 interface YepapiOfferProps {
   /** Show what $5 covers (on the pricing page). */
   examples?: boolean;
-  tinted?: boolean;
+  /** The band it sits in; pick one that differs from its neighbours. */
+  tone?: 'white' | 'cream' | 'peach';
 }
 
 /**
  * The one place a page talks about the data provider: a plain, no-sales-talk note on how to get search data,
  * with YepAPI's limited-time $5 sign-up credit. Use it once, only on pages about the tools or setup.
  */
-export function YepapiOffer({ examples = false, tinted = true }: YepapiOfferProps) {
+export function YepapiOffer({ examples = false, tone = 'white' }: YepapiOfferProps) {
   return (
-    <section id="free-credit" aria-labelledby="credit-title" className={`scroll-mt-20 ${tinted ? 'border-y border-line bg-surface' : ''}`}>
+    <section id="free-credit" aria-labelledby="credit-title" className={`band-${tone} scroll-mt-20 border-y border-line`}>
       <div className="container-page py-20 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
           <p className="eyebrow">Search data</p>
@@ -37,8 +38,8 @@ export function YepapiOffer({ examples = false, tinted = true }: YepapiOfferProp
 
         <ol className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
           {steps.map((step, index) => (
-            <li key={step.title} className="rounded-lg border border-line bg-bg p-6">
-              <span className="inline-flex size-8 items-center justify-center rounded-full bg-accent-soft font-display text-sm font-bold text-accent-text">{index + 1}</span>
+            <li key={step.title} className="card card-peach p-6">
+              <span className="inline-flex size-9 items-center justify-center rounded-full bg-orange font-display text-base font-bold text-night">{index + 1}</span>
               <p className="mt-4 font-semibold">{step.title}</p>
               <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted">{step.body}</p>
             </li>
@@ -50,10 +51,10 @@ export function YepapiOffer({ examples = false, tinted = true }: YepapiOfferProp
             <h3 className="text-heading text-center">What $5 of free credit covers</h3>
             <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
               {creditExamples.map((example) => (
-                <li key={example.what} className="rounded-lg border border-line bg-bg p-6 text-center">
-                  <p className="font-display text-4xl font-bold tracking-tight tabular-nums">{example.amount.replace('about ', '≈ ')}</p>
-                  <p className="mt-2 font-medium">{example.what}</p>
-                  <p className="mt-1 text-sm text-muted">{example.detail}</p>
+                <li key={example.what} className="card-night card p-6 text-center">
+                  <p className="figure text-[#ff8a3d]">{example.amount.replace('about ', '≈ ')}</p>
+                  <p className="mt-3 font-medium text-[#f7f0e7]">{example.what}</p>
+                  <p className="mt-1 text-sm text-[#c6b9ab]">{example.detail}</p>
                 </li>
               ))}
             </ul>

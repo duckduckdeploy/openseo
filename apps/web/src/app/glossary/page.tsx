@@ -4,7 +4,7 @@ import { CtaBand } from '@/components/cta-band';
 import { HatBadge } from '@/components/hat-badge';
 import { JsonLd } from '@/components/json-ld';
 import { plainText } from '@/components/rich-text';
-import { getTerm, glossary, glossaryCategories, hatLabels, letterOf, termsIn, type GlossaryHat } from '@/content/glossary';
+import { categoryName, getTerm, shortName, glossary, glossaryCategories, hatLabels, letterOf, termsIn, type GlossaryHat } from '@/content/glossary';
 import { pageMeta } from '@/lib/metadata';
 import { breadcrumbList } from '@/lib/schema';
 import { SITE_URL } from '@/lib/site';
@@ -18,7 +18,7 @@ export const metadata = pageMeta({
   path: '/glossary',
 });
 
-const START_HERE = ['seo', 'search-intent', 'keyword-research', 'on-page-seo', 'technical-seo', 'link-building', 'eeat', 'black-hat-seo'];
+const START_HERE = ['seo', 'serp', 'search-intent', 'keyword-research', 'on-page-seo', 'technical-seo', 'link-building', 'eeat', 'black-hat-seo'];
 const HATS: GlossaryHat[] = ['white', 'grey', 'black'];
 
 const textLink = 'inline-flex items-center gap-1.5 font-medium text-accent-text underline-offset-4 hover:underline';
@@ -49,7 +49,7 @@ export default function GlossaryPage() {
         }}
       />
 
-      <section aria-labelledby="glossary-title" className="relative overflow-hidden border-b border-line">
+      <section aria-labelledby="glossary-title" className="band-cream relative overflow-hidden">
         <div className="bg-glow pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="container-page relative py-20 text-center md:py-28">
           <p className="eyebrow">{glossary.length} terms</p>
@@ -83,36 +83,41 @@ export default function GlossaryPage() {
         <h2 id="start-title" className="text-title text-center">
           SEO basics: start here
         </h2>
-        <ul className="mx-auto mt-12 grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mx-auto mt-12 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {startHere.map((term) => (
-            <li key={term.slug} className="group relative rounded-lg border border-line bg-surface p-6 transition-colors hover:border-accent-line">
-              <h3 className="text-heading">
+            <li key={term.slug} className="card card-link group flex flex-col p-6">
+              <p className="text-xs font-semibold tracking-wide text-orange-text uppercase">{categoryName(term.category)}</p>
+              <h3 className="card-title mt-2">
                 <Link href={`/glossary/${term.slug}`} className="after:absolute after:inset-0 group-hover:text-accent-text focus-visible:outline-none">
-                  {term.term}
+                  {shortName(term)}
                 </Link>
               </h3>
-              <p className="mt-2.5 text-[0.9375rem] leading-relaxed text-muted">{plainText(term.short)}</p>
+              <p className="mt-2.5 flex-1 text-[0.9375rem] leading-relaxed text-muted">{plainText(term.short)}</p>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-text" aria-hidden="true">
+                Read
+                <ArrowRight className="size-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+              </span>
             </li>
           ))}
         </ul>
       </section>
 
       {/* By topic */}
-      <section aria-labelledby="topics-title" className="border-y border-line bg-surface">
+      <section aria-labelledby="topics-title" className="band-peach">
         <div className="container-page py-20 md:py-24">
           <h2 id="topics-title" className="text-title text-center">
             SEO terms by topic
           </h2>
           <ul className="mx-auto mt-12 grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {glossaryCategories.map((category) => (
-              <li key={category.id} className="group relative rounded-lg border border-line bg-bg p-6 transition-colors hover:border-accent-line">
-                <h3 className="text-heading">
+              <li key={category.id} className="card card-link group block p-6">
+                <h3 className="card-title">
                   <Link href={`/glossary/topics/${category.id}`} className="after:absolute after:inset-0 group-hover:text-accent-text focus-visible:outline-none">
                     {category.heading}
                   </Link>
                 </h3>
                 <p className="mt-2.5 text-[0.9375rem] leading-relaxed text-muted">{category.summary}</p>
-                <p className="mt-4 text-sm font-medium text-faint">{termsIn(category.id).length} terms</p>
+                <p className="mt-5 inline-flex rounded-full bg-peach px-3 py-1 text-sm font-semibold text-peach-text">{termsIn(category.id).length} terms</p>
               </li>
             ))}
           </ul>
@@ -120,7 +125,7 @@ export default function GlossaryPage() {
       </section>
 
       {/* A to Z */}
-      <section aria-labelledby="az-title" className="container-page py-20 md:py-24">
+      <section aria-labelledby="az-title" className="band-cream container-page py-20 md:py-24">
         <h2 id="az-title" className="text-title text-center">
           SEO terms A to Z
         </h2>

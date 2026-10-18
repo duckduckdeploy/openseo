@@ -1,33 +1,49 @@
 @import 'tailwindcss';
 
 /*
- * OpenSEO design tokens.
- * Light values live in @theme; the dark theme overrides the same variables
- * under prefers-color-scheme, so every utility (bg-surface, text-muted, ...)
- * follows the system theme without dark: variants.
+ * OpenSEO design tokens: "warm blue" (see WEBDESIGN.md in the outer folder).
+ * Light values live in @theme; the dark theme and the .band-* classes override the same variables,
+ * so every utility (bg-surface, text-muted, ...) follows the theme and the band without extra classes.
+ * Every text/background pair is checked for WCAG AA.
  */
 @theme {
-  /* Colour: cool neutrals, one blue accent used sparingly */
-  --color-bg: #fbfcfe;
+  /* Neutrals: warm cream and stone */
+  --color-bg: #fbf8f3;
   --color-surface: #ffffff;
-  --color-sunken: #f3f5fa;
-  --color-ink: #0d1321;
-  --color-muted: #4b5567;
-  --color-faint: #8892a5;
-  --color-line: #e3e7ef;
-  --color-edge: #cdd4e1;
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
+  --color-sunken: #f3ede4;
+  --color-ink: #17130f;
+  --color-muted: #544c44;
+  --color-faint: #70665c;
+  --color-line: #ebe3d7;
+  --color-edge: #d9cec0;
+
+  /* Primary: blue, the action colour */
+  --color-accent: #2350e6;
+  --color-accent-hover: #1b3fc2;
   --color-accent-fg: #ffffff;
-  --color-accent-text: #1d4ed8;
-  --color-accent-soft: #eef3ff;
-  --color-accent-line: #c9d8fd;
+  --color-accent-text: #1c44cf;
+  --color-accent-soft: #e8eeff;
+  --color-accent-line: #c6d4fd;
+
+  /* Secondary: peach, for tinted bands and soft highlights */
+  --color-peach: #fdeee2;
+  --color-peach-strong: #f8cfae;
+  --color-peach-text: #8a3a0a;
+
+  /* Imagery accent: orange, for figures, eyebrows on tinted bands and illustration */
+  --color-orange: #f2681c;
+  --color-orange-text: #b5470c;
+
+  /* Night: warm near-black for contrast bands */
+  --color-night: #15110e;
+  --color-night-surface: #201a16;
+
   --color-pos: #0f7b4a;
   --color-neg: #c2321f;
-  --color-code: #0d1321;
-  --color-code-fg: #e6ebf5;
-  --color-code-muted: #8d98ad;
-  --color-code-line: #212a3b;
+  --color-code: #15110e;
+  --color-code-fg: #f2ebe2;
+  --color-code-muted: #a09385;
+  --color-code-line: #2c251f;
 
   /* Type */
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
@@ -40,10 +56,11 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
 
-  /* Elevation: soft, low shadows. (The hard-* names are kept for existing markup.) */
-  --shadow-hard-sm: 0 1px 2px rgb(13 19 33 / 0.06);
-  --shadow-hard: 0 1px 2px rgb(13 19 33 / 0.05), 0 8px 24px -8px rgb(13 19 33 / 0.12);
-  --shadow-hard-lg: 0 2px 6px rgb(13 19 33 / 0.05), 0 32px 64px -24px rgb(13 19 33 / 0.22);
+  /* Elevation: soft, warm-tinted shadows. (The hard-* names are kept for existing markup.) */
+  --shadow-hard-sm: 0 1px 2px rgb(40 24 10 / 0.07);
+  --shadow-hard: 0 1px 2px rgb(40 24 10 / 0.06), 0 10px 28px -10px rgb(40 24 10 / 0.16);
+  --shadow-hard-lg: 0 2px 6px rgb(40 24 10 / 0.06), 0 36px 72px -28px rgb(40 24 10 / 0.28);
+  --shadow-lift: 0 2px 4px rgb(40 24 10 / 0.06), 0 18px 40px -16px rgb(40 24 10 / 0.22);
 
   --animate-rise: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   --animate-fade: fade 0.45s ease both;
@@ -88,30 +105,76 @@
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --color-bg: #0a0e16;
-      --color-surface: #10151f;
-      --color-sunken: #151b27;
-      --color-ink: #e8ecf4;
-      --color-muted: #a3adbf;
-      --color-faint: #6c768a;
-      --color-line: #1f2633;
-      --color-edge: #2d3648;
-      --color-accent: #2563eb;
-      --color-accent-hover: #3b74f0;
+      --color-bg: #100d0b;
+      --color-surface: #1a1613;
+      --color-sunken: #231e1a;
+      --color-ink: #f4ede4;
+      --color-muted: #bcae9f;
+      --color-faint: #93877a;
+      --color-line: #2c2621;
+      --color-edge: #3c342d;
+      --color-accent: #3463f5;
+      --color-accent-hover: #4a75ff;
       --color-accent-fg: #ffffff;
-      --color-accent-text: #8ab4ff;
-      --color-accent-soft: #121d36;
-      --color-accent-line: #223a72;
+      --color-accent-text: #9db7ff;
+      --color-accent-soft: #172243;
+      --color-accent-line: #2c3f7a;
+      --color-peach: #26190f;
+      --color-peach-strong: #6b3d1c;
+      --color-peach-text: #ffc7a1;
+      --color-orange: #ff8a3d;
+      --color-orange-text: #ff9c5c;
+      --color-night: #090706;
+      --color-night-surface: #15110e;
       --color-pos: #4ade94;
       --color-neg: #ff7a66;
-      --color-code: #0b1019;
-      --color-code-fg: #e6ebf5;
-      --color-code-muted: #8590a5;
-      --color-code-line: #1d2534;
+      --color-code: #090706;
+      --color-code-fg: #f2ebe2;
+      --color-code-muted: #a09385;
+      --color-code-line: #241e19;
       --shadow-hard-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-      --shadow-hard: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5);
-      --shadow-hard-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 32px 64px -24px rgb(0 0 0 / 0.7);
+      --shadow-hard: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px -10px rgb(0 0 0 / 0.55);
+      --shadow-hard-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 36px 72px -28px rgb(0 0 0 / 0.75);
+      --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.4), 0 18px 40px -16px rgb(0 0 0 / 0.6);
     }
+  }
+
+  /*
+   * Bands: a section with one of these classes re-themes everything inside it.
+   * band-night: warm near-black, the contrast band. band-peach: the warm tint. band-white: plain white.
+   */
+  .band-night {
+    --color-bg: var(--color-night);
+    --color-surface: var(--color-night-surface);
+    --color-sunken: #29221d;
+    --color-ink: #f7f0e7;
+    --color-muted: #c6b9ab;
+    --color-faint: #998c7f;
+    --color-line: #2f2822;
+    --color-edge: #4a3f35;
+    --color-accent-text: #a3bcff;
+    --color-accent-soft: #1d2546;
+    --color-accent-line: #33427a;
+    --color-orange-text: #ff8a3d;
+    --color-peach-text: #ffc7a1;
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+  }
+
+  .band-peach {
+    --color-bg: var(--color-peach);
+    --color-sunken: color-mix(in srgb, var(--color-peach-strong) 35%, var(--color-peach));
+    --color-line: color-mix(in srgb, var(--color-peach-strong) 70%, var(--color-peach));
+    background-color: var(--color-bg);
+  }
+
+  .band-white {
+    --color-bg: var(--color-surface);
+    background-color: var(--color-bg);
+  }
+
+  .band-cream {
+    background-color: var(--color-bg);
   }
 
   html {
@@ -155,7 +218,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-accent-text);
     outline-offset: 3px;
     border-radius: var(--radius-sm);
   }
@@ -218,18 +281,18 @@
   .text-display {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: clamp(2.5rem, 1.7rem + 3.2vw, 4.25rem);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
+    font-size: clamp(2.75rem, 1.6rem + 4vw, 4.75rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
     text-wrap: balance;
   }
 
   .text-title {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: clamp(2rem, 1.55rem + 1.8vw, 3rem);
-    line-height: 1.1;
-    letter-spacing: -0.025em;
+    font-size: clamp(2.125rem, 1.5rem + 2.2vw, 3.25rem);
+    line-height: 1.06;
+    letter-spacing: -0.03em;
     text-wrap: balance;
   }
 
@@ -259,6 +322,12 @@
     color: var(--color-accent-text);
   }
 
+  /* On warm and dark bands the eyebrow turns orange, so blue stays for actions */
+  .band-peach .eyebrow,
+  .band-night .eyebrow {
+    color: var(--color-orange-text);
+  }
+
   /* Emphasis in a headline: accent text that never splits across lines */
   .mark {
     color: var(--color-accent);
@@ -272,11 +341,121 @@
   }
 
 
-  /* A soft blue glow behind the hero */
+  /* The hero backdrop: a blue glow top right, a peach glow top left, on cream */
   .bg-glow {
     background:
-      radial-gradient(60rem 28rem at 78% -10%, var(--color-accent-soft), transparent 70%),
-      radial-gradient(40rem 24rem at 0% 0%, var(--color-sunken), transparent 70%);
+      radial-gradient(56rem 30rem at 85% -12%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 70%),
+      radial-gradient(44rem 26rem at 0% -5%, color-mix(in srgb, var(--color-peach-strong) 55%, transparent), transparent 70%);
+  }
+
+  /* A fine diagonal hatch, decorative only (Semrush-style texture, in our peach) */
+  .hatch {
+    background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--color-peach-strong) 70%, transparent) 0 1px, transparent 1px 9px);
+    mask-image: radial-gradient(closest-side, black 30%, transparent);
+  }
+
+  /*
+   * Screenshot frame: the product on a blue-to-peach-to-orange gradient, so it never sits bare on the page.
+   * Use around a WindowFrame or a framed screenshot.
+   */
+  .frame-glow {
+    position: relative;
+    border-radius: var(--radius-xl);
+    padding: clamp(0.75rem, 0.4rem + 1.6vw, 2rem);
+    background:
+      radial-gradient(120% 140% at 0% 0%, #2350e6 0%, transparent 55%),
+      radial-gradient(120% 140% at 100% 100%, #f2681c 0%, transparent 50%),
+      linear-gradient(135deg, #5b7cf2 0%, #b9b2f0 38%, #f8cfae 70%, #f6a26a 100%);
+    box-shadow: var(--shadow-hard-lg);
+  }
+
+  .frame-glow > * {
+    position: relative;
+  }
+
+  /* Cards. One base and four variants; see WEBDESIGN.md "Cards". */
+  .card {
+    position: relative;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-line);
+    background: var(--color-surface);
+    padding: 1.75rem;
+  }
+
+  /* A card that is one big link: lifts, and its border turns blue */
+  .card-link {
+    transition:
+      transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 200ms ease,
+      border-color 200ms ease;
+  }
+
+  .card-link:hover,
+  .card-link:focus-within {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--color-accent-line);
+  }
+
+  /* Warm card on a white or cream band */
+  .card-peach {
+    background: var(--color-peach);
+    border-color: color-mix(in srgb, var(--color-peach-strong) 60%, var(--color-peach));
+  }
+
+  /* Contrast card: a night card inside a light band */
+  .card-night {
+    background: var(--color-night);
+    border-color: var(--color-night);
+    color: #f7f0e7;
+  }
+
+  /* Highlighted card: a 2px blue edge, for the recommended option */
+  .card-featured {
+    border: 2px solid var(--color-accent);
+    box-shadow: var(--shadow-hard);
+  }
+
+  /* Icon tiles inside cards: blue or peach */
+  .tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius-md);
+    background: var(--color-accent-soft);
+    color: var(--color-accent-text);
+  }
+
+  .tile-peach {
+    background: var(--color-peach-strong);
+    color: var(--color-peach-text);
+  }
+
+  .band-peach .tile-peach {
+    background: var(--color-surface);
+    color: var(--color-orange-text);
+  }
+
+  /* Card titles: one step below section headings, so cards in a grid stay calm */
+  .card-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.1875rem;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  /* Big figures in stat strips */
+  .figure {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.75rem, 2rem + 2.6vw, 4.5rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Long-form text: docs and legal pages */

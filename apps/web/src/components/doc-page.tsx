@@ -59,7 +59,7 @@ export function DocArticle({ slug, children, brands }: DocArticleProps) {
 
       <nav aria-label="More docs" className="mt-20 grid max-w-[44rem] grid-cols-1 gap-4 border-t border-line pt-10 sm:grid-cols-2">
         {previous ? (
-          <Link href={`/docs/${previous.slug}`} className="group rounded-lg border border-line bg-surface p-5 transition-colors duration-150 hover:border-accent-line">
+          <Link href={`/docs/${previous.slug}`} className="card card-link group block p-5">
             <span className="inline-flex items-center gap-2 text-sm text-muted">
               <ArrowLeft className="size-3.5" aria-hidden="true" />
               Previous
@@ -70,7 +70,7 @@ export function DocArticle({ slug, children, brands }: DocArticleProps) {
           <span className="hidden sm:block" />
         )}
         {next ? (
-          <Link href={`/docs/${next.slug}`} className="group rounded-lg border border-line bg-surface p-5 transition-colors duration-150 hover:border-accent-line sm:text-right">
+          <Link href={`/docs/${next.slug}`} className="card card-link group block p-5 sm:text-right">
             <span className="inline-flex items-center gap-2 text-sm text-muted">
               Next
               <ArrowRight className="size-3.5" aria-hidden="true" />

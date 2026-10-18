@@ -45,10 +45,10 @@ export function ScreenImage({
 export function WindowFrame({ children, label }: { children: React.ReactNode; label?: string }) {
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-hard-lg">
-      <div className="flex items-center gap-1.5 border-b border-line bg-sunken/60 px-4 py-2.5" aria-hidden="true">
-        <span className="size-2.5 rounded-full bg-line" />
-        <span className="size-2.5 rounded-full bg-line" />
-        <span className="size-2.5 rounded-full bg-line" />
+      <div className="flex items-center gap-1.5 border-b border-line bg-sunken/70 px-4 py-2.5" aria-hidden="true">
+        <span className="size-2.5 rounded-full bg-[#f2681c]/70" />
+        <span className="size-2.5 rounded-full bg-[#f8cfae]" />
+        <span className="size-2.5 rounded-full bg-[#2350e6]/60" />
         {label ? <span className="ml-3 truncate font-mono text-xs text-faint">{label}</span> : null}
       </div>
       {children}
@@ -63,6 +63,7 @@ export function Screenshot({
   window: framed = false,
   label,
   priority,
+  glow = false,
   className = '',
 }: {
   name: ScreenName;
@@ -72,12 +73,15 @@ export function Screenshot({
   /** Address shown in the window frame, e.g. "app.openseo.gg/tools/keyword-overview". */
   label?: string;
   priority?: boolean;
+  /** Sit the screenshot on the blue-to-orange gradient frame. */
+  glow?: boolean;
   className?: string;
 }) {
   const image = <ScreenImage name={name} alt={alt} priority={priority} />;
+  const shot = framed ? <WindowFrame label={label}>{image}</WindowFrame> : <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-hard">{image}</div>;
   return (
     <figure className={className}>
-      {framed ? <WindowFrame label={label}>{image}</WindowFrame> : <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-hard">{image}</div>}
+      {glow ? <div className="frame-glow">{shot}</div> : shot}
       {caption ? <figcaption className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-muted">{caption}</figcaption> : null}
     </figure>
   );

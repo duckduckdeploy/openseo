@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { AGENT_CLIENTS, AGENT_SKILLS } from '@openseo/shared';
 import { setupPrompt } from '@/content/snippets';
 import { BrandIcon, BrandRow, CLIENT_BRANDS } from './brand-icon';
+import { ButtonLink } from './button';
 import { CopyPromptButton } from './copy-prompt-button';
 import { SectionHeader } from './section';
 
@@ -35,7 +35,9 @@ const tone: Record<Line['kind'], string> = {
 
 export function AgentFold() {
   return (
-    <section aria-labelledby="agents-title" className="container-page py-20 md:py-28 xl:py-32">
+    <section aria-labelledby="agents-title" className="band-night relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(50rem_26rem_at_50%_0%,color-mix(in_srgb,var(--color-accent)_30%,transparent),transparent_70%),radial-gradient(36rem_22rem_at_100%_100%,color-mix(in_srgb,var(--color-orange)_22%,transparent),transparent_70%)]" aria-hidden="true" />
+      <div className="container-page relative py-20 md:py-28 xl:py-32">
       <SectionHeader
         align="center"
         eyebrow="Agents and MCP"
@@ -45,7 +47,7 @@ export function AgentFold() {
       />
 
       <figure className="mx-auto mt-14 max-w-4xl md:mt-16">
-        <div className="overflow-hidden rounded-xl border border-code-line bg-code shadow-hard-lg">
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-hard-lg ring-1 ring-white/5 backdrop-blur">
           <div className="flex items-center justify-between border-b border-code-line px-5 py-3 text-xs text-code-muted">
             <span className="flex gap-1.5" aria-hidden="true">
               <span className="size-2.5 rounded-full bg-code-line" />
@@ -67,8 +69,8 @@ export function AgentFold() {
 
       <ul className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2">
         {AGENT_SKILLS.map((skill) => (
-          <li key={skill.name} className="rounded-md border border-line bg-surface px-5 py-4">
-            <p className="font-mono text-sm font-semibold text-accent-text">/{skill.name}</p>
+          <li key={skill.name} className="card card-link p-5">
+            <p className="font-mono text-sm font-semibold text-orange-text">/{skill.name}</p>
             <p className="mt-1.5 text-sm leading-relaxed text-muted">{skill.summary}</p>
           </li>
         ))}
@@ -85,11 +87,12 @@ export function AgentFold() {
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:items-center">
           <CopyPromptButton text={setupPrompt} />
-          <Link href="/docs/mcp" className="inline-flex h-12 items-center justify-center rounded-md border border-edge bg-surface px-6 font-medium transition-colors hover:border-faint hover:bg-sunken">
+          <ButtonLink href="/docs/mcp" variant="secondary" size="lg">
             Setup guide
-          </Link>
+          </ButtonLink>
         </div>
         <p className="mt-4 text-sm text-faint">Paste the prompt into your agent. It connects itself and checks the connection without spending anything.</p>
+      </div>
       </div>
     </section>
   );

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check } from 'lucide-react';
 import { BrandRow, brandName } from '@/components/brand-icon';
 import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
@@ -81,7 +81,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
       <article>
         {/* Header */}
-        <header className="relative overflow-hidden">
+        <header className="band-cream relative overflow-hidden">
           <div className="bg-glow pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="container-page relative pt-16 pb-20 md:pt-24 md:pb-24">
             <nav aria-label="Breadcrumb" className="text-center text-sm text-muted">
@@ -96,8 +96,8 @@ export default async function ToolPage({ params }: ToolPageProps) {
               </span>
             </nav>
             <div className="mx-auto mt-10 max-w-3xl text-center">
-              <span className="inline-flex size-12 items-center justify-center rounded-md bg-accent-soft text-accent-text">
-                <Icon className="size-6" aria-hidden="true" strokeWidth={1.75} />
+              <span className="tile size-14 rounded-lg shadow-hard-sm">
+                <Icon className="size-7" aria-hidden="true" strokeWidth={1.75} />
               </span>
               <h1 className="text-display mt-7 text-balance">{tool.h1}</h1>
               <p className="mt-6 font-display text-2xl font-semibold text-balance text-ink md:text-[1.75rem]">{tool.headline}</p>
@@ -108,7 +108,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
               <ul className="mt-8 flex flex-wrap justify-center gap-x-7 gap-y-3 text-[0.9375rem]">
                 {tool.points.map((point) => (
                   <li key={point} className="inline-flex items-center gap-2">
-                    <span className="inline-flex size-5 items-center justify-center rounded-full bg-accent-soft text-accent-text">
+                    <span className="inline-flex size-5 items-center justify-center rounded-full bg-accent text-accent-fg">
                       <Check className="size-3" aria-hidden="true" strokeWidth={3} />
                     </span>
                     {point}
@@ -132,14 +132,14 @@ export default async function ToolPage({ params }: ToolPageProps) {
               </p>
             </div>
             <div className="mx-auto mt-16 max-w-6xl md:mt-20">
-              <Screenshot name={tool.hero.shot} alt={tool.hero.alt} window label={`app.openseo.gg${tool.appPath}`} priority />
+              <Screenshot name={tool.hero.shot} alt={tool.hero.alt} window glow label={`app.openseo.gg${tool.appPath}`} priority />
             </div>
           </div>
         </header>
 
         {/* Each part of the screen */}
         {tool.parts.map((part, index) => (
-          <section key={part.shot} aria-labelledby={`part-${part.shot}`} className={index % 2 === 0 ? 'border-y border-line bg-surface' : undefined}>
+          <section key={part.shot} aria-labelledby={`part-${part.shot}`} className={index % 2 === 0 ? 'band-white border-y border-line' : 'band-cream'}>
             <div className="container-page py-20 md:py-28">
               <div className="mx-auto max-w-3xl text-center">
                 <h2 id={`part-${part.shot}`} className="text-title">
@@ -155,26 +155,28 @@ export default async function ToolPage({ params }: ToolPageProps) {
         ))}
 
         {/* How a search works */}
-        <section aria-labelledby="how-title" className="container-page py-20 md:py-28">
+        <section aria-labelledby="how-title" className="band-peach">
+          <div className="container-page py-20 md:py-28">
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">How it works</p>
             <h2 id="how-title" className="text-title mt-4">
               How to use the {inSentence(tool.name)}
             </h2>
           </div>
-          <ol className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-10 md:grid-cols-3">
+          <ol className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-3">
             {steps.map((step, index) => (
-              <li key={step.title} className="text-center">
-                <span className="mx-auto inline-flex size-10 items-center justify-center rounded-full bg-accent font-display text-lg font-bold text-accent-fg">{index + 1}</span>
-                <h3 className="text-heading mt-5">{step.title}</h3>
-                <p className="mt-3 text-lg leading-relaxed text-muted">{step.body}</p>
+              <li key={step.title} className="card p-7">
+                <span className="inline-flex size-10 items-center justify-center rounded-full bg-orange font-display text-lg font-bold text-night">{index + 1}</span>
+                <h3 className="card-title mt-5">{step.title}</h3>
+                <p className="mt-3 leading-relaxed text-muted">{step.body}</p>
               </li>
             ))}
           </ol>
+          </div>
         </section>
 
-        {/* What to use it for */}
-        <section aria-labelledby="uses-title" className="border-y border-line bg-surface">
+        {/* What to use it for: the night band in the middle of the page */}
+        <section aria-labelledby="uses-title" className="band-night">
           <div className="container-page py-20 md:py-28">
             <div className="mx-auto max-w-3xl text-center">
               <p className="eyebrow">Use it to</p>
@@ -184,9 +186,14 @@ export default async function ToolPage({ params }: ToolPageProps) {
             </div>
             <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2">
               {tool.uses.map((use) => (
-                <li key={use.title} className="rounded-lg border border-line bg-bg p-7">
-                  <h3 className="text-heading">{use.title}</h3>
-                  <p className="mt-3 leading-relaxed text-muted">{use.body}</p>
+                <li key={use.title} className="card flex gap-5 p-7">
+                  <span className="tile tile-peach size-10 shrink-0">
+                    <ArrowUpRight className="size-4" aria-hidden="true" strokeWidth={2.25} />
+                  </span>
+                  <div>
+                    <h3 className="card-title">{use.title}</h3>
+                    <p className="mt-2 leading-relaxed text-muted">{use.body}</p>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -194,7 +201,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
         </section>
 
         {/* What a search costs */}
-        <section id="costs" aria-labelledby="costs-title" className="container-page scroll-mt-20 py-20 md:py-28">
+        <section id="costs" aria-labelledby="costs-title" className="band-cream container-page scroll-mt-20 py-20 md:py-28">
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">What it costs</p>
             <h2 id="costs-title" className="text-title mt-4">
@@ -204,7 +211,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
               <strong className="font-semibold text-ink">{tool.total}.</strong> You pay the data provider for the lookups a search runs, from your own key, and see the price before it runs. {tool.costNote}
             </p>
           </div>
-          <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-lg border border-line">
+          <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-lg border border-line bg-surface shadow-hard-sm">
             <table className="w-full border-collapse text-left">
               <caption className="sr-only">What one {inSentence(tool.name)} search runs and costs</caption>
               <thead>
@@ -239,7 +246,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
         {/* The concept behind the tool, from the glossary */}
         {concept ? (
-          <section aria-labelledby="concept-title" className="border-t border-line">
+          <section aria-labelledby="concept-title" className="band-peach">
             <div className="container-page py-20 md:py-28">
               <div className="mx-auto max-w-3xl text-center">
                 <p className="eyebrow">SEO glossary</p>
@@ -264,7 +271,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
         ) : null}
 
         {/* Questions */}
-        <section aria-labelledby="faq-title" className="border-t border-line bg-surface">
+        <section aria-labelledby="faq-title" className="band-white border-t border-line">
           <div className="container-page py-20 md:py-28">
             <div className="mx-auto max-w-3xl">
               <h2 id="faq-title" className="text-title text-center">
@@ -278,7 +285,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
         </section>
 
         {/* The other tools */}
-        <section aria-labelledby="more-title" className="container-page py-20 md:py-28">
+        <section aria-labelledby="more-title" className="band-cream container-page py-20 md:py-28">
           <h2 id="more-title" className="text-title text-center">
             More SEO tools
           </h2>
