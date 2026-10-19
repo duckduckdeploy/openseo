@@ -150,6 +150,7 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'keyword-generator',
+    freeTool: 'keyword-ideas',
     seoTitle: 'Keyword Generator: Find Long-Tail Keyword Ideas',
     h1: 'Keyword generator',
     description: 'Generate up to 600 keyword ideas from one seed: long-tail keywords, related searches and questions, with search volume, keyword difficulty and intent.',

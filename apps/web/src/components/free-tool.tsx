@@ -8,7 +8,7 @@ import { buttonClasses } from './button';
  * A tool anyone can try on the website, without an account: a few small checks a day, run by the
  * API's free tools (apps/api/src/services/public-tools.ts) with the site's own YepAPI key.
  */
-export type FreeToolKind = 'website-traffic' | 'website-authority' | 'keyword-difficulty' | 'serp' | 'ai-overview';
+export type FreeToolKind = 'website-traffic' | 'website-authority' | 'keyword-ideas' | 'keyword-difficulty' | 'serp' | 'ai-overview';
 
 const COUNTRIES: [string, string][] = [
   ['us', 'United States'],
@@ -105,6 +105,19 @@ const SPECS: Record<FreeToolKind, Spec> = {
           const site = (row.domain ?? {}) as Row;
           return [String(row.url), num(site.domainRating), num(site.refDomains), num(site.backlinks)];
         })}
+      />
+    ),
+  },
+  'keyword-ideas': {
+    label: 'Seed keyword',
+    placeholder: 'standing desk',
+    max: 1,
+    country: true,
+    body: (items, country) => ({ keyword: items[0], country }),
+    render: (data) => (
+      <Table
+        head={['Keyword idea', 'Searches / mo', 'Difficulty', 'CPC']}
+        rows={list(data.keywords).map((row) => [String(row.keyword), num(row.volume), num(row.difficulty), typeof row.cpc === 'number' ? `$${row.cpc.toFixed(2)}` : '—'])}
       />
     ),
   },

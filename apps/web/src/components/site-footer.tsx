@@ -96,6 +96,11 @@ export function SiteFooter() {
           <FooterHeading>Project</FooterHeading>
           <ul className="space-y-3">
             <li>
+              <Link href="/open-source-seo-tools" className={linkClass}>
+                Open-source SEO tools
+              </Link>
+            </li>
+            <li>
               <Link href="/pricing" className={linkClass}>
                 Pricing
               </Link>

@@ -48,6 +48,13 @@ const TOOLS = {
     input: z.object({ domains: domainList(3) }),
     lookup: (i: { domains: string[] }) => ({ name: "url_metrics", input: { urls: i.domains } }),
   },
+  "keyword-ideas": {
+    input: z.object({ keyword: z.string().trim().min(1).max(200), country }),
+    lookup: (i: { keyword: string; country: string }) => ({ name: "keyword_ideas", input: { keyword: i.keyword, source: "ideas", limit: 50 } }),
+    shape: (data: { keywords?: { keyword: string; volume?: number; difficulty?: number | null; cpc?: number; intent?: string }[] }) => ({
+      keywords: (data.keywords ?? []).map((k) => ({ keyword: k.keyword, volume: k.volume ?? null, difficulty: k.difficulty ?? null, cpc: k.cpc ?? null, intent: k.intent ?? null })),
+    }),
+  },
   "keyword-difficulty": {
     input: z.object({ keywords: keywordList(20), country }),
     lookup: (i: { keywords: string[]; country: string }) => ({ name: "keyword_difficulty", input: { keywords: i.keywords, country: i.country } }),

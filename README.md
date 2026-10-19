@@ -34,7 +34,11 @@
 
 <br>
 
-**OpenSEO** is a user-first, open-source SEO tool suite for everyone. It covers keyword research, rank tracking, backlinks, site audits and AI visibility, and reads your own Google Search Console and Analytics data. Run it on your own machine or server, read every line of it, and hand it to your AI agent.
+**OpenSEO** ([openseo.gg](https://openseo.gg)) is an open-source alternative to Ahrefs and Semrush. It covers keyword research, rank tracking, backlinks, site audits, AI visibility and local rank tracking, and reads your own Google Search Console and Analytics data. Run it on your own machine or server, read every line of it, and hand it to your AI agent.
+
+No monthly plan: the software is free, and search data is paid per lookup at the price shown before it runs. A rank check is from $0.02, a keyword search of 150 ideas about $0.08.
+
+⭐ **If OpenSEO is useful to you, a star helps other people find it.**
 
 > [!NOTE]
 > OpenSEO is early and in active development. [Issues](https://github.com/duckduckdeploy/openseo/issues) and ideas are very welcome.
@@ -61,6 +65,19 @@ Every tool is one search: type a keyword, domain or URL, pick a country (and a c
   </tr>
 </table>
 
+## 🆓 Try it free, no account
+
+Six tools run right on the website, a few free checks a day, no sign-up:
+
+| Tool | What it checks |
+|---|---|
+| [Keyword generator](https://openseo.gg/tools/keyword-generator) | 50 keyword ideas for a seed, with volume, difficulty and CPC |
+| [Keyword difficulty checker](https://openseo.gg/tools/keyword-difficulty-checker) | Difficulty of up to 20 keywords |
+| [SERP checker](https://openseo.gg/tools/serp-checker) | The live Google top 20 for a keyword |
+| [Website traffic checker](https://openseo.gg/tools/website-traffic-checker) | Estimated Google traffic of up to 5 sites |
+| [Website authority checker](https://openseo.gg/tools/website-authority-checker) | Domain Rating, referring domains and backlinks of up to 3 sites |
+| [AI Overview checker](https://openseo.gg/tools/ai-overview-checker) | Whether Google shows an AI Overview, and which sites it cites |
+
 ## ✨ Why OpenSEO
 
 - 🔓 **Open source, all of it.** The app, the API, the crawler and the agent server are MIT licensed. Change what you need and keep your changes.
@@ -86,6 +103,30 @@ Every tool is one search: type a keyword, domain or URL, pick a country (and a c
 | 🩺 Site audit | Our own crawler with 59 checks and a health score; Lighthouse with failed audits rated by severity |
 | 🧠 AI visibility | Tracked prompts across many chat models with web search: mentions, citations, position, share of voice. Prompts that name your brand are left out of the rates |
 | 🗺️ Local rank tracker | Business lookup, profile, reviews, geo-grid rank maps |
+
+<table>
+  <tr>
+    <td width="50%"><img src="apps/web/public/screens/ai-tracking.webp" alt="AI visibility tracking across chat models"><br><sub><b>AI visibility</b>: mentions, citations and share of voice across 120+ models, paid per prompt run</sub></td>
+    <td width="50%"><img src="apps/web/public/screens/rank-tracker.webp" alt="Rank tracker with positions and history"><br><sub><b>Rank tracking</b>: the top 20, 50 or 100, desktop and mobile, any city</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="apps/web/public/screens/site-audit.webp" alt="Site audit health score and issues"><br><sub><b>Site audit</b>: our own crawler, a health score and the worst issues first</sub></td>
+    <td width="50%"><img src="apps/web/public/screens/local-grid.webp" alt="Geo-grid rank map over a city"><br><sub><b>Local rank tracker</b>: geo-grid rank maps on Google Maps</sub></td>
+  </tr>
+</table>
+
+## 🥊 OpenSEO vs the paid suites
+
+| | Ahrefs, Semrush, SE Ranking, Moz | OpenSEO |
+|---|---|---|
+| Source code | Closed | Open source (MIT) |
+| Where it runs | Their cloud | openseo.gg, or your own server with Docker |
+| Price | Monthly plans from $49 (Moz) to $140 (Semrush) to start | Free software; data paid per lookup |
+| Seats | Paid per user | No seats |
+| AI agents | API or MCP on some plans | 66 MCP tools and a REST API, spending capped per call |
+| Data depth | Their own crawlers and indexes, the deepest | A large commercial dataset through a provider |
+
+Honest side-by-sides, including when each one is the better buy: [Ahrefs](https://openseo.gg/compare/ahrefs-alternative) · [Semrush](https://openseo.gg/compare/semrush-alternative) · [SE Ranking](https://openseo.gg/compare/se-ranking-alternative) · [Mangools](https://openseo.gg/compare/mangools-alternative) · [Ubersuggest](https://openseo.gg/compare/ubersuggest-alternative) · [Moz](https://openseo.gg/compare/moz-alternative) · [Screaming Frog](https://openseo.gg/compare/screaming-frog-alternative) · [Otterly.AI](https://openseo.gg/compare/otterly-alternative)
 
 ## 🐳 Self-host with Docker
 
