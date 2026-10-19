@@ -112,7 +112,7 @@ export function DataTable<T>({ rows, columns, rowKey, caption, initialSort = nul
         <thead>
           <tr>
             {selection && (
-              <th scope="col" className={cx(cell, "sticky top-0 z-10 w-9 bg-surface pr-0")}>
+              <th scope="col" className={cx(cell, "sticky top-0 z-10 w-9 bg-sunken pr-0")}>
                 <HeaderCheckbox state={headerState} onToggle={toggleAll} />
               </th>
             )}
@@ -127,7 +127,7 @@ export function DataTable<T>({ rows, columns, rowKey, caption, initialSort = nul
                   aria-sort={column.sortValue ? (isActive ? (active.order === "asc" ? "ascending" : "descending") : "none") : undefined}
                   className={cx(
                     cell,
-                    "sticky top-0 z-10 bg-surface font-mono text-[11px] font-medium whitespace-nowrap uppercase tracking-wide text-muted",
+                    "sticky top-0 z-10 bg-sunken font-mono text-[11px] font-medium whitespace-nowrap uppercase tracking-wide text-muted",
                     column.align === "right" && "text-right",
                   )}
                 >

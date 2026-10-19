@@ -99,27 +99,22 @@ export function BalancePanel() {
               </a>
             </p>
           ) : (
-            <p className={cx("mt-0.5 flex items-center gap-2 font-display text-xl font-semibold tabular", toneText[tone])} aria-live="polite">
-              <span className={cx("size-2 shrink-0 rounded-full", toneDot[tone])} aria-hidden />
-              {usd(data?.balanceUsd)}
-            </p>
+            <div className="mt-0.5 flex items-baseline justify-between gap-2" title={`Checked ${time(data?.checkedAt)}`}>
+              <p className={cx("flex items-center gap-2 font-display text-lg font-semibold tabular", toneText[tone])} aria-live="polite">
+                <span className={cx("size-2 shrink-0 self-center rounded-full", toneDot[tone])} aria-hidden />
+                {usd(data?.balanceUsd)}
+              </p>
+              {month && (
+                <p className="whitespace-nowrap text-right font-mono text-[11px] text-muted tabular" title={`${num(month.calls)} paid calls this month`}>
+                  {usd(month.spentUsd)} spent
+                </p>
+              )}
+            </div>
           )}
           {tone === "low" && <p className="mt-0.5 text-xs text-warn">Running low.</p>}
           {tone === "empty" && <p className="mt-0.5 text-xs text-neg">Empty. Paid lookups will fail.</p>}
           {data?.autoTopup && <p className="mt-0.5 text-[11px] text-muted">Auto top-up is on</p>}
 
-          {month && (
-            <dl className="mt-2 grid grid-cols-2 gap-2 border-t border-line pt-2 text-xs">
-              <div>
-                <dt className="text-muted">Paid calls</dt>
-                <dd className="font-mono tabular text-ink">{num(month.calls)}</dd>
-              </div>
-              <div>
-                <dt className="text-muted">Spent</dt>
-                <dd className="font-mono tabular text-ink">{usd(month.spentUsd)}</dd>
-              </div>
-            </dl>
-          )}
           {month && budgetShare != null && (
             <div className="mt-2">
               <div className="h-1 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-label="Monthly limit used" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(budgetShare * 100)}>
@@ -130,9 +125,6 @@ export function BalancePanel() {
               </p>
             </div>
           )}
-          <p className="mt-1.5 text-[11px] text-faint">
-            This month · checked {time(data?.checkedAt)}
-          </p>
         </>
       )}
     </section>

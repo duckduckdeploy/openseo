@@ -452,7 +452,7 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
                 <th scope="col" className="w-8">
                   <input
                     type="checkbox"
-                    className="size-4 accent-ink"
+                    className="size-4 accent-accent"
                     aria-label="Select all shown keywords"
                     checked={visibleSelected === rows.length}
                     ref={(element) => {
@@ -477,7 +477,7 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    <input type="checkbox" className="size-4 accent-ink" aria-label={`Select ${row.keyword}`} checked={selected.has(row.id)} onChange={(event) => toggle(row.id, event.target.checked)} />
+                    <input type="checkbox" className="size-4 accent-accent" aria-label={`Select ${row.keyword}`} checked={selected.has(row.id)} onChange={(event) => toggle(row.id, event.target.checked)} />
                   </td>
                   <td>
                     <button

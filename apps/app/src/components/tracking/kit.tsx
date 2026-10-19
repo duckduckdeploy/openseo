@@ -79,7 +79,7 @@ export function Check({
 }) {
   return (
     <label className={cx("flex min-w-0 items-start gap-2 text-[13px]", disabled && "opacity-50", className)}>
-      <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-ink" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
+      <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-accent" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
       <span className="min-w-0">{children}</span>
     </label>
   );

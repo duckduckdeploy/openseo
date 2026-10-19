@@ -121,7 +121,7 @@
   },
   "keyword-overview-cards": {
     "width": 1176,
-    "height": 346
+    "height": 358
   },
   "keyword-overview-ideas": {
     "width": 1176,
@@ -133,7 +133,7 @@
   },
   "keyword-overview-serp": {
     "width": 1176,
-    "height": 1068
+    "height": 1157
   },
   "local-grid": {
     "width": 1142,
@@ -197,11 +197,11 @@
   },
   "serp-checker-mobile": {
     "width": 1176,
-    "height": 1181
+    "height": 1225
   },
   "serp-checker-table": {
     "width": 1176,
-    "height": 1181
+    "height": 1270
   },
   "site-audit": {
     "width": 1440,

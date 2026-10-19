@@ -140,7 +140,7 @@ function FindTab({ projectId, business, onChoose }: { projectId: string; busines
             <Input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={200} placeholder="Acme Plumbing Austin" required />
           </Field>
           <label className="flex items-center gap-2 text-[13px]">
-            <input type="checkbox" className="size-4 accent-ink" checked={near} onChange={(event) => setNear(event.target.checked)} />
+            <input type="checkbox" className="size-4 accent-accent" checked={near} onChange={(event) => setNear(event.target.checked)} />
             Prefer results around a point
           </label>
           {near && (

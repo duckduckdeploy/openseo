@@ -174,7 +174,7 @@ export function Stat({ label, value, sub }: { label: string; value: ReactNode; s
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={cx("relative overflow-x-auto", className)}>
-      <table className="w-full border-collapse text-left text-[13px] [&_td]:border-b [&_td]:border-line [&_td]:px-3 [&_td]:py-2 [&_th]:border-b [&_th]:border-line [&_th]:px-3 [&_th]:py-2 [&_th]:font-mono [&_th]:text-[11px] [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted [&_tbody_tr:hover]:bg-sunken/60 [&_tbody_tr:last-child_td]:border-b-0">
+      <table className="w-full border-collapse text-left text-[13px] [&_td]:border-b [&_td]:border-line [&_td]:px-3 [&_td]:py-2 [&_th]:border-b [&_th]:border-line [&_th]:px-3 [&_th]:py-2 [&_th]:font-mono [&_th]:text-[11px] [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted [&_thead_th]:bg-sunken [&_tbody_tr:hover]:bg-sunken/60 [&_tbody_tr:last-child_td]:border-b-0">
         {children}
       </table>
     </div>

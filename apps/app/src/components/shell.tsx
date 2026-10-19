@@ -106,6 +106,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
     if (unauthenticated) router.replace("/sign-in");
   }, [unauthenticated, router]);
   useEffect(() => setOpen(false), [pathname]);
+  // Keep the current page's item in view when the nav list scrolls.
+  useEffect(() => {
+    document.querySelector('aside [aria-current="page"]')?.scrollIntoView({ block: "nearest" });
+  }, [pathname]);
 
   if (me.isPending || unauthenticated) {
     return (
@@ -178,13 +182,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <BalancePanel />
           {params.projectId && <NavLink href="/tools" label="SEO tools" icon={Wrench} active={false} />}
           <NavLink href="/settings" label="Settings and usage" icon={Settings} active={pathname.startsWith("/settings")} />
-          <button type="button" onClick={onSignOut} className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] text-muted hover:bg-sunken hover:text-ink">
-            <LogOut className="size-4" aria-hidden /> Sign out
-          </button>
           <div className="px-2.5 pt-2">
             <ThemeSwitcher />
           </div>
-          <p className="truncate px-2.5 pt-1 font-mono text-[11px] text-faint">{me.data.user.email}</p>
+          <div className="flex items-center gap-2 pt-1 pl-2.5">
+            <p className="min-w-0 flex-1 truncate font-mono text-[11px] text-faint">{me.data.user.email}</p>
+            <button type="button" onClick={onSignOut} className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted hover:bg-sunken hover:text-ink">
+              <LogOut className="size-3.5" aria-hidden /> Sign out
+            </button>
+          </div>
         </div>
       </aside>
 

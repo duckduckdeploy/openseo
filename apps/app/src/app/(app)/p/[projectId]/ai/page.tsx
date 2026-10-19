@@ -311,7 +311,7 @@ function PromptsTab({ projectId, state }: { projectId: string; state: AiState })
                     <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        className="size-4 accent-ink"
+                        className="size-4 accent-accent"
                         checked={prompt.active}
                         aria-label={`Include "${prompt.prompt}" in runs`}
                         onChange={(event) => toggle.mutate({ id: prompt.id, active: event.target.checked })}
