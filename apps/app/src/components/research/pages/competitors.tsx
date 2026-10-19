@@ -235,7 +235,7 @@ function GapView({
         <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
           Top competitors:
           {suggestions.map((row) => (
-            <Link key={row.domain} href={toolLinks.gap(domain, row.domain, market)} className="rounded-full border border-line px-2 py-0.5 text-ink hover:border-ink">
+            <Link key={row.domain} href={toolLinks.gap(domain, row.domain, market)} className="rounded-full border border-line px-2 py-0.5 text-ink hover:border-faint">
               {row.domain}
             </Link>
           ))}
@@ -267,7 +267,7 @@ function GapView({
                     setMode(key);
                     setSelected(new Set());
                   }}
-                  className={mode === key ? "rounded bg-ink px-2.5 py-1 text-[13px] font-medium text-bg" : "rounded px-2.5 py-1 text-[13px] text-muted hover:text-ink"}
+                  className={mode === key ? "rounded bg-surface px-2.5 py-1 text-[13px] font-medium text-ink shadow-card" : "rounded px-2.5 py-1 text-[13px] text-muted hover:text-ink"}
                 >
                   {label} {query.data?.keywords ? <span className="font-mono text-xs opacity-80">{num(query.data.keywords.length)}</span> : null}
                 </button>

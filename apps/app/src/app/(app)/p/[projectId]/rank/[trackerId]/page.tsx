@@ -674,7 +674,7 @@ function CompetitorsTab({ trackerId, device }: { trackerId: string; device: Devi
                 <span className="flex items-center gap-2">
                   <span className="w-8 text-right font-mono tabular">{row.keywords}</span>
                   <span className="h-2 flex-1 rounded-sm bg-sunken" aria-hidden>
-                    <span className="block h-full rounded-sm bg-ink" style={{ width: `${(row.keywords / most) * 100}%` }} />
+                    <span className="block h-full rounded-sm bg-accent" style={{ width: `${(row.keywords / most) * 100}%` }} />
                   </span>
                 </span>
               </td>

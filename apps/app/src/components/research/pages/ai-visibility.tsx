@@ -231,7 +231,7 @@ export function AiVisibility({ project }: { project: Project }) {
                 }}
                 className={cx(
                   "inline-flex items-center gap-1.5 rounded-full border py-1 pr-3 pl-2 text-[13px] transition-colors",
-                  on ? "border-accent bg-accent/10 font-medium text-ink" : "border-line text-muted opacity-70 hover:border-ink hover:text-ink hover:opacity-100",
+                  on ? "border-accent bg-accent/10 font-medium text-ink" : "border-line text-muted opacity-70 hover:border-faint hover:text-ink hover:opacity-100",
                 )}
               >
                 <AssistantIcon model={assistant.id} />

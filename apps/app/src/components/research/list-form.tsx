@@ -55,7 +55,7 @@ export function ListForm({
   const over = entries.length > max;
   return (
     <form
-      className="mb-8 space-y-3 rounded-xl border border-line bg-surface p-3 shadow-hard-sm sm:p-4"
+      className="mb-8 space-y-3 rounded-xl border border-line bg-surface p-3 shadow-card sm:p-4"
       onSubmit={(event) => {
         event.preventDefault();
         if (entries.length) onSubmit(entries.slice(0, max));

@@ -33,7 +33,7 @@ const SPACINGS = [
 type Business = Place & { ranks: (number | null)[]; found: number; top3: number; average: number | null };
 
 function rankTone(rank: number | null) {
-  if (rank == null) return "bg-faint text-white";
+  if (rank == null) return "bg-other text-ink";
   if (rank <= 3) return "bg-pos text-white";
   if (rank <= 10) return "bg-warn text-white";
   return "bg-neg text-white";
@@ -233,7 +233,7 @@ export function LocalRank({ project }: { project: Project }) {
                   <span className="size-3 rounded-full bg-neg" aria-hidden /> 11–20
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="size-3 rounded-full bg-faint" aria-hidden /> not in top 20
+                  <span className="size-3 rounded-full bg-other" aria-hidden /> not in top 20
                 </span>
               </p>
             </div>

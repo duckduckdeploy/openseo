@@ -16,7 +16,7 @@ type TipProps = {
 function Tip({ active, label, payload, format }: TipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-ink bg-surface px-2.5 py-1.5 text-xs text-ink shadow-hard-sm">
+    <div className="rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-ink shadow-pop">
       <p className="font-mono text-[11px] text-muted">{String(label ?? "")}</p>
       {payload.map((entry) => (
         <p key={String(entry.dataKey)} className="font-mono tabular">
@@ -46,9 +46,9 @@ export function DistributionChart({ buckets, values = true, className = "h-48" }
           <XAxis dataKey="label" tick={tick} axisLine={axisLine} tickLine={false} interval={values ? 0 : "preserveStartEnd"} minTickGap={2} />
           <YAxis allowDecimals={false} tick={tick} axisLine={false} tickLine={false} tickFormatter={(value: number) => new Intl.NumberFormat("en-US", { notation: "compact" }).format(value)} />
           <Tooltip cursor={{ fill: "var(--color-sunken)" }} content={<Tip />} />
-          <Bar dataKey="count" name="Keywords" radius={[2, 2, 0, 0]} isAnimationActive={false} maxBarSize={56} stroke="var(--color-ink)" strokeWidth={1}>
+          <Bar dataKey="count" name="Keywords" radius={[2, 2, 0, 0]} isAnimationActive={false} maxBarSize={56}>
             {buckets.map((bucket) => (
-              <Cell key={bucket.label} fill={bucket.highlight ? "var(--color-accent)" : "var(--color-ink)"} />
+              <Cell key={bucket.label} fill={bucket.highlight ? "var(--color-accent)" : "var(--color-other)"} />
             ))}
             {values && <LabelList dataKey="count" position="top" style={{ ...tick, fill: "var(--color-ink)" }} />}
           </Bar>
@@ -76,10 +76,10 @@ export function PositionTrend({ points }: { points: { checkedAt: string; positio
             dataKey="position"
             name="Position"
             type="linear"
-            stroke="var(--color-ink)"
+            stroke="var(--color-accent)"
             strokeWidth={2}
-            dot={{ r: 3, fill: "var(--color-accent)", stroke: "var(--color-ink)", strokeWidth: 1.5 }}
-            activeDot={{ r: 5, fill: "var(--color-accent)", stroke: "var(--color-ink)" }}
+            dot={{ r: 3, fill: "var(--color-accent)", stroke: "var(--color-surface)", strokeWidth: 1.5 }}
+            activeDot={{ r: 5, fill: "var(--color-accent)", stroke: "var(--color-surface)", strokeWidth: 2 }}
             connectNulls={false}
             isAnimationActive={false}
           />
@@ -106,19 +106,19 @@ export function RateTrend({ runs }: { runs: { finishedAt: string | null; mention
               dataKey="mentionRate"
               name="Mentioned"
               type="linear"
-              stroke="var(--color-ink)"
+              stroke="var(--color-series-1)"
               strokeWidth={2}
-              dot={{ r: 3, fill: "var(--color-ink)" }}
+              dot={{ r: 3, fill: "var(--color-series-1)" }}
               isAnimationActive={false}
             />
             <Line
               dataKey="citeRate"
               name="Cited"
               type="linear"
-              stroke="var(--color-accent-text)"
+              stroke="var(--color-series-2)"
               strokeWidth={2}
               strokeDasharray="5 4"
-              dot={{ r: 3, fill: "var(--color-surface)", stroke: "var(--color-accent-text)", strokeWidth: 1.5 }}
+              dot={{ r: 3, fill: "var(--color-surface)", stroke: "var(--color-series-2)", strokeWidth: 1.5 }}
               isAnimationActive={false}
             />
           </LineChart>
@@ -126,7 +126,7 @@ export function RateTrend({ runs }: { runs: { finishedAt: string | null; mention
       </div>
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-muted">
         <li className="flex items-center gap-1.5">
-          <span className="inline-block h-0.5 w-5 bg-ink" aria-hidden /> Mentioned
+          <span className="inline-block h-0.5 w-5 bg-series-1" aria-hidden /> Mentioned
         </li>
         <li className="flex items-center gap-1.5">
           <span className="inline-block h-0 w-5 border-t-2 border-dashed border-accent-text" aria-hidden /> Cited
@@ -161,13 +161,13 @@ export function HistoryStrip({ history }: { history: (number | null)[] }) {
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label} className="block">
       <title>{label}</title>
       {segments.map((points) => (
-        <polyline key={points} points={points} fill="none" strokeWidth="1.5" className="stroke-ink" />
+        <polyline key={points} points={points} fill="none" strokeWidth="1.5" className="stroke-accent" />
       ))}
       {history.map((position, index) =>
         position == null ? (
           <line key={index} x1={x(index) - 2} x2={x(index) + 2} y1={height - 2} y2={height - 2} strokeWidth="1.5" className="stroke-faint" />
         ) : (
-          <circle key={index} cx={x(index)} cy={y(position)} r={index === history.length - 1 ? 2.5 : 1.5} className={index === history.length - 1 ? "fill-accent stroke-ink" : "fill-ink"} />
+          <circle key={index} cx={x(index)} cy={y(position)} r={index === history.length - 1 ? 2.5 : 1.5} className={index === history.length - 1 ? "fill-accent stroke-surface" : "fill-accent"} />
         ),
       )}
     </svg>

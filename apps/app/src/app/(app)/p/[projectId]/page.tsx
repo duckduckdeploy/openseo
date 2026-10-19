@@ -27,7 +27,7 @@ type Audit = { id: string; startUrl?: string | null; status: string; healthScore
 type AiResults = { latest?: { finishedAt?: string | null; answers?: number | null; mentionRate?: number | null; citeRate?: number | null } | null; prompts?: unknown[] | null };
 type GeoGrid = { id: string; keyword?: string | null; placeName?: string | null; size?: number | null; status?: string | null; averagePosition?: number | null; foundIn?: number | null; done?: number | null; createdAt: string };
 
-const linkButton = "inline-flex h-8 items-center gap-1.5 rounded-md border border-ink bg-accent px-2.5 text-[13px] font-medium text-accent-fg shadow-hard-sm hover:brightness-95";
+const linkButton = "inline-flex h-8 items-center gap-1.5 rounded-md border border-accent bg-accent px-2.5 text-[13px] font-medium text-accent-fg shadow-card hover:brightness-95";
 
 function Section<T>({
   title,

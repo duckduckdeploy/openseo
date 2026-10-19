@@ -103,9 +103,9 @@ const cellState = (cell: Cell | undefined): CellState =>
             : "absent";
 
 const CELL: Record<CellState, { label: string; text: string; className: string }> = {
-  both: { label: "Mentioned and cited", text: "Both", className: "border-ink bg-accent font-semibold text-accent-fg" },
-  mentioned: { label: "Mentioned", text: "Mention", className: "border-ink bg-ink text-bg" },
-  cited: { label: "Cited only", text: "Cited", className: "border-ink text-ink" },
+  both: { label: "Mentioned and cited", text: "Both", className: "border-accent bg-accent font-semibold text-accent-fg" },
+  mentioned: { label: "Mentioned", text: "Mention", className: "border-accent-line bg-accent-soft text-accent-text" },
+  cited: { label: "Cited only", text: "Cited", className: "border-edge text-ink" },
   absent: { label: "Absent", text: "Absent", className: "border-line text-faint" },
   noanswer: { label: "Failed or empty answer (not counted)", text: "No answer", className: "border-dashed border-warn text-warn" },
   none: { label: "No data", text: "·", className: "border-dashed border-line text-faint" },
@@ -175,7 +175,7 @@ function AnswersPanel({ projectId, prompt, onClose }: { projectId: string; promp
                   ) : (
                     <ul className="flex flex-wrap gap-1.5">
                       {answer.brands.map((hit, index) => (
-                        <li key={hit.name} className={cx("rounded-sm border px-1.5 py-1 text-xs", hit.mentioned || hit.cited ? "border-ink" : "border-line text-muted")}>
+                        <li key={hit.name} className={cx("rounded-sm border px-1.5 py-1 text-xs", hit.mentioned || hit.cited ? "border-accent-line bg-accent-soft/50" : "border-line text-muted")}>
                           <span className="font-medium">{hit.name}</span>
                           {index === 0 && <span className="text-muted"> (you)</span>}
                           <span className="font-mono text-[11px] text-muted">
@@ -314,7 +314,7 @@ export function AiOverview({ projectId, webSearch }: { projectId: string; webSea
                     </span>
                   </div>
                   <div className="mt-1 h-2.5 rounded-sm bg-sunken" aria-hidden>
-                    <div className={cx("h-full rounded-sm", row.own ? "border border-ink bg-accent" : "bg-ink")} style={{ width: `${(row.mentions / topVoice) * 100}%` }} />
+                    <div className={cx("h-full rounded-sm", row.own ? "bg-accent" : "bg-other")} style={{ width: `${(row.mentions / topVoice) * 100}%` }} />
                   </div>
                 </li>
               ))}
@@ -342,7 +342,7 @@ export function AiOverview({ projectId, webSearch }: { projectId: string; webSea
                       <span className="flex items-center gap-2">
                         <span className="w-6 text-right font-mono tabular">{row.answers}</span>
                         <span className="h-2 flex-1 rounded-sm bg-sunken" aria-hidden>
-                          <span className="block h-full rounded-sm bg-ink" style={{ width: `${(row.answers / topCited) * 100}%` }} />
+                          <span className="block h-full rounded-sm bg-accent" style={{ width: `${(row.answers / topCited) * 100}%` }} />
                         </span>
                       </span>
                     </td>

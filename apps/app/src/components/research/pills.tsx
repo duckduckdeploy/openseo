@@ -37,8 +37,8 @@ export function IntentBadge({ intent }: { intent: S }) {
     <span
       className={cx(
         "inline-flex items-center rounded-sm border px-1.5 py-0.5 font-mono text-[11px] leading-none uppercase tracking-wide",
-        intent === "transactional" && "border-ink bg-accent text-accent-fg",
-        intent === "commercial" && "border-ink text-ink",
+        intent === "transactional" && "border-accent-line bg-accent-soft text-accent-text",
+        intent === "commercial" && "border-edge text-ink",
         intent !== "transactional" && intent !== "commercial" && "border-line text-muted",
       )}
     >

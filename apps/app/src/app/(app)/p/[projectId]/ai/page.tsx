@@ -423,7 +423,7 @@ function ModelPicker({ value, onChange }: { value: string[]; onChange: (models: 
       {extra.length > 0 && (
         <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Other selected models">
           {extra.map((id) => (
-            <li key={id} className="inline-flex items-center gap-1 rounded-sm border border-ink py-0.5 pr-0.5 pl-1.5 font-mono text-[11px]">
+            <li key={id} className="inline-flex items-center gap-1 rounded-sm border border-edge py-0.5 pr-0.5 pl-1.5 font-mono text-[11px]">
               {id}
               <button type="button" onClick={() => toggle(id, false)} aria-label={`Remove ${id}`} className="rounded-sm p-0.5 hover:bg-sunken">
                 <X className="size-3" aria-hidden />

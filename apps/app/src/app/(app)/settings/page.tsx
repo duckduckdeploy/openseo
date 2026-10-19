@@ -158,7 +158,7 @@ function ApiKeysCard() {
         </form>
         <ErrorNote error={create.error ?? remove.error} />
         {create.data && (
-          <div className="rounded-md border border-ink bg-sunken p-3">
+          <div className="rounded-md border border-edge bg-sunken p-3">
             <p className="text-[13px] font-medium">Copy this key now. It won't be shown again.</p>
             <div className="mt-2 flex items-center gap-2">
               <code className="min-w-0 flex-1 truncate font-mono text-xs">{create.data.key}</code>

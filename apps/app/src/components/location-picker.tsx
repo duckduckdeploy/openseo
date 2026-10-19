@@ -111,7 +111,7 @@ export function LocationPicker({
         }}
       />
       {showList && (
-        <ul id={listId} role="listbox" aria-label="Locations" className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-ink bg-surface py-1 shadow-hard-sm">
+        <ul id={listId} role="listbox" aria-label="Locations" className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-line bg-surface py-1 shadow-pop">
           {results.isPending && <li className="px-3 py-2 text-[13px] text-muted">Searching…</li>}
           {results.isSuccess && rows.length === 0 && <li className="px-3 py-2 text-[13px] text-muted">No matches</li>}
           {rows.map((row, index) => (

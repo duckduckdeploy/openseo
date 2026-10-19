@@ -32,6 +32,7 @@ import { ApiError } from "@/lib/api";
 import { signOut } from "@/lib/auth";
 import { useMe, useProject } from "@/lib/hooks";
 import { BalanceAlert, BalanceChip, BalancePanel } from "./balance";
+import { Logo } from "./logo";
 import { TOOLS } from "./research/tool-catalog";
 import { ThemeSwitcher } from "./theme";
 import { cx, Spinner } from "./ui";
@@ -60,7 +61,7 @@ function NavLink({ href, label, icon: Icon, active }: { href: string; label: str
       aria-current={active ? "page" : undefined}
       className={cx(
         "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px]",
-        active ? "bg-ink font-medium text-bg" : "text-muted hover:bg-sunken hover:text-ink",
+        active ? "bg-accent-soft font-medium text-accent-text" : "text-muted hover:bg-sunken hover:text-ink",
       )}
     >
       <Icon className="size-4 shrink-0" aria-hidden />
@@ -135,8 +136,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[232px_1fr]">
       <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-2.5 lg:hidden">
-        <Link href="/projects" className="font-display text-base font-semibold">
-          Open<span className="bg-accent px-1 text-accent-fg">SEO</span>
+        <Link href="/projects" className="text-base">
+          <Logo />
         </Link>
         <div className="flex items-center gap-2">
           <BalanceChip />
@@ -152,8 +153,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           open ? "flex" : "hidden",
         )}
       >
-        <Link href="/projects" className="mb-5 hidden px-2.5 pt-1 font-display text-lg font-semibold tracking-tight lg:block">
-          Open<span className="bg-accent px-1 text-accent-fg">SEO</span>
+        <Link href="/projects" className="mb-5 hidden px-2.5 pt-1 text-lg lg:block">
+          <Logo />
         </Link>
         <div className="flex-1 overflow-y-auto">
           {params.projectId ? (
@@ -189,7 +190,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <main className="min-w-0">
         {needsKey && !pathname.startsWith("/settings") && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-ink bg-accent px-4 py-2 text-[13px] text-accent-fg lg:px-8">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-accent bg-accent px-4 py-2 text-[13px] text-accent-fg lg:px-8">
             <KeyRound className="size-4" aria-hidden />
             <span>Add your YepAPI key to run research. For a limited time, new YepAPI accounts get $5 in free credit.</span>
             <Link href="/settings" className="font-semibold underline underline-offset-2">

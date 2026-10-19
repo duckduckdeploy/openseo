@@ -140,7 +140,7 @@ function Results({ project, rows, market, lookups }: { project: Project; rows: R
               role="radio"
               aria-checked={band === b.key}
               onClick={() => setBand(b.key)}
-              className={cx("rounded-md border px-3 py-1.5 text-left text-[13px] transition-colors", band === b.key ? "border-ink bg-ink text-bg" : "border-line hover:border-ink")}
+              className={cx("rounded-md border px-3 py-1.5 text-left text-[13px] transition-colors", band === b.key ? "border-accent-line bg-accent-soft text-accent-text" : "border-line hover:border-faint")}
             >
               <span className="font-medium">{b.label}</span>
               {b.note && <span className="ml-1 opacity-70">{b.note}</span>}

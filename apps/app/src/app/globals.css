@@ -1,33 +1,48 @@
 @import "tailwindcss";
 
-/* Tokens mirror apps/web/src/app/globals.css so the site and the app read as one product. */
+/* Tokens follow APPDESIGN.md: the website's warm blue (apps/web), tuned for reading data. */
 @theme {
-  --color-bg: #fafaf7;
+  --color-bg: #f5f2ec;
   --color-surface: #ffffff;
-  --color-sunken: #f1f1ec;
-  --color-ink: #111210;
-  --color-muted: #5c5e57;
-  --color-faint: #8b8d85;
-  --color-line: #deded6;
-  --color-accent: #2563eb;
+  --color-sunken: #f3efe8;
+  --color-ink: #17130f;
+  --color-muted: #544c44;
+  --color-faint: #70665c;
+  --color-line: #e9e3d9;
+  --color-edge: #d9cec0;
+  --color-accent: #2350e6;
+  --color-accent-hover: #1b3fc2;
   --color-accent-fg: #ffffff;
-  --color-accent-text: #1d4ed8;
+  --color-accent-text: #1c44cf;
+  --color-accent-soft: #e8eeff;
+  --color-accent-line: #c6d4fd;
   --color-pos: #0f7b4a;
   --color-neg: #c2321f;
-  --color-warn: #a35f00;
+  --color-warn: #9a5800;
+  --color-price: #b5470c;
+  --color-price-bg: #fdeee2;
+  --color-other: #cfc6ba;
+
+  /* Chart series, in this order, never cycled (APPDESIGN.md 3.3) */
+  --color-series-1: #2350e6;
+  --color-series-2: #eb6834;
+  --color-series-3: #1baf7a;
+  --color-series-4: #eda100;
+  --color-series-5: #e87ba4;
+  --color-series-6: #008300;
+  --color-series-7: #6250d6;
 
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
 
-  --color-shadow: #111210;
-
-  --shadow-hard-sm: 2px 2px 0 0 var(--color-shadow);
-  --shadow-hard: 4px 4px 0 0 var(--color-shadow);
+  --shadow-card: 0 1px 2px rgb(23 19 15 / 0.05);
+  --shadow-pop: 0 8px 24px -6px rgb(23 19 15 / 0.18), 0 2px 6px rgb(23 19 15 / 0.08);
 }
 
 @layer base {
@@ -43,39 +58,69 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --color-bg: #0d0f13;
-      --color-surface: #151820;
-      --color-sunken: #1d212b;
-      --color-ink: #eceef3;
-      --color-muted: #a1a7b4;
-      --color-faint: #6f7685;
-      --color-line: #2a2f3b;
-      --color-accent: #3b7bf6;
+      --color-bg: #12100d;
+      --color-surface: #1b1714;
+      --color-sunken: #241f1b;
+      --color-ink: #f3ece3;
+      --color-muted: #c2b6a8;
+      --color-faint: #998c7f;
+      --color-line: #2e2823;
+      --color-edge: #453b33;
+      --color-accent: #3a66f0;
+      --color-accent-hover: #2f58de;
       --color-accent-fg: #ffffff;
-      --color-accent-text: #8cb4ff;
+      --color-accent-text: #a3bcff;
+      --color-accent-soft: #1d2546;
+      --color-accent-line: #33427a;
       --color-pos: #4ade94;
       --color-neg: #ff7a66;
       --color-warn: #f5b041;
-      --color-shadow: #000000;
+      --color-price: #ffc7a1;
+      --color-price-bg: #3a2618;
+      --color-other: #4a4038;
+      --color-series-1: #5b84f5;
+      --color-series-2: #d95926;
+      --color-series-3: #199e70;
+      --color-series-4: #c98500;
+      --color-series-5: #d55181;
+      --color-series-6: #008300;
+      --color-series-7: #9085e9;
+      --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+      --shadow-pop: 0 10px 28px -6px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.35);
     }
   }
 
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --color-bg: #0d0f13;
-    --color-surface: #151820;
-    --color-sunken: #1d212b;
-    --color-ink: #eceef3;
-    --color-muted: #a1a7b4;
-    --color-faint: #6f7685;
-    --color-line: #2a2f3b;
-    --color-accent: #3b7bf6;
+    --color-bg: #12100d;
+    --color-surface: #1b1714;
+    --color-sunken: #241f1b;
+    --color-ink: #f3ece3;
+    --color-muted: #c2b6a8;
+    --color-faint: #998c7f;
+    --color-line: #2e2823;
+    --color-edge: #453b33;
+    --color-accent: #3a66f0;
+    --color-accent-hover: #2f58de;
     --color-accent-fg: #ffffff;
-    --color-accent-text: #8cb4ff;
+    --color-accent-text: #a3bcff;
+    --color-accent-soft: #1d2546;
+    --color-accent-line: #33427a;
     --color-pos: #4ade94;
     --color-neg: #ff7a66;
     --color-warn: #f5b041;
-    --color-shadow: #000000;
+    --color-price: #ffc7a1;
+    --color-price-bg: #3a2618;
+    --color-other: #4a4038;
+    --color-series-1: #5b84f5;
+    --color-series-2: #d95926;
+    --color-series-3: #199e70;
+    --color-series-4: #c98500;
+    --color-series-5: #d55181;
+    --color-series-6: #008300;
+    --color-series-7: #9085e9;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-pop: 0 10px 28px -6px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.35);
   }
 
   body {
@@ -88,8 +133,18 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-ink);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) :focus-visible {
+      outline-color: var(--color-accent-text);
+    }
+  }
+
+  :root[data-theme="dark"] :focus-visible {
+    outline-color: var(--color-accent-text);
   }
 
   ::selection {

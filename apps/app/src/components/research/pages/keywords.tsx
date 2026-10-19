@@ -179,7 +179,7 @@ export function KeywordResearch({ project }: { project: Project }) {
                 type="button"
                 aria-current={view === key ? "page" : undefined}
                 onClick={() => setFilter({ view: key === "all" ? undefined : key })}
-                className={cx("rounded-full border px-3 py-1 text-[13px]", view === key ? "border-ink bg-ink text-bg" : "border-line text-muted hover:border-ink hover:text-ink")}
+                className={cx("rounded-full border px-3 py-1 text-[13px]", view === key ? "border-accent-line bg-accent-soft font-medium text-accent-text" : "border-line text-muted hover:border-faint hover:text-ink")}
               >
                 {label} <span className="font-mono text-xs opacity-80">{loading ? "…" : num(counts[key])}</span>
               </button>

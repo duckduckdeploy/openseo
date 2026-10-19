@@ -193,7 +193,7 @@ export function SearchBar({
   const trimmed = text.trim();
   return (
     <form
-      className="mb-8 rounded-xl border border-line bg-surface p-3 shadow-hard-sm sm:p-4"
+      className="mb-8 rounded-xl border border-line bg-surface p-3 shadow-card sm:p-4"
       onSubmit={(event) => {
         event.preventDefault();
         if (trimmed) onSearch(trimmed);

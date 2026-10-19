@@ -95,7 +95,7 @@ export default function ProjectsPage() {
       )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {projects.data?.map((project) => (
-          <Link key={project.id} href={`/p/${project.id}`} className="rounded-lg border border-line bg-surface p-4 transition-shadow hover:border-ink hover:shadow-hard-sm">
+          <Link key={project.id} href={`/p/${project.id}`} className="rounded-lg border border-line bg-surface p-4 transition-shadow hover:border-edge hover:shadow-card">
             <p className="truncate font-display text-base font-semibold">{project.name}</p>
             <p className="truncate font-mono text-xs text-muted">{project.domain ?? "no domain"}</p>
             <p className="mt-4 text-xs text-faint">

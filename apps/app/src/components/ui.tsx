@@ -21,8 +21,8 @@ export function Button({ variant = "secondary", size = "md", loading, className,
       className={cx(
         "inline-flex items-center justify-center gap-2 rounded-md border font-medium whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50",
         size === "sm" ? "h-8 px-2.5 text-[13px]" : "h-9 px-3.5 text-sm",
-        variant === "primary" && "border-ink bg-accent text-accent-fg shadow-hard-sm hover:brightness-95 active:translate-x-px active:translate-y-px active:shadow-none",
-        variant === "secondary" && "border-line bg-surface text-ink hover:border-ink",
+        variant === "primary" && "border-accent bg-accent text-accent-fg shadow-card hover:border-accent-hover hover:bg-accent-hover",
+        variant === "secondary" && "border-edge bg-surface text-ink hover:border-faint",
         variant === "ghost" && "border-transparent text-muted hover:bg-sunken hover:text-ink",
         variant === "danger" && "border-line bg-surface text-neg hover:border-neg",
         className,
@@ -35,7 +35,7 @@ export function Button({ variant = "secondary", size = "md", loading, className,
 }
 
 const field =
-  "h-9 w-full rounded-md border border-line bg-surface px-3 text-sm text-ink placeholder:text-faint hover:border-faint focus:border-ink focus:outline-none disabled:opacity-50";
+  "h-9 w-full rounded-md border border-edge bg-surface px-3 text-sm text-ink placeholder:text-faint hover:border-faint focus:border-accent focus:ring-3 focus:ring-accent/20 focus:outline-none disabled:opacity-50";
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...rest} className={cx(field, className)} />;
@@ -113,7 +113,7 @@ export function Badge({ tone = "neutral", children }: { tone?: "neutral" | "pos"
         tone === "pos" && "border-pos/40 text-pos",
         tone === "neg" && "border-neg/40 text-neg",
         tone === "warn" && "border-warn/40 text-warn",
-        tone === "accent" && "border-ink bg-accent text-accent-fg",
+        tone === "accent" && "border-accent-line bg-accent-soft text-accent-text",
       )}
     >
       {children}
@@ -155,7 +155,7 @@ export function CostNote({ min, max, note }: { min: number; max?: number; note?:
   const range = max !== undefined && max !== min ? `${usd(min)} – ${usd(max)}` : usd(min);
   return (
     <span className="inline-flex items-center gap-1.5 font-mono text-xs text-muted">
-      <span className="rounded-sm bg-sunken px-1.5 py-0.5 text-ink tabular">{range}</span>
+      <span className="rounded-sm bg-price-bg px-1.5 py-0.5 font-medium text-price tabular">{range}</span>
       {note ?? "from your YepAPI balance"}
     </span>
   );

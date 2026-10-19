@@ -25,7 +25,7 @@ export default function ToolsIndex() {
                 <li key={tool.slug}>
                   <Link
                     href={`/tools/${tool.slug}`}
-                    className="group flex h-full flex-col rounded-lg border border-line bg-surface p-4 transition-colors hover:border-ink"
+                    className="group flex h-full flex-col rounded-lg border border-line bg-surface p-4 transition-colors hover:border-faint"
                   >
                     <span className="mb-3 grid size-9 place-items-center rounded-md bg-accent text-accent-fg">
                       <tool.icon className="size-4.5" aria-hidden />

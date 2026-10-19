@@ -61,8 +61,8 @@ function FollowSplit({ dofollow, nofollow }: { dofollow: N; nofollow: N }) {
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Dofollow / nofollow</p>
       <p className="mt-1 font-display text-2xl font-semibold tabular">{share == null ? "—" : `${Math.round(share)}%`}</p>
       {share != null && (
-        <div className="mt-1.5 flex h-2 overflow-hidden rounded-sm border border-ink bg-sunken" role="img" aria-label={`${Math.round(share)}% dofollow, ${100 - Math.round(share)}% nofollow`}>
-          <div className="bg-ink" style={{ width: `${share}%` }} />
+        <div className="mt-1.5 flex h-2 overflow-hidden rounded-sm bg-sunken" role="img" aria-label={`${Math.round(share)}% dofollow, ${100 - Math.round(share)}% nofollow`}>
+          <div className="bg-accent" style={{ width: `${share}%` }} />
         </div>
       )}
       <p className="mt-1.5 text-xs text-muted">
@@ -486,11 +486,11 @@ export function Backlinks({ project }: { project: Project }) {
             </h1>
             <div className="flex flex-wrap gap-2">
               {isPage(target) ? (
-                <Link href={toolLinks.page(target, market)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[13px] hover:border-ink">
+                <Link href={toolLinks.page(target, market)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[13px] hover:border-faint">
                   <FileSearch className="size-3.5" aria-hidden /> Analyse this page
                 </Link>
               ) : (
-                <Link href={toolLinks.domain(target, market)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[13px] hover:border-ink">
+                <Link href={toolLinks.domain(target, market)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[13px] hover:border-faint">
                   <Globe className="size-3.5" aria-hidden /> Domain overview
                 </Link>
               )}

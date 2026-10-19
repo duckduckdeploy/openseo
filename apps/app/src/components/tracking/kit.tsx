@@ -105,7 +105,7 @@ export function Segmented<T extends string>({
           role="radio"
           aria-checked={option.id === value}
           onClick={() => onChange(option.id)}
-          className={cx("h-7 rounded-sm px-2.5 text-[13px] font-medium", option.id === value ? "bg-ink text-bg" : "text-muted hover:text-ink")}
+          className={cx("h-7 rounded-sm px-2.5 text-[13px] font-medium", option.id === value ? "bg-surface text-ink shadow-card" : "text-muted hover:text-ink")}
         >
           {option.label}
         </button>
@@ -159,7 +159,7 @@ export function Tabs<T extends string>({
             }}
             className={cx(
               "-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2 text-[13px] font-medium whitespace-nowrap focus-visible:-outline-offset-2",
-              selected ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink",
+              selected ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink",
             )}
           >
             {tab.label}
@@ -233,7 +233,7 @@ export function SidePanel({
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="my-0 mr-0 ml-auto h-dvh max-h-dvh w-full max-w-xl border-l border-ink bg-surface p-0 text-ink backdrop:bg-bg/70"
+      className="my-0 mr-0 ml-auto h-dvh max-h-dvh w-full max-w-xl border-l border-line bg-surface shadow-pop p-0 text-ink backdrop:bg-bg/70"
     >
       {open && (
         <div className="flex h-full flex-col">
@@ -286,7 +286,7 @@ export function ConfirmDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-ink bg-surface p-0 text-ink shadow-hard backdrop:bg-bg/70"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-pop backdrop:bg-bg/70"
     >
       {open && (
         <div className="space-y-3 p-4">
@@ -323,7 +323,7 @@ export function ProgressBar({ done, total, label }: { done: number; total: numbe
       aria-valuenow={known ? done : undefined}
       className="h-2 w-full overflow-hidden rounded-sm border border-line bg-sunken"
     >
-      <div className={cx("h-full bg-ink transition-[width]", !known && "w-1/4 animate-pulse")} style={known ? { width: `${width}%` } : undefined} />
+      <div className={cx("h-full bg-accent transition-[width]", !known && "w-1/4 animate-pulse")} style={known ? { width: `${width}%` } : undefined} />
     </div>
   );
 }
@@ -355,7 +355,7 @@ export function RunProgress({
   totalIsLimit?: boolean;
 }) {
   return (
-    <Card className="mb-5 border-ink p-4" >
+    <Card className="mb-5 border-accent-line p-4" >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <StatusBadge status={status} />

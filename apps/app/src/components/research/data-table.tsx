@@ -51,7 +51,7 @@ function HeaderCheckbox({ state, onToggle }: { state: "none" | "some" | "all"; o
   useEffect(() => {
     if (ref.current) ref.current.indeterminate = state === "some";
   }, [state]);
-  return <input ref={ref} type="checkbox" className="size-3.5 accent-(--color-ink)" checked={state === "all"} onChange={onToggle} aria-label="Select all rows" />;
+  return <input ref={ref} type="checkbox" className="size-3.5 accent-(--color-accent)" checked={state === "all"} onChange={onToggle} aria-label="Select all rows" />;
 }
 
 const cell = "border-b border-line px-3 py-2";
@@ -158,7 +158,7 @@ export function DataTable<T>({ rows, columns, rowKey, caption, initialSort = nul
                   <td className={cx(cell, "w-9 pr-0")}>
                     <input
                       type="checkbox"
-                      className="size-3.5 accent-(--color-ink)"
+                      className="size-3.5 accent-(--color-accent)"
                       checked={isSelected}
                       onChange={() => toggleRow(key)}
                       aria-label={`Select ${selection.label(row)}`}

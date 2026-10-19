@@ -179,7 +179,7 @@ function FindTab({ projectId, business, onChoose }: { projectId: string; busines
               {lookup.data.results.map((place) => {
                 const mine = business?.id === place.id;
                 return (
-                  <li key={place.id} className={cx("flex flex-col gap-2 rounded-lg border bg-surface p-4", mine ? "border-ink shadow-hard-sm" : "border-line")}>
+                  <li key={place.id} className={cx("flex flex-col gap-2 rounded-lg border bg-surface p-4", mine ? "border-accent shadow-card" : "border-line")}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <h3 className="font-display text-base font-semibold break-words">{place.name}</h3>
@@ -417,7 +417,7 @@ function ReviewsTab({ projectId, business }: { projectId: string; business: Busi
                         {row.stars} {row.stars === 1 ? "star" : "stars"}
                       </span>
                       <span className="h-2.5 flex-1 rounded-sm bg-sunken" aria-hidden>
-                        <span className="block h-full rounded-sm bg-ink" style={{ width: `${(row.count / most) * 100}%` }} />
+                        <span className="block h-full rounded-sm bg-accent" style={{ width: `${(row.count / most) * 100}%` }} />
                       </span>
                       <span className="w-8 shrink-0 text-right font-mono text-xs tabular">{row.count}</span>
                     </li>
@@ -468,7 +468,7 @@ const TIER: Record<Tier, { label: string; className: string }> = {
   strong: { label: "1–3 strong", className: "bg-pos text-white" },
   medium: { label: "4–10 medium", className: "bg-warn text-white" },
   weak: { label: "11–20 weak", className: "bg-neg text-white" },
-  none: { label: "Not found", className: "bg-faint text-white" },
+  none: { label: "Not found", className: "bg-other text-ink" },
   error: { label: "Search failed", className: "bg-surface text-neg" },
   pending: { label: "Waiting", className: "bg-surface/80 text-faint" },
 };
@@ -818,7 +818,7 @@ function LocalView() {
         <Spinner />
       ) : (
         <>
-          <Card className={cx("mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3", business && "border-ink")}>
+          <Card className={cx("mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3", business && "border-accent-line")}>
             <div className="flex min-w-0 items-start gap-2.5">
               <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
               <div className="min-w-0">

@@ -8,7 +8,6 @@ import type { BacklinksHistoryPoint, N } from "./types";
 import { chronological, finite, monthLabel } from "./util";
 
 // Colours come from the theme tokens, so every chart follows light and dark mode.
-const INK = "var(--color-ink)";
 const MUTED = "var(--color-muted)";
 const LINE = "var(--color-line)";
 const tick = { fill: MUTED, fontSize: 11, fontFamily: "var(--font-mono)" };
@@ -21,11 +20,11 @@ function ChartTooltip({ active, payload, label, title }: TipProps & { title?: (l
   if (!active || !payload?.length) return null;
   const heading = String(label ?? "");
   return (
-    <div className="rounded-md border border-ink bg-surface px-2.5 py-2 shadow-hard-sm">
+    <div className="rounded-md border border-line bg-surface px-2.5 py-2 shadow-pop">
       <p className="mb-1 font-mono text-[11px] uppercase tracking-wide text-muted">{title ? title(heading) : heading}</p>
       {payload.map((entry) => (
         <p key={String(entry.dataKey ?? entry.name)} className="flex items-center gap-2 font-mono text-xs text-ink tabular">
-          <span className="size-2 shrink-0 rounded-sm border border-ink" style={{ background: entry.color }} aria-hidden />
+          <span className="size-2 shrink-0 rounded-sm" style={{ background: entry.color }} aria-hidden />
           <span className="text-muted">{String(entry.name ?? "")}</span>
           <span className="ml-auto pl-3">{finite(entry.value) ? num(Math.abs(entry.value)) : "—"}</span>
         </p>
@@ -37,7 +36,7 @@ function ChartTooltip({ active, payload, label, title }: TipProps & { title?: (l
 function Swatch({ color, children }: { color: string; children: ReactNode }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="size-2.5 rounded-sm border border-ink" style={{ background: color }} aria-hidden />
+      <span className="size-2.5 rounded-sm" style={{ background: color }} aria-hidden />
       {children}
     </span>
   );
@@ -83,7 +82,7 @@ export function PositionDistribution({ positions }: { positions: Record<string, 
         <span className="font-mono text-[11px] uppercase tracking-wide text-muted">Keywords by Google position</span>
         <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
           <Swatch color="var(--color-accent)">Top 10 ({num(top10)})</Swatch>
-          <Swatch color={INK}>11–100 ({num(all - top10)})</Swatch>
+          <Swatch color="var(--color-other)">11–100 ({num(all - top10)})</Swatch>
         </span>
       </figcaption>
       <DistributionChart buckets={buckets} values={false} className="h-52" />
@@ -110,7 +109,7 @@ export function HistoryLine({ history, dataKey, title }: { history: BacklinksHis
           <XAxis dataKey="month" tick={tick} tickLine={false} axisLine={axis} minTickGap={28} />
           <YAxis tick={tick} tickLine={false} axisLine={false} width={44} domain={["auto", "auto"]} tickFormatter={(value: number) => compact(value)} />
           <Tooltip cursor={{ stroke: MUTED, strokeDasharray: "3 3" }} content={(props) => <ChartTooltip {...(props as TipProps)} />} />
-          <Line type="monotone" dataKey="value" name={title} stroke={INK} strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "var(--color-accent)", stroke: INK, strokeWidth: 1.5 }} isAnimationActive={false} />
+          <Line type="monotone" dataKey="value" name={title} stroke="var(--color-accent)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "var(--color-accent)", stroke: "var(--color-surface)", strokeWidth: 2 }} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </ChartFrame>
@@ -143,7 +142,7 @@ export function NewLostBars({ history, newKey, lostKey, title }: { history: Back
           <XAxis dataKey="month" tick={tick} tickLine={false} axisLine={false} minTickGap={28} />
           <YAxis tick={tick} tickLine={false} axisLine={false} width={44} tickFormatter={(value: number) => compact(Math.abs(value))} allowDecimals={false} />
           <Tooltip cursor={{ fill: "var(--color-sunken)" }} content={(props) => <ChartTooltip {...(props as TipProps)} />} />
-          <ReferenceLine y={0} stroke={INK} />
+          <ReferenceLine y={0} stroke="var(--color-faint)" />
           <Bar dataKey="gained" name="New" stackId="movement" fill="var(--color-pos)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
           <Bar dataKey="lost" name="Lost" stackId="movement" fill="var(--color-neg)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
         </BarChart>

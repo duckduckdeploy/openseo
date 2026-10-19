@@ -303,7 +303,7 @@ function SavedKeywords({ project }: { project: Project }) {
           title="No saved keywords yet"
           action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Link href={`/p/${project.id}/keywords`} className="inline-flex h-9 items-center rounded-md border border-ink bg-accent px-3.5 text-sm font-medium text-accent-fg shadow-hard-sm hover:brightness-95">
+              <Link href={`/p/${project.id}/keywords`} className="inline-flex h-9 items-center rounded-md border border-accent bg-accent px-3.5 text-sm font-medium text-accent-fg shadow-card hover:brightness-95">
                 Research keywords
               </Link>
               <Button onClick={() => setMode("add")}>Add keywords manually</Button>
@@ -345,7 +345,7 @@ function SavedKeywords({ project }: { project: Project }) {
                       onClick={() => setUrl({ tag: item.tag, page: null })}
                       className={cx(
                         "rounded-sm border px-2 py-1 font-mono text-[11px] leading-none",
-                        active ? "border-ink bg-ink text-bg" : "border-line text-muted hover:border-ink hover:text-ink",
+                        active ? "border-accent-line bg-accent-soft font-medium text-accent-text" : "border-line text-muted hover:border-faint hover:text-ink",
                       )}
                     >
                       {item.tag || "All"}
@@ -357,7 +357,7 @@ function SavedKeywords({ project }: { project: Project }) {
             )}
 
             {ids.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-ink bg-sunken px-3 py-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-edge bg-sunken px-3 py-2">
                 <p className="font-mono text-xs tabular" aria-live="polite">
                   {num(ids.length)} selected
                 </p>

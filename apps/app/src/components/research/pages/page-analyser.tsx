@@ -173,11 +173,11 @@ export function PageAnalyser({ project }: { project: Project }) {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href={toolLinks.backlinks(url)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[13px] hover:border-ink">
+              <Link href={toolLinks.backlinks(url)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[13px] hover:border-faint">
                 <Link2 className="size-3.5" aria-hidden /> All backlinks
               </Link>
               {host && (
-                <Link href={toolLinks.domain(host, market)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[13px] hover:border-ink">
+                <Link href={toolLinks.domain(host, market)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[13px] hover:border-faint">
                   <Globe className="size-3.5" aria-hidden /> Domain overview of {host}
                 </Link>
               )}
