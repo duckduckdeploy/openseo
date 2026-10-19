@@ -67,7 +67,7 @@ export const UNLISTED_PRICE_LABEL = 'Shown in the app before it runs';
 
 export const features: Feature[] = [
   {
-    slug: 'rank-tracking',
+    slug: 'keyword-rank-tracker',
     seoTitle: 'Keyword Rank Tracker: Open-Source Google Rank Tracking',
     h1: 'Keyword rank tracker',
     description: 'Track Google rankings on desktop and mobile by country, city or exact coordinates. Every check reads the top 100, on your schedule or on demand.',
@@ -124,7 +124,7 @@ export const features: Feature[] = [
       '100 keywords on desktop cost $10 a run: about $43 a month checked weekly, or $300 checked daily.',
   },
   {
-    slug: 'search-performance',
+    slug: 'search-console-dashboard',
     seoTitle: 'Google Search Console Dashboard with GA4 Data',
     h1: 'Google Search Console dashboard',
     description: 'Connect Google Search Console and GA4 read-only. Find striking-distance queries at positions 5 to 20 and the pages most worth improving. Free.',
@@ -214,7 +214,7 @@ export const features: Feature[] = [
     ],
   },
   {
-    slug: 'ai-visibility',
+    slug: 'ai-visibility-tracker',
     seoTitle: 'AI Visibility Tracker: GEO Tool for ChatGPT and Gemini',
     h1: 'AI visibility tracker',
     description: 'Track whether ChatGPT, Gemini, Claude, Perplexity and 120+ AI models mention your brand and cite your site, prompt by prompt, over time.',
@@ -299,7 +299,7 @@ export const features: Feature[] = [
     ],
   },
   {
-    slug: 'mcp-and-api',
+    slug: 'seo-mcp-server',
     seoTitle: 'SEO MCP Server and SEO API for AI Agents',
     h1: 'SEO MCP server and API',
     description: 'An SEO MCP server with 66 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',

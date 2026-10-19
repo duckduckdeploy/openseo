@@ -32,7 +32,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Type any keyword into the keyword overview to see its volume, difficulty, traffic potential and the live top 10 in any country, state or city.',
-      href: '/tools/keyword-overview',
+      href: '/tools/keyword-analysis-tool',
       label: 'Open the keyword overview',
     },
     related: ['keyword-research', 'search-volume', 'keyword-difficulty', 'search-intent', 'primary-keyword', 'long-tail-keywords'],
@@ -90,7 +90,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s keyword ideas tool expands a seed into matching terms, related searches, questions and Google suggestions with volume, difficulty, CPC, intent and a 12-month trend. The keyword research tutorial walks through the whole process.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Open keyword ideas',
     },
     related: ['keyword', 'seed-keyword', 'search-volume', 'keyword-difficulty', 'search-intent', 'long-tail-keywords', 'keyword-clustering', 'keyword-mapping', 'keyword-gap', 'seo-strategy'],
@@ -142,7 +142,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Enter a seed in keyword ideas to get matching terms, related searches, questions and Google suggestions, each with volume and difficulty.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Expand a seed keyword',
     },
     related: ['keyword-research', 'keyword', 'long-tail-keywords', 'head-terms', 'question-keywords'],
@@ -193,7 +193,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas lists matching terms, questions and Google suggestions for any seed with volume and difficulty, so you can filter down to low-competition long-tail terms.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find long-tail keywords',
     },
     related: ['head-terms', 'keyword-research', 'seed-keyword', 'question-keywords', 'zero-volume-keywords', 'parent-topic', 'keyword-difficulty'],
@@ -296,7 +296,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The keyword overview shows a keyword’s volume, volume by country and traffic potential; keyword ideas adds a 12-month trend for every suggestion.',
-      href: '/tools/keyword-overview',
+      href: '/tools/keyword-analysis-tool',
       label: 'Check search volume',
     },
     related: ['keyword-research', 'traffic-potential', 'seasonality', 'keyword-trend', 'clickstream-data', 'zero-volume-keywords', 'zero-click-searches', 'impressions'],
@@ -406,7 +406,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas shows CPC for every suggestion next to volume, difficulty and intent.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'See CPC for your keywords',
     },
     related: ['traffic-value', 'commercial-intent', 'transactional-intent', 'paid-results', 'search-engine-marketing', 'keyword-research'],
@@ -450,7 +450,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The keyword overview shows traffic potential next to volume and difficulty for any keyword.',
-      href: '/tools/keyword-overview',
+      href: '/tools/keyword-analysis-tool',
       label: 'Check traffic potential',
     },
     related: ['search-volume', 'parent-topic', 'organic-traffic', 'keyword-research', 'organic-ctr-curve'],
@@ -555,7 +555,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas tags each keyword with its intent and lists questions for any topic, so you can find informational terms worth a guide.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find informational keywords',
     },
     related: ['search-intent', 'question-keywords', 'featured-snippet', 'people-also-ask', 'commercial-intent', 'content-marketing'],
@@ -599,7 +599,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Rank tracking monitors your brand keywords in Google on desktop and mobile, including the SERP features that appear.',
-      href: '/features/rank-tracking',
+      href: '/features/keyword-rank-tracker',
       label: 'Track brand keywords',
     },
     related: ['search-intent', 'branded-keywords', 'sitelinks', 'knowledge-panel', 'informational-intent'],
@@ -644,7 +644,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas labels commercial keywords and shows CPC, and the competitors tool finds the comparison keywords rivals rank for and you do not.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find commercial keywords',
     },
     related: ['search-intent', 'transactional-intent', 'informational-intent', 'comparison-pages', 'cost-per-click', 'thin-affiliate-pages'],
@@ -689,7 +689,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas tags transactional keywords and shows their CPC, and rank tracking follows your product pages’ positions, including shopping and other SERP features.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find transactional keywords',
     },
     related: ['search-intent', 'commercial-intent', 'cost-per-click', 'ecommerce-seo', 'shopping-results', 'landing-page'],
@@ -734,7 +734,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser checks a page’s title, description and headings and lists the keywords it already ranks for, so you can confirm it targets the right one.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Analyse a page',
     },
     related: ['secondary-keywords', 'keyword-mapping', 'keyword-cannibalization', 'title-tag', 'h1-tag', 'keyword-clustering'],
@@ -777,7 +777,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser lists every keyword a ranking page gets traffic from, a quick source of secondary keywords for your own version.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'See what a page ranks for',
     },
     related: ['primary-keyword', 'keyword-clustering', 'lsi-keywords', 'keyword-mapping', 'header-tags'],
@@ -821,7 +821,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Connect Search Console in OpenSEO to read your queries with period comparisons, and track brand terms with rank tracking.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Read your Search Console data',
     },
     related: ['navigational-intent', 'brand-mentions', 'google-search-console', 'sitelinks', 'entity'],
@@ -866,7 +866,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas has a questions list for any seed, with volume and difficulty for each question.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find question keywords',
     },
     related: ['informational-intent', 'people-also-ask', 'featured-snippet', 'long-tail-keywords', 'faq-page', 'answer-engine-optimization'],
@@ -913,7 +913,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Connect Search Console in OpenSEO to see which queries send impressions to more than one of your pages, and use rank tracking to spot URLs swapping places.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Check your queries',
     },
     related: ['keyword-mapping', 'primary-keyword', 'duplicate-content', 'canonical-tag', '301-redirect', 'content-pruning', 'content-audit'],
@@ -1009,7 +1009,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The domain overview lists your site’s top pages and the keywords they rank for, a quick starting point for a keyword map.',
-      href: '/tools/domain-overview',
+      href: '/tools/website-seo-analysis',
       label: 'See your top pages',
     },
     related: ['keyword-clustering', 'primary-keyword', 'keyword-cannibalization', 'site-architecture', 'internal-links', 'content-brief'],
@@ -1098,7 +1098,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser checks a page’s title, description and headings and shows which keywords it already ranks for, which is more useful than a density figure.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Analyse a page',
     },
     related: ['keyword-stuffing', 'primary-keyword', 'content-optimization', 'secondary-keywords', 'google-spam-policies'],
@@ -1148,7 +1148,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas lists related searches and questions for any keyword, and the page analyser shows every keyword a top page ranks for, which reveals the subtopics it covers.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find related terms',
     },
     related: ['secondary-keywords', 'semantic-search', 'entity', 'knowledge-graph', 'keyword-density', 'keyword-stuffing', 'content-optimization'],
@@ -1197,7 +1197,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas shows a 12-month trend for every keyword so you can spot seasonal peaks before you plan content.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'See keyword trends',
     },
     related: ['keyword-trend', 'search-volume', 'evergreen-content', 'content-refresh', 'freshness'],
@@ -1242,7 +1242,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Connect Search Console to OpenSEO to see real impressions for queries that keyword databases miss.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See your real queries',
     },
     related: ['long-tail-keywords', 'search-volume', 'google-search-console', 'impressions', 'question-keywords'],
@@ -1287,7 +1287,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s search performance view pulls striking-distance queries (positions 5-20) from Search Console with opportunity scores, so you can see which to work on first.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Find striking distance keywords',
     },
     related: ['google-search-console', 'average-position', 'impressions', 'organic-ctr-curve', 'content-refresh', 'internal-links'],
@@ -1398,7 +1398,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas shows a 12-month trend for every keyword next to its volume and difficulty.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'See keyword trends',
     },
     related: ['seasonality', 'search-volume', 'keyword-research', 'freshness', 'impressions'],

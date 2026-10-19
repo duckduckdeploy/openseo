@@ -212,7 +212,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
           </div>
         </section>
 
-        {feature.slug === 'search-performance' ? null : <YepapiOffer />}
+        {feature.slug === 'search-console-dashboard' ? null : <YepapiOffer />}
 
         {/* Glossary */}
         <div className="container-page border-t border-line py-20 md:py-28">

@@ -354,7 +354,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Search performance compares periods from your Search Console data, so you can see exactly which pages and queries lost clicks after an update.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Compare search performance',
     },
     related: ['manual-action', 'spambrain', 'core-update', 'google-algorithm-update', 'google-penalty-recovery', 'helpful-content'],
@@ -636,7 +636,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser checks a page’s title, description and headings and shows the keywords it actually ranks for, which helps you write naturally instead of repeating one phrase.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Analyse a page',
     },
     related: ['keyword-density', 'content-optimization', 'hidden-text', 'black-hat-seo', 'manual-action', 'lsi-keywords'],
@@ -994,7 +994,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Search performance shows which pages actually earn impressions and clicks, so you can find the low-value parts of a large page set to merge or prune.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Review page performance',
     },
     related: ['ai-generated-content', 'programmatic-seo', 'thin-content', 'doorway-pages', 'helpful-content', 'content-pruning'],
@@ -1047,7 +1047,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Domain overview shows which pages and keywords a domain ranks for, so a section ranking far outside the site’s topic is easy to spot.',
-      href: '/tools/domain-overview',
+      href: '/tools/website-seo-analysis',
       label: 'Open domain overview',
     },
     related: ['expired-domain-abuse', 'google-spam-policies', 'manual-action', 'sponsored-attribute', 'black-hat-seo', 'scaled-content-abuse'],
@@ -1398,7 +1398,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Search performance shows real clicks, impressions and CTR from Search Console for each query, so you can improve titles where real users skip your result.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Find low-CTR queries',
     },
     related: ['click-through-rate', 'automated-queries', 'title-tag', 'clickbait-titles', 'google-business-profile', 'black-hat-seo'],
@@ -1558,7 +1558,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Search performance shows which affiliate pages get impressions but few clicks, a good shortlist for improving or pruning.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Review page performance',
     },
     related: ['thin-content', 'scraped-content', 'information-gain', 'eeat', 'sponsored-attribute', 'comparison-pages'],
@@ -1605,7 +1605,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Search performance reads your Search Console data through Google’s own API, so you can see real clicks, impressions and positions for your site.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Connect Search Console',
     },
     related: ['ctr-manipulation', 'google-search-console', 'impressions', 'google-spam-policies', 'black-hat-seo'],
@@ -1707,7 +1707,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Search performance shows CTR by query from Search Console, so you can test better titles where you rank but few people click.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'Find low-CTR pages',
     },
     related: ['title-tag', 'click-through-rate', 'ctr-manipulation', 'google-discover', 'grey-hat-seo', 'search-engine-friendly-copywriting'],

@@ -74,15 +74,15 @@ Every tool is one search: type a keyword, domain or URL, pick a country (and a c
 
 | Area | What you get |
 |---|---|
-| 🔎 [Keyword overview](https://openseo.gg/tools/keyword-overview) | Difficulty, volume, traffic potential, volume by country, ideas and the live top 10 for one keyword, down to a city |
-| 💡 [Keyword ideas](https://openseo.gg/tools/keyword-ideas) | Matching terms, related searches, questions and suggestions with volume, CPC, difficulty, intent and trend; saved lists with tags |
+| 🔎 [Keyword overview](https://openseo.gg/tools/keyword-analysis-tool) | Difficulty, volume, traffic potential, volume by country, ideas and the live top 10 for one keyword, down to a city |
+| 💡 [Keyword ideas](https://openseo.gg/tools/keyword-generator) | Matching terms, related searches, questions and suggestions with volume, CPC, difficulty, intent and trend; saved lists with tags |
 | 📋 [SERP checker](https://openseo.gg/tools/serp-checker) | The live top 10 on desktop or mobile, with each result's DR, UR, links and traffic |
 | 📍 Rank tracking | Google positions on desktop and mobile, by country, city or exact coordinates, on a schedule. Every check reads the top 100, in the background on a schedule or on demand. History survives removing a keyword |
 | 📊 Search performance | Search Console and GA4: totals against the previous period, striking-distance queries, organic landing pages, opportunity scores |
-| 🌐 [Domain overview](https://openseo.gg/tools/domain-overview) | Estimated traffic, ranking distribution, top keywords, top pages, competitors |
-| 📄 [Page analyser](https://openseo.gg/tools/page-analyser) | One page's authority, links, traffic, on-page checks, keywords and backlinks |
+| 🌐 [Domain overview](https://openseo.gg/tools/website-seo-analysis) | Estimated traffic, ranking distribution, top keywords, top pages, competitors |
+| 📄 [Page analyser](https://openseo.gg/tools/on-page-seo-audit) | One page's authority, links, traffic, on-page checks, keywords and backlinks |
 | 🔗 [Backlink checker](https://openseo.gg/tools/backlink-checker) | Summary, monthly history, backlinks, referring domains, anchors, top pages, link intersect |
-| 🥊 [Competitors](https://openseo.gg/tools/competitors) | Organic and SERP competitors, keyword gap |
+| 🥊 [Competitors](https://openseo.gg/tools/seo-competitor-analysis) | Organic and SERP competitors, keyword gap |
 | 🩺 Site audit | Our own crawler with 59 checks and a health score; Lighthouse with failed audits rated by severity |
 | 🧠 AI visibility | Tracked prompts across many chat models with web search: mentions, citations, position, share of voice. Prompts that name your brand are left out of the rates |
 | 🗺️ Local SEO | Business lookup, profile, reviews, geo-grid rank maps |

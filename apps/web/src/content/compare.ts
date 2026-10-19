@@ -6,7 +6,7 @@ import type { Faq } from './pricing';
  * and the figures together, and never state a claim here that has not been checked.
  */
 export interface Comparison {
-  slug: 'ahrefs' | 'semrush';
+  slug: 'ahrefs-alternative' | 'semrush-alternative';
   name: string;
   checked: string;
   summary: string;
@@ -43,7 +43,7 @@ const sharedFaqs: Faq[] = [
 
 export const comparisons: Comparison[] = [
   {
-    slug: 'ahrefs',
+    slug: 'ahrefs-alternative',
     name: 'Ahrefs',
     checked: 'October 2026',
     summary: 'Ahrefs is a closed SEO suite on a monthly plan. OpenSEO is open source: you run it, own it, and pay only for the data you look up. Here is how they differ, and when Ahrefs is the better buy.',
@@ -79,7 +79,7 @@ export const comparisons: Comparison[] = [
     ],
   },
   {
-    slug: 'semrush',
+    slug: 'semrush-alternative',
     name: 'Semrush',
     checked: 'October 2026',
     summary: 'Semrush is a closed marketing suite on a monthly plan. OpenSEO is open source: you run it, own it, and pay only for the data you look up. Here is how they differ, and when Semrush is the better buy.',

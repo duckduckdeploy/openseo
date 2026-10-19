@@ -129,7 +129,7 @@ export const terms: GlossaryTerm[] = [
     why: [
       'Anchor text was one of the earliest signals Google used, from its original research paper onwards. It helps Google match a page to queries, sometimes even for words that do not appear on the page itself.',
       'Because it worked so well, it was heavily abused. Google’s Penguin update in 2012 targeted sites with unnatural, keyword-stuffed anchor profiles, and Google’s [spam policies](/glossary/google-spam-policies) still name links with optimised anchor text in articles, guest posts and press releases as an example of link spam. Over-optimised anchors are one of the clearest footprints of a [link scheme](/glossary/link-schemes).',
-      'For internal links, good anchors are a quick, safe win. Linking “see our [rank tracking](/features/rank-tracking) guide” instead of “click here” tells search engines and screen-reader users exactly where the link goes.',
+      'For internal links, good anchors are a quick, safe win. Linking “see our [rank tracking](/features/keyword-rank-tracker) guide” instead of “click here” tells search engines and screen-reader users exactly where the link goes.',
     ],
     how: {
       heading: 'How to choose anchor text',
@@ -399,7 +399,7 @@ export const terms: GlossaryTerm[] = [
       body: 'A bike-shop chain publishes a yearly study of bike theft by city, using police data. Local newspapers and cycling blogs cover the findings and link to the study page. Internal links from the study pass some of that authority to the shop’s service and product pages. No link was bought, and every link sits in a relevant article.',
     },
     openseo: {
-      body: 'The backlink checker shows your competitors’ strongest backlinks and top linked pages, and its link intersect finds sites that link to them but not you. The [competitors tool](/tools/competitors) helps you pick which sites to benchmark against.',
+      body: 'The backlink checker shows your competitors’ strongest backlinks and top linked pages, and its link intersect finds sites that link to them but not you. The [competitors tool](/tools/seo-competitor-analysis) helps you pick which sites to benchmark against.',
       href: '/tools/backlink-checker',
       label: 'Find link opportunities',
     },
@@ -514,7 +514,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s backlink and page tools show authority scores for domains and URLs, which are third-party estimates of link strength in the spirit of PageRank.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Analyse a page’s links',
     },
     related: ['link-equity', 'backlink', 'domain-rating', 'url-rating', 'domain-authority', 'search-algorithm', 'internal-links'],
@@ -612,7 +612,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser shows a page’s URL Rating alongside its links, traffic, ranking keywords and strongest backlinks.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Analyse a page',
     },
     related: ['domain-rating', 'pagerank', 'link-equity', 'backlink', 'internal-links'],
@@ -912,7 +912,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Check a prospective site’s real traffic, keywords and links in the domain overview before you write for it.',
-      href: '/tools/domain-overview',
+      href: '/tools/website-seo-analysis',
       label: 'Vet a guest post site',
     },
     related: ['link-building', 'link-schemes', 'paid-links', 'anchor-text', 'digital-pr', 'grey-hat-seo'],
@@ -1201,7 +1201,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Track how often AI assistants mention your brand with AI visibility, then turn web mentions into links.',
-      href: '/features/ai-visibility',
+      href: '/features/ai-visibility-tracker',
       label: 'Track brand mentions',
     },
     related: ['brand-mentions', 'link-reclamation', 'link-building', 'digital-pr', 'editorial-links'],
@@ -2152,7 +2152,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Use rank tracking with city-level locations to see how each location page ranks in its own area.',
-      href: '/features/rank-tracking',
+      href: '/features/keyword-rank-tracker',
       label: 'Track city rankings',
     },
     related: ['doorway-pages', 'local-business-schema', 'service-area-business', 'google-business-profile', 'landing-page', 'programmatic-seo'],

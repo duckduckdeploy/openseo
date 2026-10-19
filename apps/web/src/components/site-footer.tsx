@@ -34,7 +34,7 @@ export function SiteFooter() {
             {tools.map((tool) => (
               <li key={tool.slug}>
                 <Link href={`/tools/${tool.slug}`} className={linkClass}>
-                  {tool.name}
+                  {tool.h1}
                 </Link>
               </li>
             ))}

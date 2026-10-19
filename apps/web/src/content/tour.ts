@@ -19,7 +19,7 @@ export const tour: TourStop[] = [
     title: 'Keyword research: difficulty, volume and the top 10',
     lede: 'Type a keyword, pick a market, press Enter. Difficulty, volume, traffic potential, volume in other countries, ideas, questions and the live top 10 load together.',
     points: ['Difficulty with the links you need', 'Volume by country', 'Live top 10 with DR, links and traffic'],
-    href: '/tools/keyword-overview',
+    href: '/tools/keyword-analysis-tool',
     slides: [
       {
         name: 'search-bar',
@@ -75,7 +75,7 @@ export const tour: TourStop[] = [
     title: 'Keyword ideas around any topic',
     lede: 'Matching terms, related searches, questions and Google suggestions in one list, with volume, difficulty, intent and trend. Filter for free on what is loaded.',
     points: ['Filter by words, intent, volume and difficulty', 'Save to a project in one click', 'Export to CSV'],
-    href: '/tools/keyword-ideas',
+    href: '/tools/keyword-generator',
     slides: [
       {
         name: 'keyword-ideas',
@@ -107,7 +107,7 @@ export const tour: TourStop[] = [
     title: 'Website traffic and domain overview',
     lede: 'Traffic and what it is worth, keywords, links and authority, how rankings are spread and moving, its top keywords and pages, and who it competes with.',
     points: ['Top 100 keywords by traffic', 'Top 100 pages', 'Competitors one click away'],
-    href: '/tools/domain-overview',
+    href: '/tools/website-seo-analysis',
     slides: [
       {
         name: 'domain-overview',
@@ -135,7 +135,7 @@ export const tour: TourStop[] = [
     title: 'On-page SEO analysis of any URL',
     lede: 'Paste a URL: its authority, links and traffic, its title, description and headings checked, the keywords it ranks for and its strongest backlinks.',
     points: ['On-page checks', 'Keywords the page ranks for', 'Strongest backlinks'],
-    href: '/tools/page-analyser',
+    href: '/tools/on-page-seo-audit',
     slides: [
       {
         name: 'page-analyser',
@@ -191,7 +191,7 @@ export const tour: TourStop[] = [
     title: 'Competitor analysis and keyword gap',
     lede: 'Your organic competitors, then the keyword gap with any of them: the keywords only they rank for, and the ones you share, side by side.',
     points: ['Organic and SERP competitors', 'Keyword gap in one click', 'Save the opportunities'],
-    href: '/tools/competitors',
+    href: '/tools/seo-competitor-analysis',
     slides: [
       {
         name: 'competitors',
@@ -367,8 +367,8 @@ export const tourStop = (id: string) => [...tour, ...projectTour].find((stop) =>
 
 /** The tool screens a feature page shows, by feature slug. */
 export const featureTour: Record<string, string[]> = {
-  'rank-tracking': ['rank-tracking'],
+  'keyword-rank-tracker': ['rank-tracking'],
   'site-audit': ['site-audit'],
-  'ai-visibility': ['ai-tracking', 'ai-visibility'],
+  'ai-visibility-tracker': ['ai-tracking', 'ai-visibility'],
   'local-seo': ['local-grid', 'local-rank', 'local'],
 };

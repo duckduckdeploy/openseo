@@ -39,7 +39,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO covers the main parts of SEO in one open-source tool: keyword research, rank tracking, backlinks, a site audit and Search Console data. Start with the keyword overview to see what a topic is worth.',
-      href: '/tools/keyword-overview',
+      href: '/tools/keyword-analysis-tool',
       label: 'Open the keyword overview',
     },
     related: ['technical-seo', 'on-page-seo', 'off-page-seo', 'keyword-research', 'search-intent', 'eeat', 'crawling', 'indexing'],
@@ -137,7 +137,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s search performance view reads your Search Console and GA4 data and highlights queries in positions 5 to 20 that are closest to bringing more organic clicks.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['organic-traffic', 'paid-results', 'serp', 'seo', 'search-engine-marketing'],
@@ -254,7 +254,7 @@ export const terms: GlossaryTerm[] = [
     ],
     openseo: {
       body: 'Rank tracking in OpenSEO records your positions daily, weekly or monthly, so you can see when an algorithm change moved your pages.',
-      href: '/features/rank-tracking',
+      href: '/features/keyword-rank-tracker',
       label: 'See rank tracking',
     },
     related: ['ranking-factors', 'google-algorithm-update', 'core-update', 'pagerank', 'spambrain', 'helpful-content'],
@@ -296,7 +296,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser checks a page’s title, description and headings, its links and URL Rating, and the keywords it ranks for, so you can compare it with what ranks above it.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Open the page analyser',
     },
     related: ['search-algorithm', 'eeat', 'backlink', 'core-web-vitals', 'search-intent', 'local-ranking-factors'],
@@ -343,7 +343,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Rank tracking keeps a daily, weekly or monthly history of your positions and competitors’, so you can line up ranking moves with update dates.',
-      href: '/features/rank-tracking',
+      href: '/features/keyword-rank-tracker',
       label: 'See rank tracking',
     },
     related: ['core-update', 'search-algorithm', 'serp-volatility', 'algorithmic-penalty', 'helpful-content', 'spambrain'],
@@ -385,7 +385,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s search performance view compares periods in your Search Console data, which makes it easier to see which queries and pages moved after an update.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['google-algorithm-update', 'helpful-content', 'eeat', 'serp-volatility', 'content-audit'],
@@ -685,7 +685,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser checks a page’s title, description and headings, and shows the keywords it ranks for and its strongest backlinks.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Open the page analyser',
     },
     related: ['title-tag', 'meta-description', 'header-tags', 'internal-links', 'content-optimization', 'on-page-checklist', 'search-intent', 'technical-seo'],
@@ -855,7 +855,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO keyword tools show volume by country, and rank tracking checks positions in any country or city, so you can measure each market separately.',
-      href: '/tools/keyword-overview',
+      href: '/tools/keyword-analysis-tool',
       label: 'Open the keyword overview',
     },
     related: ['hreflang', 'lang-attribute', 'keyword-research', 'technical-seo', 'duplicate-content'],
@@ -898,7 +898,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas in OpenSEO show volume, difficulty, CPC and intent for product and category terms, which helps you map keywords to the right pages.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Open keyword ideas',
     },
     related: ['faceted-navigation', 'transactional-intent', 'structured-data', 'shopping-results', 'duplicate-content', 'index-bloat'],
@@ -940,7 +940,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s MCP server and REST API let agents and scripts run keyword, ranking and audit lookups at scale, with spending ceilings per call.',
-      href: '/features/mcp-and-api',
+      href: '/features/seo-mcp-server',
       label: 'See the MCP server and API',
     },
     related: ['technical-seo', 'crawl-budget', 'log-file-analysis', 'site-architecture', 'programmatic-seo', 'seo-reporting'],
@@ -983,7 +983,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword ideas finds matching terms with volume and difficulty, which helps you check how much demand a search pattern really has before you build pages for it.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Open keyword ideas',
     },
     related: ['scaled-content-abuse', 'doorway-pages', 'thin-content', 'long-tail-keywords', 'local-landing-pages', 'index-bloat'],
@@ -1198,7 +1198,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Keyword tools in OpenSEO show CPC alongside volume and difficulty, so you can see what a click would cost as an ad.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Open keyword ideas',
     },
     related: ['seo', 'paid-results', 'cost-per-click', 'organic-search', 'traffic-value'],
@@ -1284,7 +1284,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The competitors tool finds your organic competitors and the keyword gap between you, a good starting point for deciding which topics to target.',
-      href: '/tools/competitors',
+      href: '/tools/seo-competitor-analysis',
       label: 'Open the competitors tool',
     },
     related: ['keyword-research', 'keyword-gap', 'topic-cluster', 'seo-kpis', 'seo-audit', 'content-marketing'],
@@ -1377,7 +1377,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser checks any page’s title, description and headings and shows the keywords it ranks for. The site audit flags missing, duplicate and over-long titles across your whole site.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Open the page analyser',
     },
     related: ['title-tag-length', 'meta-description', 'h1-tag', 'click-through-rate', 'on-page-seo', 'clickbait-titles', 'open-graph'],
@@ -1477,7 +1477,7 @@ export const terms: GlossaryTerm[] = [
     example: { label: 'HTML', code: '<h1>How to make a sourdough starter</h1>' },
     openseo: {
       body: 'The page analyser checks a page’s headings, and the site audit flags missing or duplicate H1s across your site.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Open the page analyser',
     },
     related: ['header-tags', 'heading-hierarchy', 'title-tag', 'on-page-seo', 'primary-keyword'],
@@ -1523,7 +1523,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser lists a page’s headings so you can check its structure against competing pages.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Open the page analyser',
     },
     related: ['h1-tag', 'heading-hierarchy', 'featured-snippet', 'readability', 'on-page-seo'],
@@ -2145,7 +2145,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser lists a page’s headings in order, so you can spot missing or skipped levels.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Open the page analyser',
     },
     related: ['header-tags', 'h1-tag', 'readability', 'featured-snippet', 'on-page-seo'],
@@ -2189,7 +2189,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s search performance view finds striking-distance queries in positions 5 to 20 and gives them opportunity scores, a ready-made list of pages to optimise.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['on-page-seo', 'content-refresh', 'striking-distance-keywords', 'search-intent', 'content-decay', 'information-gain', 'keyword-stuffing'],
@@ -2238,7 +2238,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The page analyser checks a single page’s title, description and headings, and the site audit runs 59 technical checks across the whole site.',
-      href: '/tools/page-analyser',
+      href: '/tools/on-page-seo-audit',
       label: 'Open the page analyser',
     },
     related: ['on-page-seo', 'title-tag', 'meta-description', 'header-tags', 'alt-text', 'internal-links', 'seo-audit'],

@@ -73,7 +73,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
             faqPage(tool.faqs),
             breadcrumbList([
               { name: 'SEO tools', path: '/tools' },
-              { name: tool.name, path: `/tools/${tool.slug}` },
+              { name: tool.h1, path: `/tools/${tool.slug}` },
             ]),
           ],
         }}
@@ -92,7 +92,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
                 /
               </span>
               <span aria-current="page" className="font-medium text-ink">
-                {tool.name}
+                {tool.h1}
               </span>
             </nav>
             <div className="mx-auto mt-10 max-w-3xl text-center">
@@ -181,7 +181,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
             <div className="mx-auto max-w-3xl text-center">
               <p className="eyebrow">Use it to</p>
               <h2 id="uses-title" className="text-title mt-4">
-                {tool.name} use cases
+                {tool.h1} use cases
               </h2>
             </div>
             <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2">
@@ -205,7 +205,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
           <div className="mx-auto max-w-3xl text-center">
             <p className="eyebrow">What it costs</p>
             <h2 id="costs-title" className="text-title mt-4">
-              {tool.name} pricing
+              {tool.h1} pricing
             </h2>
             <p className="mt-6 text-xl leading-relaxed text-pretty text-muted">
               <strong className="font-semibold text-ink">{tool.total}.</strong> You pay the data provider for the lookups a search runs, from your own key, and see the price before it runs. {tool.costNote}
@@ -275,7 +275,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
           <div className="container-page py-20 md:py-28">
             <div className="mx-auto max-w-3xl">
               <h2 id="faq-title" className="text-title text-center">
-                {tool.name} FAQ
+                {tool.h1} FAQ
               </h2>
               <div className="mt-12">
                 <FaqList faqs={tool.faqs} />

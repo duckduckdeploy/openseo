@@ -74,7 +74,7 @@ const shared: Faq[] = [
 
 export const tools: ResearchTool[] = [
   {
-    slug: 'keyword-overview',
+    slug: 'keyword-analysis-tool',
     seoTitle: 'Keyword Analysis Tool: Volume, Difficulty and SERP',
     h1: 'Keyword analysis tool',
     description: 'A keyword analysis tool: search volume, keyword difficulty, traffic potential, keyword ideas and the live top 10 for any keyword, in any country or city.',
@@ -146,7 +146,7 @@ export const tools: ResearchTool[] = [
     guide: '/docs/tutorials/seo-tools#keyword-overview',
   },
   {
-    slug: 'keyword-ideas',
+    slug: 'keyword-generator',
     seoTitle: 'Keyword Generator: Find Long-Tail Keyword Ideas',
     h1: 'Keyword generator',
     description: 'Generate up to 600 keyword ideas from one seed: long-tail keywords, related searches and questions, with search volume, keyword difficulty and intent.',
@@ -288,7 +288,7 @@ export const tools: ResearchTool[] = [
     guide: '/docs/tutorials/seo-tools#serp-checker',
   },
   {
-    slug: 'domain-overview',
+    slug: 'website-seo-analysis',
     seoTitle: 'Website SEO Analysis: Domain Overview of Any Site',
     h1: 'Website SEO analysis',
     description: 'Run a website SEO analysis of any domain: organic traffic and its value, top keywords and pages, backlinks, authority and competitors, in any market.',
@@ -442,7 +442,7 @@ export const tools: ResearchTool[] = [
     guide: '/docs/tutorials/seo-tools#website-authority-checker',
   },
   {
-    slug: 'page-analyser',
+    slug: 'on-page-seo-audit',
     seoTitle: 'On-Page SEO Audit: Check Any Page’s SEO',
     h1: 'On-page SEO audit',
     description: 'Run an on-page SEO audit of any URL: title, meta description and headings checked, plus the page’s authority, backlinks, traffic and ranking keywords.',
@@ -565,7 +565,7 @@ export const tools: ResearchTool[] = [
     guide: '/docs/tutorials/seo-tools#backlinks',
   },
   {
-    slug: 'competitors',
+    slug: 'seo-competitor-analysis',
     seoTitle: 'SEO Competitor Analysis: Find Your Organic Competitors',
     h1: 'SEO competitor analysis',
     description: 'SEO competitor analysis: find your organic competitors in Google, run a competitor keyword gap, and see which sites rank most for a list of keywords.',

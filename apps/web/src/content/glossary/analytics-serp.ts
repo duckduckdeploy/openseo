@@ -39,7 +39,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO connects to Search Console read-only and stores your query data, so you can see striking-distance queries (positions 5 to 20) with opportunity scores and compare any two periods.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['search-console-performance-report', 'google-analytics-4', 'impressions', 'click-through-rate', 'average-position', 'manual-action', 'indexing', 'bing-webmaster-tools'],
@@ -89,7 +89,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO reads GA4 alongside Search Console (read-only), so you can see queries, rankings and on-site results for the same pages in one place.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['google-search-console', 'engagement-rate', 'bounce-rate', 'key-events', 'utm-parameters', 'organic-traffic', 'looker-studio'],
@@ -171,7 +171,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO stores your Search Console impressions beyond the 16-month window and compares any two periods by query and page.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['clicks', 'click-through-rate', 'average-position', 'search-console-performance-report', 'google-search-console'],
@@ -212,7 +212,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO compares Search Console clicks between any two periods and highlights the queries and pages with the biggest changes.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['impressions', 'click-through-rate', 'organic-traffic', 'zero-click-searches', 'search-console-performance-report'],
@@ -264,7 +264,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO reads your Search Console data and scores each query and page by opportunity, so pages with high impressions and weak CTR for their position rise to the top.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['impressions', 'clicks', 'organic-ctr-curve', 'title-tag', 'meta-description', 'serp-features', 'zero-click-searches', 'search-console-performance-report'],
@@ -316,7 +316,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO combines Search Console average position with live rank tracking, so you can see both what users saw and where you rank today in a given city.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['rank-tracking', 'keyword-ranking', 'impressions', 'search-console-performance-report', 'striking-distance-keywords'],
@@ -367,7 +367,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO tracks Google positions on desktop and mobile by country, city or coordinates, to the top 100, daily, weekly, monthly or on demand, with competitors and SERP features recorded for every check.',
-      href: '/features/rank-tracking',
+      href: '/features/keyword-rank-tracker',
       label: 'See rank tracking',
     },
     related: ['keyword-ranking', 'average-position', 'seo-visibility', 'ranking-distribution', 'serp-features', 'serp-volatility', 'geo-grid', 'striking-distance-keywords'],
@@ -454,7 +454,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The OpenSEO domain overview shows any domain’s ranking distribution along with its traffic, top keywords, top pages and competitors.',
-      href: '/tools/domain-overview',
+      href: '/tools/website-seo-analysis',
       label: 'Open the domain overview',
     },
     related: ['keyword-ranking', 'rank-tracking', 'seo-visibility', 'striking-distance-keywords', 'average-position'],
@@ -495,7 +495,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s search performance view scores Search Console queries by opportunity, taking into account impressions, position and CTR.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['click-through-rate', 'keyword-ranking', 'traffic-potential', 'zero-click-searches', 'serp-features'],
@@ -530,7 +530,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'The OpenSEO domain overview shows estimated traffic and traffic value for any domain, along with its top keywords and pages.',
-      href: '/tools/domain-overview',
+      href: '/tools/website-seo-analysis',
       label: 'Open the domain overview',
     },
     related: ['cost-per-click', 'organic-traffic', 'seo-roi', 'traffic-potential', 'commercial-intent'],
@@ -569,7 +569,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO rank tracking records your positions and competitors’ for every tracked keyword, so you can see visibility change over time.',
-      href: '/features/rank-tracking',
+      href: '/features/keyword-rank-tracker',
       label: 'See rank tracking',
     },
     related: ['rank-tracking', 'share-of-voice', 'ranking-distribution', 'organic-ctr-curve', 'seo-kpis'],
@@ -720,7 +720,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO brings together Search Console and GA4 data for each page, so you can see a landing page’s queries, rankings and on-site results together.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['google-analytics-4', 'key-events', 'engagement-rate', 'search-intent', 'organic-traffic', 'local-landing-pages'],
@@ -802,7 +802,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO puts Search Console and GA4 data, rank tracking and site audit health scores in one place, covering the outcome, performance and health layers.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['seo-reporting', 'seo-roi', 'seo-visibility', 'key-events', 'organic-traffic', 'site-health-score'],
@@ -844,7 +844,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s MCP server and REST API let an AI agent or script pull rankings, Search Console data and audits for automated reports.',
-      href: '/features/mcp-and-api',
+      href: '/features/seo-mcp-server',
       label: 'See the MCP server and API',
     },
     related: ['seo-kpis', 'looker-studio', 'seo-roi', 'google-search-console', 'google-analytics-4', 'rank-tracking'],
@@ -967,7 +967,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO reads the Performance report data read-only, keeps it beyond 16 months, and lists striking-distance queries (positions 5 to 20) with opportunity scores.',
-      href: '/features/search-performance',
+      href: '/features/search-console-dashboard',
       label: 'See search performance',
     },
     related: ['google-search-console', 'clicks', 'impressions', 'click-through-rate', 'average-position', 'striking-distance-keywords', 'google-discover'],
@@ -1138,7 +1138,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO keyword ideas list the questions people search around any keyword, with volume, difficulty and intent, so you can choose which to answer.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find question keywords',
     },
     related: ['featured-snippet', 'question-keywords', 'serp-features', 'related-searches', 'google-autocomplete', 'answer-engine-optimization', 'faq-page'],
@@ -1457,7 +1457,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO keyword ideas include related searches for any keyword, with volume, difficulty, CPC, intent and a 12-month trend.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find keyword ideas',
     },
     related: ['people-also-ask', 'google-autocomplete', 'keyword-research', 'long-tail-keywords', 'seed-keyword'],
@@ -1641,7 +1641,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO rank tracking can check positions daily, so you can see how much your keywords and competitors move during an update.',
-      href: '/features/rank-tracking',
+      href: '/features/keyword-rank-tracker',
       label: 'See rank tracking',
     },
     related: ['core-update', 'google-algorithm-update', 'rank-tracking', 'keyword-ranking', 'serp'],
@@ -1685,7 +1685,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO keyword ideas include Google suggestions for any keyword, with search volume, difficulty, CPC and intent attached.',
-      href: '/tools/keyword-ideas',
+      href: '/tools/keyword-generator',
       label: 'Find keyword ideas',
     },
     related: ['long-tail-keywords', 'question-keywords', 'related-searches', 'people-also-ask', 'keyword-research', 'seed-keyword', 'automated-queries'],
