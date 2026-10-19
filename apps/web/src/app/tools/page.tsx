@@ -9,9 +9,10 @@ import type { ResearchTool } from '@/content/tools';
 import { SIGN_UP_URL } from '@/lib/site';
 
 export const metadata = pageMeta({
-  title: 'SEO Tools: Keyword, Backlink, SERP and AI Checkers',
+  title: 'Open Source SEO Tools - 15+ Free SEO Tools & Features',
   description: 'Open-source SEO tools: keyword analysis and difficulty, SERP checker, website traffic and authority, backlink and keyword gap, and an AI Overview checker.',
   path: '/tools',
+  absoluteTitle: true,
 });
 
 /** The tools in three groups, each under a keyword-led heading. */

@@ -27,7 +27,7 @@ const everything = [
   'Site audit with Lighthouse',
   'Backlinks, domain overview and competitors',
   'AI visibility tracking',
-  'Local SEO and geo-grids',
+  'Local rank tracker with geo-grids',
   'Search Console and GA4 reports',
   'MCP server and REST API for AI agents',
 ];

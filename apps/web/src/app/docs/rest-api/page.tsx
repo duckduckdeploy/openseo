@@ -186,9 +186,9 @@ export default function RestApiPage() {
         ]}
       />
 
-      <h2 id="local">Local SEO</h2>
+      <h2 id="local">Local rank tracker</h2>
       <DocTable
-        caption="Local SEO routes"
+        caption="Local rank tracker routes"
         head={['Route', 'Notes']}
         mono={[0]}
         rows={[

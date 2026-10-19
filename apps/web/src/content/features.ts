@@ -37,6 +37,8 @@ export interface Feature {
   name: string;
   /** Title tag, keyword first. The " · OpenSEO" suffix is added by the template. */
   seoTitle: string;
+  /** Use seoTitle as the whole title tag, without the suffix (when the suffix would pass 60 characters). */
+  absoluteTitle?: boolean;
   /** Page H1: the exact head keyword, 2 to 5 words. */
   h1: string;
   /** Short line under the H1. */
@@ -68,8 +70,8 @@ export const UNLISTED_PRICE_LABEL = 'Shown in the app before it runs';
 export const features: Feature[] = [
   {
     slug: 'keyword-rank-tracker',
-    seoTitle: 'Keyword Rank Tracker: Open-Source Google Rank Tracking',
-    h1: 'Keyword rank tracker',
+    seoTitle: 'Open Source Rank Tracker - Self Host & 100% Free',
+    h1: 'Open Source Rank Tracker',
     description: 'Track Google rankings on desktop and mobile by country, city or exact coordinates. Every check reads the top 100, on your schedule or on demand.',
     whatTitle: 'How keyword rank tracking works',
     glossary: ['rank-tracking', 'keyword-ranking', 'serp-features', 'serp-volatility', 'average-position', 'share-of-voice'],
@@ -171,8 +173,8 @@ export const features: Feature[] = [
   },
   {
     slug: 'site-audit',
-    seoTitle: `SEO Site Audit Tool: ${AUDIT_CHECKS} Technical SEO Checks`,
-    h1: 'Technical SEO site audit',
+    seoTitle: 'Site Audit - Open Source & 100% Free SEO Audit',
+    h1: 'Open Source Technical site audit',
     description: `Crawl your site for free with ${AUDIT_CHECKS} technical SEO checks and a health score: redirects, canonicals, indexability, sitemaps, hreflang. Plus Lighthouse.`,
     whatTitle: 'How the site audit works',
     glossary: ['seo-audit', 'technical-seo', 'crawling', 'canonical-tag', 'redirect-chain', 'core-web-vitals'],
@@ -215,8 +217,9 @@ export const features: Feature[] = [
   },
   {
     slug: 'ai-visibility-tracker',
-    seoTitle: 'AI Visibility Tracker: GEO Tool for ChatGPT and Gemini',
-    h1: 'AI visibility tracker',
+    seoTitle: 'AI Visibility Tracker: Open Source AI Citations Tracking',
+    absoluteTitle: true,
+    h1: 'Open Source AI Visibility Tracker',
     description: 'Track whether ChatGPT, Gemini, Claude, Perplexity and 120+ AI models mention your brand and cite your site, prompt by prompt, over time.',
     whatTitle: 'How AI visibility tracking works',
     glossary: ['ai-visibility', 'generative-engine-optimization', 'ai-citations', 'prompt-tracking', 'brand-mentions', 'share-of-voice'],
@@ -260,13 +263,14 @@ export const features: Feature[] = [
     costs: [{ action: 'Prompt run', unit: 'One prompt on one model', price: null }],
   },
   {
-    slug: 'local-seo',
-    seoTitle: 'Local SEO Tool with Geo-Grid Rank Tracking',
-    h1: 'Local SEO tool',
+    slug: 'local-rank-tracker',
+    seoTitle: 'Local Rank Tracker - Open Source Geo-Grid Rank Tracking',
+    absoluteTitle: true,
+    h1: 'Open Source Local Rank Tracker',
     description: 'Map your Google Maps rankings street by street with geo-grids, look up Google Business profiles and pull reviews with owner reply rates.',
-    whatTitle: 'How the local SEO tool works',
+    whatTitle: 'How the local rank tracker works',
     glossary: ['geo-grid', 'local-pack', 'google-business-profile', 'local-ranking-factors', 'online-reviews', 'nap'],
-    name: 'Local SEO',
+    name: 'Local rank tracker',
     headline: 'Local rankings, mapped street by street',
     summary: 'Google Business profile lookups, reviews and geo-grid rank maps.',
     icon: MapPin,
@@ -300,7 +304,7 @@ export const features: Feature[] = [
   },
   {
     slug: 'seo-mcp-server',
-    seoTitle: 'SEO MCP Server and SEO API for AI Agents',
+    seoTitle: 'SEO MCP Server: 20+ Free SEO Tools - Fresh Data',
     h1: 'SEO MCP server and API',
     description: 'An SEO MCP server with 66 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
     whatTitle: 'How the MCP server works',

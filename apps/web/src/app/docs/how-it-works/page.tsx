@@ -103,7 +103,7 @@ export default function HowItWorksPage() {
           ['Lookup results', 'In the cache, for the lookup’s cache time. Expired entries are cleared every 15 minutes.'],
           ['Saved keywords, trackers, positions, AI answers, audits, geo-grids', 'Until you delete them, or the project they belong to.'],
           ['Usage log', 'Every billed or failed YepAPI call, with its cost. It survives project deletion, so the monthly limit stays accurate.'],
-          ['Your chosen Google Business listing (Local SEO)', 'In your browser only, per project.'],
+          ['Your chosen Google Business listing (Local rank tracker)', 'In your browser only, per project.'],
         ]}
       />
 

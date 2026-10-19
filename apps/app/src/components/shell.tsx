@@ -50,7 +50,7 @@ const projectNav = [
   { href: "/competitors", label: "Competitors", icon: Swords },
   { href: "/audit", label: "Site audit", icon: Activity },
   { href: "/ai", label: "AI visibility", icon: Bot },
-  { href: "/local", label: "Local SEO", icon: MapPin },
+  { href: "/local", label: "Local rank tracker", icon: MapPin },
 ];
 
 function NavLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Search; active: boolean }) {

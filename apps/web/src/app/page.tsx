@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Bot, Check, Code2, Server, ShieldCheck } from 'lucide-react';
 import { AgentFold } from '@/components/agent-fold';
@@ -28,7 +29,7 @@ export const metadata = pageMeta({
 const ledger = [
   { value: 'MIT', label: 'Open-source licence' },
   { value: '1', label: 'Docker command to self-host' },
-  { value: '63', label: 'MCP tools for your AI agent' },
+  { value: '66', label: 'MCP tools for your AI agent' },
   { value: String(AUDIT_CHECKS), label: 'Site audit checks, free' },
 ];
 
@@ -51,7 +52,7 @@ const control = [
   {
     icon: Bot,
     title: 'Agents on a leash',
-    body: 'Sixty-three MCP tools give your agent the whole workspace, and every paid call takes a ceiling: a call that could cost more than you agreed is refused before it starts.',
+    body: 'Sixty-six MCP tools give your agent the whole workspace, and every paid call takes a ceiling: a call that could cost more than you agreed is refused before it starts.',
   },
 ];
 
@@ -93,7 +94,7 @@ export default function HomePage() {
             </p>
 
             <h1 id="hero-title" className="text-display animate-rise mt-8 text-balance [animation-delay:60ms]">
-              <span className="mark">Open&#8209;source</span> SEO tools you control
+              <span className="mark">Open&#8209;source</span> SEO Ahrefs &amp; SEMrush features
             </h1>
 
             <p className="text-lede animate-rise mx-auto mt-7 max-w-2xl [animation-delay:120ms]">
@@ -146,9 +147,13 @@ export default function HomePage() {
         </dl>
       </Band>
 
-      {/* The research tools, one split section each, alternating side and tone */}
+      {/* The research tools, one split section each, alternating side and tone. The agent server comes
+          straight after the first, on its night band between two light ones. */}
       {tour.map((stop, index) => (
-        <TourSection key={stop.id} stop={stop} tone={TOUR_TONES[index % TOUR_TONES.length]} flip={index % 2 === 1} />
+        <Fragment key={stop.id}>
+          <TourSection stop={stop} tone={TOUR_TONES[index % TOUR_TONES.length]} flip={index % 2 === 1} />
+          {index === 0 && <AgentFold />}
+        </Fragment>
       ))}
 
       {/* Everything else */}
@@ -158,7 +163,7 @@ export default function HomePage() {
           eyebrow="Features"
           id="features-title"
           title="Rank tracking, site audits and AI visibility"
-          lede="Rank tracking, Search Console, site audits, AI visibility, local SEO and the agent tools, each with its own page on what it does and what it costs."
+          lede="Rank tracking, Search Console, site audits, AI visibility, local rank tracking and the agent tools, each with its own page on what it does and what it costs."
         />
         <div className="mt-14 md:mt-16">
           <FeatureGrid />
@@ -195,8 +200,6 @@ export default function HomePage() {
           })}
         </ul>
       </Band>
-
-      <AgentFold />
 
       {/* Self-host: copy on one side, the command on the other */}
       <Band tone="cream" labelledBy="selfhost-title">

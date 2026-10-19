@@ -36,6 +36,7 @@ export async function generateMetadata({ params }: FeaturePageProps): Promise<Me
     title: feature.seoTitle,
     description: feature.description,
     path: `/features/${feature.slug}`,
+    absoluteTitle: feature.absoluteTitle,
   });
 }
 

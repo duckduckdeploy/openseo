@@ -85,7 +85,7 @@ Every tool is one search: type a keyword, domain or URL, pick a country (and a c
 | 🥊 [Competitors](https://openseo.gg/tools/seo-competitor-analysis) | Organic and SERP competitors, keyword gap |
 | 🩺 Site audit | Our own crawler with 59 checks and a health score; Lighthouse with failed audits rated by severity |
 | 🧠 AI visibility | Tracked prompts across many chat models with web search: mentions, citations, position, share of voice. Prompts that name your brand are left out of the rates |
-| 🗺️ Local SEO | Business lookup, profile, reviews, geo-grid rank maps |
+| 🗺️ Local rank tracker | Business lookup, profile, reviews, geo-grid rank maps |
 
 ## 🐳 Self-host with Docker
 

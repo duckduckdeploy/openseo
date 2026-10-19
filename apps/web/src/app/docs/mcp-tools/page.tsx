@@ -150,9 +150,9 @@ export default function McpToolsPage() {
         ]}
       />
 
-      <h2 id="local">Local SEO</h2>
+      <h2 id="local">Local rank tracker</h2>
       <DocTable
-        caption="Local SEO tools"
+        caption="Local rank tracker tools"
         head={head}
         mono={[2]}
         rows={[

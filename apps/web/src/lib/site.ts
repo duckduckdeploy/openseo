@@ -23,7 +23,7 @@ export const NEWS_URL = 'https://news.openseo.gg';
 export const SITE_NAME = 'OpenSEO';
 export const SITE_TAGLINE = 'The open-source SEO suite you control.';
 /** Homepage title tag: keyword first. */
-export const SITE_TITLE = 'OpenSEO: Open-Source SEO Tools You Can Self-Host';
+export const SITE_TITLE = 'OpenSEO: Free Open-Source Ahrefs & SEMrush';
 export const SITE_DESCRIPTION =
   'Open-source SEO tools for keyword research, rank tracking, backlinks, site audits and AI visibility. Self-host with Docker or use it online. MIT licensed.';
 

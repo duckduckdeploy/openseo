@@ -44,7 +44,7 @@ export default function ToolsIndex() {
         <section className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-line px-4 py-4 text-[13px] text-muted">
           <FolderKanban className="size-4 text-ink" aria-hidden />
           <span className="min-w-0 flex-1">
-            Rank tracking, site audits, AI visibility, local SEO and saved keyword lists live in a project, so they can follow one site over time.
+            Rank tracking, site audits, AI visibility, local rank tracking and saved keyword lists live in a project, so they can follow one site over time.
           </span>
           <Link href="/projects" className="font-medium text-ink underline underline-offset-2">
             Go to projects

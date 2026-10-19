@@ -348,7 +348,7 @@ function Overview({ project }: { project: Project }) {
         </Section>
 
         <Section
-          title="Local SEO"
+          title="Local rank tracker"
           href={`${base}/local`}
           query={grids}
           isEmpty={(data) => data.length === 0}

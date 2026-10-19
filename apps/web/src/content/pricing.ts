@@ -21,7 +21,7 @@ export const priceRows: PriceRow[] = [
   { action: 'Backlink checker', unit: 'Totals, history and four lists of 100', price: '$0.30 – $0.34', href: '/tools/backlink-checker' },
   { action: 'Rank check', unit: 'One keyword and device, the top 100 results', price: '$0.10', href: '/features/keyword-rank-tracker' },
   { action: 'Lighthouse', unit: 'One run, mobile or desktop', price: '$0.05', href: '/features/site-audit' },
-  { action: 'Geo-grid', unit: '5×5 grid, 25 Maps searches', price: '$1.75', href: '/features/local-seo' },
+  { action: 'Geo-grid', unit: '5×5 grid, 25 Maps searches', price: '$1.75', href: '/features/local-rank-tracker' },
 ];
 
 export interface CreditExample {

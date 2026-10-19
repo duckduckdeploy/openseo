@@ -14,7 +14,7 @@ export default function LocalSeoTutorial() {
   return (
     <DocArticle slug={slug}>
       <p>
-        Local SEO works from your Google Business listing: find it once, then check how complete its profile is, read
+        The local rank tracker works from your Google Business listing: find it once, then check how complete its profile is, read
         its reviews, and map how well it ranks across the area you serve.
       </p>
 
@@ -22,7 +22,7 @@ export default function LocalSeoTutorial() {
       <Steps>
         <Step title="Search Google Maps">
           <p>
-            Open <Ui>Local SEO</Ui>. On <strong>Find a business</strong>, search for your business the way a customer
+            Open <Ui>Local rank tracker</Ui>. On <strong>Find a business</strong>, search for your business the way a customer
             would; the name with the town works best, for example <code>Acme Plumbing Austin</code>. Click{' '}
             <Ui>Search Maps</Ui> ($0.07; a repeat within a day is free). Tick <strong>Prefer results around a point</strong>{' '}
             if your business shares its name with others elsewhere.

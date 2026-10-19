@@ -6,6 +6,8 @@ import { glossary, glossaryCategories } from '@/content/glossary';
 import { tools } from '@/content/tools';
 import { SITE_URL } from '@/lib/site';
 
+// Language alternates live in each page's <head>; with one language they add nothing here and make
+// browsers show the file as unstyled text. Add them back with the translations.
 // Privacy and terms are unreviewed drafts and are marked noindex, so they are left out.
 export default function sitemap(): MetadataRoute.Sitemap {
   const paths: { path: string; priority: number }[] = [
@@ -25,6 +27,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return paths.map(({ path, priority }) => {
     const url = `${SITE_URL}${path === '/' ? '' : path}`;
-    return { url, changeFrequency: 'weekly', priority, alternates: { languages: { en: url, 'x-default': url } } };
+    return { url, changeFrequency: 'weekly', priority };
   });
 }

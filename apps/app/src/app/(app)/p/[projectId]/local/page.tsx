@@ -813,7 +813,7 @@ function LocalView() {
 
   return (
     <>
-      <PageHeader title="Local SEO" description="See your Google Business listing the way customers do: profile completeness, reviews, and where you rank across your service area." />
+      <PageHeader title="Local rank tracker" description="See your Google Business listing the way customers do: profile completeness, reviews, and where you rank across your service area." />
       {!loaded ? (
         <Spinner />
       ) : (
@@ -840,7 +840,7 @@ function LocalView() {
             )}
           </Card>
           <Tabs
-            label="Local SEO sections"
+            label="Local rank tracker sections"
             value={tab}
             onChange={setTab}
             tabs={[

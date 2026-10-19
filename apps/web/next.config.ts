@@ -22,6 +22,8 @@ const MOVED: Record<string, string> = {
   '/features/mcp-and-api': '/features/seo-mcp-server',
   '/compare/ahrefs': '/compare/ahrefs-alternative',
   '/compare/semrush': '/compare/semrush-alternative',
+  // Local SEO became the local rank tracker on 2026-10-19.
+  '/features/local-seo': '/features/local-rank-tracker',
 };
 
 const nextConfig: NextConfig = {

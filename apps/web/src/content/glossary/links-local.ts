@@ -1593,7 +1593,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s local SEO feature looks up Google Business profiles, shows reviews with the owner reply rate, and maps your rankings across a geo-grid.',
-      href: '/features/local-seo',
+      href: '/features/local-rank-tracker',
       label: 'Explore local SEO',
     },
     related: ['local-pack', 'local-ranking-factors', 'gbp-categories', 'online-reviews', 'nap', 'service-area-business', 'google-maps-seo', 'knowledge-panel'],
@@ -1639,7 +1639,7 @@ export const terms: GlossaryTerm[] = [
     ],
     why: [
       'For local businesses, the local pack is usually the most valuable spot on the page. It takes up prime space, it shows ratings at a glance and it lets people call or get directions in one tap. Many searchers choose from the pack without scrolling further.',
-      'Because the pack shows only a few businesses, the gap between third and fourth place is large. Being in the pack for your main service across your area is often the clearest goal of [local SEO](/features/local-seo).',
+      'Because the pack shows only a few businesses, the gap between third and fourth place is large. Being in the pack for your main service across your area is often the clearest goal of [local SEO](/features/local-rank-tracker).',
       'Rankings in the pack change with the searcher’s location, so a single rank check from one point gives a misleading picture. A [geo-grid](/glossary/geo-grid) shows how your position varies across your area.',
       'The pack is also tightly policed. Because the rewards are high, it attracts spam: fake listings, keyword-stuffed business names and [fake reviews](/glossary/fake-reviews). Google removes such listings and suspends profiles, and you can report competitors who break the guidelines through Google Maps.',
     ],
@@ -1761,7 +1761,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s local SEO feature looks up Google Business profiles so you can check the details that your citations should match.',
-      href: '/features/local-seo',
+      href: '/features/local-rank-tracker',
       label: 'Explore local SEO',
     },
     related: ['nap', 'google-business-profile', 'local-ranking-factors', 'apple-business-connect', 'bing-places', 'backlink'],
@@ -1859,7 +1859,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s local SEO feature brings the main factors together: Google Business profile lookups for relevance, reviews and reply rate for prominence, and geo-grid maps to see the effect of distance.',
-      href: '/features/local-seo',
+      href: '/features/local-rank-tracker',
       label: 'Explore local SEO',
     },
     related: ['local-pack', 'google-business-profile', 'gbp-categories', 'online-reviews', 'geo-grid', 'local-citations', 'ranking-factors'],
@@ -1963,7 +1963,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO’s local SEO feature shows a Google Business profile’s reviews along with the owner’s reply rate.',
-      href: '/features/local-seo',
+      href: '/features/local-rank-tracker',
       label: 'See reviews and reply rate',
     },
     related: ['review-response-rate', 'fake-reviews', 'review-gating', 'google-business-profile', 'local-ranking-factors', 'local-pack'],
@@ -2017,7 +2017,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'OpenSEO shows a Google Business profile’s reviews with its owner reply rate, so you can compare your responsiveness with competitors.',
-      href: '/features/local-seo',
+      href: '/features/local-rank-tracker',
       label: 'Check reply rates',
     },
     related: ['online-reviews', 'google-business-profile', 'fake-reviews', 'review-gating', 'local-ranking-factors'],
@@ -2197,7 +2197,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Look up competitors’ Google Business profiles in OpenSEO to see the categories and review data of businesses that outrank you.',
-      href: '/features/local-seo',
+      href: '/features/local-rank-tracker',
       label: 'Look up a profile',
     },
     related: ['google-business-profile', 'local-ranking-factors', 'local-pack', 'google-maps-seo'],
@@ -2383,7 +2383,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Watch your Google reviews and reply rate in OpenSEO’s local SEO feature, so you can respond to honest negative reviews rather than filtering them out.',
-      href: '/features/local-seo',
+      href: '/features/local-rank-tracker',
       label: 'Monitor your reviews',
     },
     related: ['fake-reviews', 'online-reviews', 'review-response-rate', 'google-business-profile', 'black-hat-seo', 'google-spam-policies'],
@@ -2447,7 +2447,7 @@ export const terms: GlossaryTerm[] = [
     },
     openseo: {
       body: 'Monitor your own and competitors’ Google reviews and reply rates in OpenSEO’s local SEO feature, so you notice unusual bursts of reviews early.',
-      href: '/features/local-seo',
+      href: '/features/local-rank-tracker',
       label: 'Monitor reviews',
     },
     related: ['review-gating', 'online-reviews', 'review-response-rate', 'google-business-profile', 'black-hat-seo', 'google-spam-policies'],

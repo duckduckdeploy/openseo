@@ -27,7 +27,7 @@ export default function AgentsTutorial() {
     <DocArticle slug={slug} brands={['mcp', 'claude', 'chatgpt', 'claudecode', 'cursor', 'codex', 'geminicli']}>
       <p>
         Everything in the app is also available to AI agents through OpenSEO&apos;s MCP server: research, saving,
-        trackers, audits, AI visibility and local SEO. You ask in plain language; the agent picks the tools, checks
+        trackers, audits, AI visibility and local rank tracking. You ask in plain language; the agent picks the tools, checks
         prices and keeps under the ceiling you set.
       </p>
 

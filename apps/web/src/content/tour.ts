@@ -53,7 +53,7 @@ export const tour: TourStop[] = [
     title: 'Local keyword research by city',
     lede: 'Pick a city, state or region inside the country. Volume becomes local, and the results and suggestions are the ones people there see.',
     points: ['Local volume next to the national figure', 'Results from that place', 'Remembered across every tool'],
-    href: '/features/local-seo',
+    href: '/features/local-rank-tracker',
     slides: [
       {
         name: 'search-bar-city',
@@ -370,5 +370,5 @@ export const featureTour: Record<string, string[]> = {
   'keyword-rank-tracker': ['rank-tracking'],
   'site-audit': ['site-audit'],
   'ai-visibility-tracker': ['ai-tracking', 'ai-visibility'],
-  'local-seo': ['local-grid', 'local-rank', 'local'],
+  'local-rank-tracker': ['local-grid', 'local-rank', 'local'],
 };
