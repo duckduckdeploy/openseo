@@ -33,11 +33,15 @@ export const CURATED_MODELS: { id: string; assistant: string; default: boolean }
 ];
 
 /**
- * Every rank check reads the top 100 Google results (10 pages), like any rank tracker: where a
- * site ranks beyond page one matters as much as page one. YepAPI bills $0.01 per page of 10.
+ * How many Google results a rank check reads: 20, 50 or 100 (the default, like most rank trackers).
+ * YepAPI bills $0.01 per 10, so a check costs $0.02, $0.05 or $0.10. SERP features count toward the
+ * depth, so a 20-result check usually covers 15 to 18 organic positions.
  */
-export const RANK_DEPTH = 100;
-export const RANK_CHECK_USD = 0.1;
+export const RANK_DEPTHS = [20, 50, 100] as const;
+export type RankDepth = (typeof RANK_DEPTHS)[number];
+export const RANK_DEPTH: RankDepth = 100;
+export const rankCheckUsd = (depth: number) => Math.round(depth / 10) / 100;
+export const RANK_CHECK_USD = rankCheckUsd(RANK_DEPTH);
 
 export const DEFAULT_MODEL_IDS = CURATED_MODELS.filter((m) => m.default).map((m) => m.id);
 

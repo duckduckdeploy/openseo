@@ -1,4 +1,4 @@
-import { RANK_CHECK_USD, RANK_DEPTH } from "@openseo/shared";
+import { rankCheckUsd } from "@openseo/shared";
 import type { GoogleSerpData } from "@openseo/yepapi";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { dataDb, db, schema } from "../db";
@@ -23,10 +23,10 @@ export async function requireTracker(userId: string, trackerId: string) {
   return row;
 }
 
-/** Every check reads the top 100 (10 pages at $0.01), so each keyword and device costs $0.10. */
-export function estimateRun(tracker: Pick<Tracker, "devices">, keywordCount: number) {
+/** Each keyword and device is one check of the tracker's depth: $0.02 (top 20), $0.05 (top 50) or $0.10 (top 100). */
+export function estimateRun(tracker: Pick<Tracker, "devices" | "depth">, keywordCount: number) {
   const checks = keywordCount * tracker.devices.length;
-  const cost = Math.round(checks * RANK_CHECK_USD * 100) / 100;
+  const cost = Math.round(checks * rankCheckUsd(tracker.depth) * 100) / 100;
   return { checks, min: cost, max: cost };
 }
 
@@ -155,14 +155,14 @@ export async function processRankRun(runId: string) {
     try {
       const res = await yep.serp.google({
         query: keyword.keyword,
-        // The whole top 100, never stopping at the site: positions beyond it and the full
+        // The tracker's whole depth, never stopping at the site: positions beyond it and the full
         // competitor picture are part of what a rank tracker records.
-        depth: RANK_DEPTH,
+        depth: tracker.depth,
         device,
         language: tracker.language,
         ...where,
       });
-      const parsed = parseSerp(res.data, tracker.domain, RANK_DEPTH);
+      const parsed = parseSerp(res.data, tracker.domain, tracker.depth);
       await dataDb.insert(schema.rankResults).values({ ...base, ...parsed, costUsd: res.costUsd });
       await dataDb
         .update(schema.rankRuns)

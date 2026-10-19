@@ -6,6 +6,7 @@ import { BrandRow, brandName } from '@/components/brand-icon';
 import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
 import { FaqList } from '@/components/faq';
+import { FreeTool } from '@/components/free-tool';
 import { JsonLd } from '@/components/json-ld';
 import { RelatedTerms } from '@/components/related-terms';
 import { RichText } from '@/components/rich-text';
@@ -16,7 +17,7 @@ import { getTerm, whatIs } from '@/content/glossary';
 import { getTool, tools } from '@/content/tools';
 import { pageMeta } from '@/lib/metadata';
 import { breadcrumbList, faqPage } from '@/lib/schema';
-import { APP_URL, inSentence, SITE_NAME, SITE_URL } from '@/lib/site';
+import { APP_URL, inSentence, PUBLIC_API_URL, SIGN_UP_URL, SITE_NAME, SITE_URL } from '@/lib/site';
 
 interface ToolPageProps {
   params: Promise<{ slug: string }>;
@@ -115,8 +116,13 @@ export default async function ToolPage({ params }: ToolPageProps) {
                   </li>
                 ))}
               </ul>
+              {tool.freeTool ? (
+                <div className="mt-10">
+                  <FreeTool kind={tool.freeTool} apiUrl={PUBLIC_API_URL} appHref={open} signUpHref={SIGN_UP_URL} />
+                </div>
+              ) : null}
               <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-                <ButtonLink href={open} size="lg">
+                <ButtonLink href={open} size={tool.freeTool ? 'md' : 'lg'} variant={tool.freeTool ? 'secondary' : 'primary'}>
                   Open {inSentence(tool.name)}
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </ButtonLink>

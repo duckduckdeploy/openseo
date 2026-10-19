@@ -162,8 +162,8 @@ export default function HomePage() {
           align="center"
           eyebrow="Features"
           id="features-title"
-          title="Rank tracking, site audits and AI visibility"
-          lede="Rank tracking, Search Console, site audits, AI visibility, local rank tracking and the agent tools, each with its own page on what it does and what it costs."
+          title="AI visibility, rank tracking and site audits"
+          lede="AI visibility without a subscription, rank tracking from $0.02 a check, site audits, Search Console, local rank tracking and the agent tools, each with its own page on what it does and what it costs."
         />
         <div className="mt-14 md:mt-16">
           <FeatureGrid />

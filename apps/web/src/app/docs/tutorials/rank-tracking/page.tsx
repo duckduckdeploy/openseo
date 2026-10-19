@@ -33,9 +33,10 @@ export default function RankTrackingTutorial() {
             change street by street.
           </p>
         </Step>
-        <Step title="Pick devices and schedule">
+        <Step title="Pick devices, schedule and depth">
           <p>
-            Desktop and mobile are separate checks, so both doubles the price. Every check reads the top 100 results.{' '}
+            Desktop and mobile are separate checks, so both doubles the price. <strong>Depth</strong> is how many results
+            each check reads: top 20, 50 or 100.{' '}
             <strong>Schedule</strong> runs checks daily, weekly or monthly in the background; manual trackers run only when
             you click <Ui>Check rankings now</Ui>, which you can also do any time on a scheduled one.
           </p>
@@ -50,8 +51,9 @@ export default function RankTrackingTutorial() {
 
       <Callout tone="cost" title="What a check costs">
         <p>
-          Every check reads the top 100 results: 10 pages at $0.01, so $0.10 per keyword and device. 100 keywords on
-          desktop cost $10 a run, about $43 a month checked weekly.
+          A check costs $0.01 for every 10 results it reads: $0.02 for the top 20, $0.05 for the top 50 and $0.10 for
+          the top 100, per keyword and device. 100 keywords on desktop checked daily cost about $60 a month at the top 20,
+          or $300 at the top 100; checked weekly, about $9 or $43.
         </p>
       </Callout>
 

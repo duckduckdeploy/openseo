@@ -10,6 +10,11 @@ describe("prices shown before a run", () => {
     expect(runPrice(3, 1)).toEqual({ checks: 3, min: 0.3, max: 0.3 });
   });
 
+  it("prices shallower checks at $0.01 per 10 results", () => {
+    expect(runPrice(100, 1, 20)).toEqual({ checks: 100, min: 2, max: 2 });
+    expect(runPrice(100, 2, 50)).toEqual({ checks: 200, min: 10, max: 10 });
+  });
+
   it("projects a monthly price from the schedule", () => {
     expect(monthlyPrice({ min: 1, max: 2 }, "weekly")).toEqual({ runs: 4.35, min: 4.35, max: 8.7 });
     expect(monthlyPrice({ min: 1, max: 2 }, "manual")).toBeNull();

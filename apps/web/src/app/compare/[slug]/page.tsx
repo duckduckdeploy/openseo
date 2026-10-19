@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: ComparePageProps): Promise<Me
   const c = getComparison(slug);
   if (!c) return {};
   return pageMeta({
-    title: `${c.name} Alternative: OpenSEO vs ${c.name} (Open Source)`,
+    title: c.seoTitle ?? `${c.name} Alternative: OpenSEO vs ${c.name} (Open Source)`,
     description: `Looking for a free ${c.name} alternative? Compare OpenSEO vs ${c.name}: features, pricing and data. Open source, self-hostable, billed per lookup.`,
     path: `/compare/${c.slug}`,
     absoluteTitle: true,
@@ -65,7 +65,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
             ))}
           </ul>
           <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-faint">
-            List prices on monthly billing, checked in {c.checked}. {c.name} sets its own prices and changes them; check its pricing page for current figures. OpenSEO&apos;s data costs are
+            List prices, checked in {c.checked}. {c.name} sets its own prices and changes them; check its pricing page for current figures. OpenSEO&apos;s data costs are
             at the time of writing; see{' '}
             <Link href="/pricing" className="font-medium text-accent-text underline-offset-4 hover:underline">
               Pricing

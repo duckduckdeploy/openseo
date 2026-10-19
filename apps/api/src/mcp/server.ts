@@ -187,7 +187,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   );
   tool(
     "create_rank_tracker",
-    "Create a Google rank tracker for a domain in one location. Creating it spends nothing; every check reads the top 100 results and costs $0.10 per keyword and device.",
+    "Create a Google rank tracker for a domain in one location. Creating it spends nothing. depth is how many results each check reads: 20 ($0.02 per keyword and device), 50 ($0.05) or 100 ($0.10, the default). SERP features count toward the depth.",
     {
       project_id: projectId,
       domain: z.string().min(3),
@@ -198,6 +198,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
       language: z.string().optional(),
       devices: z.array(z.enum(["desktop", "mobile"])).min(1).max(2).optional(),
       schedule: z.enum(["manual", "daily", "weekly", "monthly"]).optional(),
+      depth: z.union([z.literal(20), z.literal(50), z.literal(100)]).optional().describe("Results per check: 20, 50 or 100 (default)"),
       keywords: z.array(z.string()).max(1000).optional(),
     },
     async (a) =>
@@ -210,6 +211,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
         language: a.language,
         devices: a.devices,
         schedule: a.schedule,
+        depth: a.depth,
         keywords: a.keywords,
       }),
   );
@@ -221,7 +223,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   );
   tool(
     "run_rank_check",
-    "Check every keyword in a tracker now. Runs in the background; poll get_rank_results. Each keyword and device costs $0.10 (the top 100 results); the total is in list_rank_trackers (estimate).",
+    "Check every keyword in a tracker now. Runs in the background; poll get_rank_results. Each keyword and device costs $0.02, $0.05 or $0.10 by the tracker's depth (20, 50 or 100 results); the total is in list_rank_trackers (estimate).",
     { tracker_id: z.string().uuid(), max_cost_usd: maxCost },
     async (a) => {
       const tracker = (await rest("GET", `/trackers/${a.tracker_id}`)) as { estimate: { max: number } };

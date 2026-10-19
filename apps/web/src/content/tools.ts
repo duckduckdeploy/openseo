@@ -1,3 +1,4 @@
+import type { FreeToolKind } from '@/components/free-tool';
 import { BarChart3, Bot, FileSearch, Gauge, Globe, Grid3x3, Lightbulb, Link2, ListOrdered, Network, Search, Sparkles, Swords, TrendingUp, type LucideIcon } from 'lucide-react';
 import { ASSISTANT_BRANDS, type Brand } from '@/components/brand-icon';
 import type { ScreenName } from '@/components/screenshot';
@@ -25,6 +26,8 @@ export interface ToolCost {
 /** A research tool of the app, as its landing page on this site presents it. */
 export interface ResearchTool {
   slug: string;
+  /** A free version on the page itself, no account needed (components/free-tool.tsx). */
+  freeTool?: FreeToolKind;
   name: string;
   icon: LucideIcon;
   /** Title tag, keyword first. The " · OpenSEO" suffix is added by the template. */
@@ -192,6 +195,7 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'keyword-difficulty-checker',
+    freeTool: 'keyword-difficulty',
     seoTitle: 'Keyword Difficulty Checker: Bulk KD for 1,000 Keywords',
     h1: 'Keyword difficulty checker',
     description: 'Check keyword difficulty for up to 1,000 keywords at once, sorted into easy, medium and hard, so you can see which ones you can rank for now.',
@@ -239,6 +243,7 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'serp-checker',
+    freeTool: 'serp',
     seoTitle: 'SERP Checker: Check Live Google Results Online',
     h1: 'SERP checker',
     description: 'Check the live Google top 10 online for any keyword, on desktop or mobile, in any country, state or city, with each result’s authority, links and traffic.',
@@ -352,6 +357,7 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'website-traffic-checker',
+    freeTool: 'website-traffic',
     seoTitle: 'Website Traffic Checker: Compare Up to 100 Sites',
     h1: 'Website traffic checker',
     description: 'Check website traffic for up to 100 sites at once: estimated organic and paid Google visits and keywords, side by side, in any country. Export to CSV.',
@@ -396,6 +402,7 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'website-authority-checker',
+    freeTool: 'website-authority',
     seoTitle: 'Website Authority Checker: Domain Rating in Bulk',
     h1: 'Website authority checker',
     description: 'Check website authority for up to 10 sites side by side: Domain Rating, referring domains and backlinks, for $0.02 a site. A bulk domain authority checker.',
@@ -702,6 +709,7 @@ export const tools: ResearchTool[] = [
   },
   {
     slug: 'ai-overview-checker',
+    freeTool: 'ai-overview',
     seoTitle: 'AI Overview Checker and Tracker: See Who Google Cites',
     h1: 'AI Overview checker',
     description: 'Check up to 100 keywords for Google AI Overviews: which show one, the sites each cites, whether you are cited, and every other SERP feature on page one.',

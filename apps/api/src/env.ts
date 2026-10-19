@@ -31,6 +31,14 @@ const schema = z.object({
   AUDIT_MAX_ACTIVE_PER_USER: z.coerce.number().int().min(1).max(100).default(3),
   AUDIT_MAX_PER_DAY: z.coerce.number().int().min(1).max(10000).default(30),
 
+  // Optional: free tools on the public website, run with the site's own YepAPI key (services/public-tools.ts).
+  // Unset: off. Spending stops at the monthly budget and, each day, at the daily one; each visitor
+  // gets PUBLIC_TOOLS_PER_DAY runs a day.
+  PUBLIC_TOOLS_YEPAPI_KEY: z.string().min(10).optional(),
+  PUBLIC_TOOLS_MONTHLY_USD: z.coerce.number().min(0).default(30),
+  PUBLIC_TOOLS_DAILY_USD: z.coerce.number().min(0).default(2),
+  PUBLIC_TOOLS_PER_DAY: z.coerce.number().int().min(1).max(1000).default(5),
+
   // Optional: Google Search Console and Analytics. An OAuth client from Google Cloud with
   // ${APP_URL}/api/google/gsc/callback and ${APP_URL}/api/google/ga4/callback as redirect URIs.
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),

@@ -74,8 +74,10 @@ describe("AI Overview citations", () => {
 });
 
 describe("estimateRun", () => {
-  it("prices every check at the top 100: $0.10 per keyword and device", () => {
-    expect(estimateRun({ devices: ["desktop", "mobile"] }, 100)).toEqual({ checks: 200, min: 20, max: 20 });
-    expect(estimateRun({ devices: ["desktop"] }, 5)).toEqual({ checks: 5, min: 0.5, max: 0.5 });
+  it("prices every check by the tracker's depth: $0.01 per 10 results, per keyword and device", () => {
+    expect(estimateRun({ devices: ["desktop", "mobile"], depth: 100 }, 100)).toEqual({ checks: 200, min: 20, max: 20 });
+    expect(estimateRun({ devices: ["desktop"], depth: 100 }, 5)).toEqual({ checks: 5, min: 0.5, max: 0.5 });
+    expect(estimateRun({ devices: ["desktop"], depth: 50 }, 100)).toEqual({ checks: 100, min: 5, max: 5 });
+    expect(estimateRun({ devices: ["desktop", "mobile"], depth: 20 }, 100)).toEqual({ checks: 200, min: 4, max: 4 });
   });
 });

@@ -39,9 +39,13 @@ const sizes: Record<Size, string> = {
   lg: 'h-13 px-7 text-base',
 };
 
+/** The classes of a button, for a real <button> in a form. */
+export const buttonClasses = (variant: Variant = 'primary', size: Size = 'md', className = '') =>
+  `${base} ${variants[variant]} ${variant === 'ghost' ? 'h-auto' : sizes[size]} ${className}`;
+
 /** Link styled as a button. Absolute URLs render a plain anchor, internal paths use next/link. */
 export function ButtonLink({ href, children, variant = 'primary', size = 'md', className = '' }: ButtonLinkProps) {
-  const classes = `${base} ${variants[variant]} ${variant === 'ghost' ? 'h-auto' : sizes[size]} ${className}`;
+  const classes = buttonClasses(variant, size, className);
 
   if (/^https?:\/\//.test(href)) {
     return (

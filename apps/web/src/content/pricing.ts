@@ -19,7 +19,7 @@ export const priceRows: PriceRow[] = [
   { action: 'Website traffic checker', unit: 'Organic and paid traffic of up to 100 websites', price: '$0.03 – $0.06', href: '/tools/website-traffic-checker' },
   { action: 'Website authority checker', unit: 'Domain Rating and links, per website', price: '$0.02', href: '/tools/website-authority-checker' },
   { action: 'Backlink checker', unit: 'Totals, history and four lists of 100', price: '$0.30 – $0.34', href: '/tools/backlink-checker' },
-  { action: 'Rank check', unit: 'One keyword and device, the top 100 results', price: '$0.10', href: '/features/keyword-rank-tracker' },
+  { action: 'Rank check', unit: 'One keyword and device, the top 20 to the top 100', price: '$0.02 – $0.10', href: '/features/keyword-rank-tracker' },
   { action: 'Lighthouse', unit: 'One run, mobile or desktop', price: '$0.05', href: '/features/site-audit' },
   { action: 'Geo-grid', unit: '5×5 grid, 25 Maps searches', price: '$1.75', href: '/features/local-rank-tracker' },
 ];
@@ -32,7 +32,7 @@ export interface CreditExample {
 
 /** What the $5 in free credits on a new YepAPI account covers. Each line is an alternative, not a bundle. */
 export const creditExamples: CreditExample[] = [
-  { amount: 'about 50', what: 'rank checks of the top 100', detail: 'at $0.10 each' },
+  { amount: 'about 250', what: 'rank checks of the top 20', detail: 'at $0.02 each' },
   { amount: 'about 60', what: 'keyword research runs', detail: '150 results each, about $0.08' },
   { amount: 'about 80', what: 'backlink lookups', detail: '100 rows each, $0.06' },
 ];

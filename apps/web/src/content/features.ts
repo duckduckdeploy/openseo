@@ -72,7 +72,7 @@ export const features: Feature[] = [
     slug: 'keyword-rank-tracker',
     seoTitle: 'Open Source Rank Tracker - Self Host & 100% Free',
     h1: 'Open Source Rank Tracker',
-    description: 'Track Google rankings on desktop and mobile by country, city or exact coordinates. Every check reads the top 100, on your schedule or on demand.',
+    description: 'Track Google rankings on desktop and mobile by country, city or exact coordinates, from $0.02 a check, to the top 20, 50 or 100, on your schedule.',
     whatTitle: 'How keyword rank tracking works',
     glossary: ['rank-tracking', 'keyword-ranking', 'serp-features', 'serp-volatility', 'average-position', 'share-of-voice'],
     name: 'Rank tracking',
@@ -82,7 +82,7 @@ export const features: Feature[] = [
     icon: ChartLine,
     what: [
       'Track where your site ranks on Google for the keywords you care about, on desktop and mobile, from a country, a city or an exact pair of coordinates.',
-      'Every check reads the top 100 results, so you see your position wherever it is, and every competitor around you. Checks run in the background on the schedule you pick, or right away when you click.',
+      'Each tracker reads the top 20, 50 or 100 results per check. Top 20 covers the first two pages from $0.02 a keyword; top 100 shows your position wherever it is, and every competitor around you. Checks run in the background on the schedule you pick, or right away when you click.',
     ],
     capabilities: [
       {
@@ -106,8 +106,8 @@ export const features: Feature[] = [
         body: 'See which SERP features appear on the results page for each keyword.',
       },
       {
-        title: 'The full top 100',
-        body: 'Every check reads 10 pages of results, so a keyword on page four is tracked as closely as one on page one.',
+        title: 'Top 20, 50 or 100',
+        body: 'Pick the depth per tracker: two pages for daily tracking on a budget, or ten so a keyword on page four is tracked as closely as one on page one.',
       },
       {
         title: 'History that stays',
@@ -115,15 +115,17 @@ export const features: Feature[] = [
       },
     ],
     facts: [
-      { value: '100', label: 'results per check' },
+      { value: '$0.02', label: 'per check, top 20' },
       { value: '2', label: 'devices' },
       { value: '3', label: 'schedules' },
     ],
     costs: [
-      { action: 'Rank check', unit: 'One keyword and device, the top 100 results', price: '$0.10' },
+      { action: 'Rank check, top 20', unit: 'One keyword and device', price: '$0.02' },
+      { action: 'Rank check, top 50', unit: 'One keyword and device', price: '$0.05' },
+      { action: 'Rank check, top 100', unit: 'One keyword and device', price: '$0.10' },
     ],
     costNote:
-      '100 keywords on desktop cost $10 a run: about $43 a month checked weekly, or $300 checked daily.',
+      '100 keywords on desktop checked daily cost about $60 a month at the top 20, or $300 at the top 100. Checked weekly: about $9 or $43.',
   },
   {
     slug: 'search-console-dashboard',
@@ -225,15 +227,20 @@ export const features: Feature[] = [
     glossary: ['ai-visibility', 'generative-engine-optimization', 'ai-citations', 'prompt-tracking', 'brand-mentions', 'share-of-voice'],
     worksWith: ASSISTANT_BRANDS,
     name: 'AI visibility',
-    headline: 'Find out what AI models say about your brand',
+    headline: 'AI visibility tracking without a subscription',
     summary:
       'Track prompts across 120+ AI models with web search on. See whether your brand is mentioned, whether your site is cited, and where.',
     icon: Bot,
     what: [
       'People ask AI models the questions they used to type into a search box. OpenSEO lets you track prompts across more than 120 models from OpenAI, Anthropic, Google, xAI, Perplexity and more, with web search turned on.',
       'For each answer you see whether your brand is mentioned, whether your site is cited and at what position. Put models side by side to see how the answers differ.',
+      'There is no plan priced by number of prompts. You pay for the runs you make, at the price shown before they start, so you can test a handful of prompts on a few models before tracking more.',
     ],
     capabilities: [
+      {
+        title: 'No subscription',
+        body: 'Pay per prompt run, priced before it runs. Track 5 prompts or 200, on a schedule or on demand.',
+      },
       {
         title: 'Prompt tracking',
         body: 'Save the prompts that matter to you and track the answers.',

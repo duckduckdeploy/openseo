@@ -1,5 +1,6 @@
 "use client";
 
+import { RANK_DEPTH } from "@openseo/shared";
 import { LANGUAGES } from "@/lib/scope";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -8,7 +9,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { LocationPicker, type LocationChoice } from "@/components/location-picker";
 import { Check, Group, lines, SCHEDULES, type Schedule, Segmented, usdRange } from "@/components/tracking/kit";
-import { DEVICES, type Device, monthlyPrice, monthlyText, runPrice, type Tracker, type TrackerRow, whereText } from "@/components/tracking/rank";
+import { DEPTH_HINT, DEPTH_OPTIONS, DEVICES, type Device, monthlyPrice, monthlyText, runPrice, type Tracker, type TrackerRow, whereText } from "@/components/tracking/rank";
 import { Badge, Button, Card, CardHeader, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Table, Textarea } from "@/components/ui";
 import { api, dateTime, num } from "@/lib/api";
 import { type Project, useProject } from "@/lib/hooks";
@@ -27,13 +28,14 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
   const [language, setLanguage] = useState(project.language || "en");
   const [devices, setDevices] = useState<Device[]>(["desktop"]);
   const [schedule, setSchedule] = useState<Schedule>("weekly");
+  const [depth, setDepth] = useState<number>(RANK_DEPTH);
   const [text, setText] = useState("");
 
   const keywords = lines(text, true);
   const lat = Number(latitude);
   const lng = Number(longitude);
   const pointValid = latitude.trim() !== "" && longitude.trim() !== "" && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
-  const price = runPrice(keywords.length, devices.length);
+  const price = runPrice(keywords.length, devices.length, depth);
   const monthly = monthlyPrice(price, schedule);
   const tooMany = keywords.length > MAX_KEYWORDS;
   const ready = domain.trim().length >= 3 && devices.length > 0 && !tooMany && (mode === "place" || pointValid);
@@ -47,6 +49,7 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
           language,
           devices,
           schedule,
+          depth,
           keywords: keywords.length ? keywords : undefined,
           ...(mode === "point"
             ? { latitude: lat, longitude: lng, locationName: pointLabel.trim() || `${lat.toFixed(4)}, ${lng.toFixed(4)}` }
@@ -129,6 +132,16 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
               <option key={option} value={option}>
                 {option[0]?.toUpperCase()}
                 {option.slice(1)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <Field label="Depth" hint={DEPTH_HINT}>
+          <Select value={String(depth)} onChange={(event) => setDepth(Number(event.target.value))}>
+            {DEPTH_OPTIONS.map((option) => (
+              <option key={option.depth} value={option.depth}>
+                {option.label}
               </option>
             ))}
           </Select>

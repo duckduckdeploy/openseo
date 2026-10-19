@@ -186,9 +186,10 @@ describe("rank runs", () => {
     const tracker = await newTracker(user);
     const [keyword] = await dataDb.select().from(schema.rankKeywords).where(eq(schema.rankKeywords.trackerId, tracker.id));
     expect((await user.api.ok("PATCH", `/trackers/${tracker.id}/keywords/${keyword!.id}`, { pinned: true })).pinned).toBe(true);
-    // Depth is not a setting: every check reads the top 100.
-    const updated = await user.api.ok("PATCH", `/trackers/${tracker.id}`, { schedule: "weekly", depth: 10, devices: ["mobile", "mobile"] });
-    expect(updated).toMatchObject({ schedule: "weekly", depth: 100, devices: ["mobile"] });
+    // Depth is 20, 50 or 100 results; anything else is refused.
+    expect((await user.api.patch(`/trackers/${tracker.id}`, { depth: 10 })).status).toBe(400);
+    const updated = await user.api.ok("PATCH", `/trackers/${tracker.id}`, { schedule: "weekly", depth: 20, devices: ["mobile", "mobile"] });
+    expect(updated).toMatchObject({ schedule: "weekly", depth: 20, devices: ["mobile"] });
     expect(new Date(updated.nextRunAt).getTime()).toBeGreaterThan(Date.now() + 6 * 24 * 3600_000);
   });
 });

@@ -48,6 +48,28 @@ export const tour: TourStop[] = [
     ],
   },
   {
+    id: 'ai-visibility',
+    eyebrow: 'AI visibility checker',
+    title: 'AI visibility checker for ChatGPT and Gemini',
+    lede: 'Ask ChatGPT, Gemini, Claude and Perplexity the same question with web search on. Every source each one cites, in order, and whether your site is among them.',
+    points: ['Four assistants, one question', 'Citations in order', 'Your site cited and named'],
+    href: '/tools/ai-visibility-checker',
+    slides: [
+      {
+        name: 'ai-visibility-sites',
+        title: 'Most cited sites',
+        alt: 'The most cited sites, with the assistants that cite each one and their place in each list',
+        body: 'Every site any assistant cited, ranked by how many cite it and how high, with each assistant’s place for it.',
+      },
+      {
+        name: 'ai-visibility-order',
+        title: 'Citations in order',
+        alt: 'Four columns, one per assistant, listing the sources each cited in order',
+        body: 'One column per assistant, sources numbered as given. Your site is highlighted wherever it appears.',
+      },
+    ],
+  },
+  {
     id: 'local',
     eyebrow: 'Local search',
     title: 'Local keyword research by city',
@@ -204,28 +226,6 @@ export const tour: TourStop[] = [
         title: 'Keyword gap',
         alt: 'Keyword gap between todoist.com and ticktick.com listing keywords only the competitor ranks for',
         body: 'Keywords only they rank for and keywords you both rank for, loaded together, with volume, difficulty and intent.',
-      },
-    ],
-  },
-  {
-    id: 'ai-visibility',
-    eyebrow: 'AI visibility checker',
-    title: 'AI visibility checker for ChatGPT and Gemini',
-    lede: 'Ask ChatGPT, Gemini, Claude and Perplexity the same question with web search on. Every source each one cites, in order, and whether your site is among them.',
-    points: ['Four assistants, one question', 'Citations in order', 'Your site cited and named'],
-    href: '/tools/ai-visibility-checker',
-    slides: [
-      {
-        name: 'ai-visibility-sites',
-        title: 'Most cited sites',
-        alt: 'The most cited sites, with the assistants that cite each one and their place in each list',
-        body: 'Every site any assistant cited, ranked by how many cite it and how high, with each assistant’s place for it.',
-      },
-      {
-        name: 'ai-visibility-order',
-        title: 'Citations in order',
-        alt: 'Four columns, one per assistant, listing the sources each cited in order',
-        body: 'One column per assistant, sources numbered as given. Your site is highlighted wherever it appears.',
       },
     ],
   },

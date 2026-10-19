@@ -15,6 +15,7 @@ import { keywordRoutes } from "./routes/keywords";
 import { localRoutes } from "./routes/local";
 import { lookupRoutes } from "./routes/lookups";
 import { projectRoutes } from "./routes/projects";
+import { publicToolRoutes } from "./routes/public-tools";
 import { rankRoutes } from "./routes/rank";
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -33,6 +34,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cors, {
     delegator: (request, callback) => {
       if (isPublicOAuth(request.url ?? "")) callback(null, { origin: true, credentials: false });
+      // The website's free tools: from the website only, never with cookies.
+      else if ((request.url ?? "").startsWith("/public/")) callback(null, { origin: [env.WEB_URL], credentials: false });
       else callback(null, { origin: [env.APP_URL], credentials: true });
     },
   });
@@ -111,6 +114,8 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // OAuth for MCP clients that cannot send an API key, such as ChatGPT (services/oauth.ts).
   await app.register(oauthPublicRoutes);
+
+  await app.register(publicToolRoutes);
 
 
   await registerMcp(app);

@@ -1,4 +1,4 @@
-import { RUNS_PER_MONTH, RANK_CHECK_USD } from "@openseo/shared";
+import { RANK_DEPTH, RANK_DEPTHS, RUNS_PER_MONTH, rankCheckUsd } from "@openseo/shared";
 import { usd } from "@/lib/api";
 import type { RunStatus, Schedule } from "./kit";
 
@@ -102,12 +102,16 @@ export type KeywordHistory = {
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
-/** Every check reads the top 100 Google results (10 pages at $0.01): $0.10 per keyword and device. */
-export function runPrice(keywords: number, devices: number) {
+/** Each keyword and device is one check of `depth` results at $0.01 per 10: $0.02, $0.05 or $0.10. */
+export function runPrice(keywords: number, devices: number, depth: number = RANK_DEPTH) {
   const checks = keywords * devices;
-  const cost = round(checks * RANK_CHECK_USD);
+  const cost = round(checks * rankCheckUsd(depth));
   return { checks, min: cost, max: cost };
 }
+
+/** The depth choices, cheapest first. SERP features count toward the depth. */
+export const DEPTH_OPTIONS = RANK_DEPTHS.map((depth) => ({ depth, label: `Top ${depth} · ${usd(rankCheckUsd(depth))} per check` }));
+export const DEPTH_HINT = "Results read per keyword. Top 20 covers the first two pages for a fifth of the price; top 100 also records competitors and positions far down. SERP features count toward the depth.";
 
 export function monthlyPrice(estimate: { min: number; max: number }, schedule: Schedule) {
   const runs = RUNS_PER_MONTH[schedule];

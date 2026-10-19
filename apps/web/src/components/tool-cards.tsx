@@ -39,7 +39,12 @@ export function ToolCards({ tools }: { tools: ResearchTool[] }) {
                   {tool.h1}
                 </Link>
               </h3>
-              {appName && <p className="mt-1 font-mono text-xs text-faint">In the app: {appName}</p>}
+              {(tool.freeTool || appName) && (
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-faint">
+                  {tool.freeTool && <span className="rounded-full bg-accent-soft px-2 py-0.5 font-sans font-medium text-accent-text">Free to try, no account</span>}
+                  {appName && <span>In the app: {appName}</span>}
+                </p>
+              )}
               <p className="mt-2.5 flex-1 text-[0.9375rem] leading-relaxed text-muted">{tool.summary}</p>
               <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-accent-text" aria-hidden="true">
                 Learn more

@@ -2,8 +2,10 @@ import { buildApp } from "./app";
 import { dataPool, pool } from "./db";
 import { env } from "./env";
 import { startWorker, stopWorker } from "./jobs/queue";
+import { ensurePublicToolsAccount } from "./services/public-tools";
 
 const app = await buildApp();
+await ensurePublicToolsAccount();
 
 if (env.RUN_WORKER === "true") await startWorker(app.log);
 

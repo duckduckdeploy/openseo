@@ -1,5 +1,6 @@
 "use client";
 
+import { rankCheckUsd } from "@openseo/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ChevronLeft, Download, Minus, Pin, Play, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -32,6 +33,8 @@ import {
 } from "@/components/tracking/kit";
 import {
   type CompetitorRow,
+  DEPTH_HINT,
+  DEPTH_OPTIONS,
   DEVICES,
   type Device,
   featureLabel,
@@ -227,7 +230,7 @@ function AddKeywords({ tracker, onDone }: { tracker: TrackerDetail; onDone: () =
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const keywords = lines(text, true);
-  const extra = runPrice(keywords.length, tracker.devices.length);
+  const extra = runPrice(keywords.length, tracker.devices.length, tracker.depth);
   const room = 1000 - tracker.keywordCount;
   const add = useMutation({
     mutationFn: () => api<{ added: number; skipped: number }>(`/trackers/${tracker.id}/keywords`, { method: "POST", body: { keywords } }),
@@ -729,12 +732,13 @@ function SettingsTab({ tracker, projectId }: { tracker: TrackerDetail; projectId
   const queryClient = useQueryClient();
   const [devices, setDevices] = useState<Device[]>(tracker.devices);
   const [schedule, setSchedule] = useState<Schedule>(tracker.schedule);
+  const [depth, setDepth] = useState<number>(tracker.depth);
   const [confirming, setConfirming] = useState(false);
-  const price = runPrice(tracker.keywordCount, devices.length);
-  const dirty = schedule !== tracker.schedule || devices.join() !== tracker.devices.join();
+  const price = runPrice(tracker.keywordCount, devices.length, depth);
+  const dirty = schedule !== tracker.schedule || depth !== tracker.depth || devices.join() !== tracker.devices.join();
 
   const save = useMutation({
-    mutationFn: () => api(`/trackers/${tracker.id}`, { method: "PATCH", body: { devices, schedule } }),
+    mutationFn: () => api(`/trackers/${tracker.id}`, { method: "PATCH", body: { devices, schedule, depth } }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id] });
       void queryClient.invalidateQueries({ queryKey: ["trackers", projectId] });
@@ -775,6 +779,15 @@ function SettingsTab({ tracker, projectId }: { tracker: TrackerDetail; projectId
                 <option key={option} value={option}>
                   {option[0]?.toUpperCase()}
                   {option.slice(1)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Depth" hint={DEPTH_HINT}>
+            <Select value={String(depth)} onChange={(event) => setDepth(Number(event.target.value))}>
+              {DEPTH_OPTIONS.map((option) => (
+                <option key={option.depth} value={option.depth}>
+                  {option.label}
                 </option>
               ))}
             </Select>
@@ -882,7 +895,7 @@ function TrackerView() {
         title={data.name.replaceAll(",", ", ")}
         description={
           <span className="font-mono text-xs">
-            {data.domain} · {whereText(data)} · {data.language} · {data.devices.join(" + ")} · top 100 · {data.schedule}
+            {data.domain} · {whereText(data)} · {data.language} · {data.devices.join(" + ")} · top {data.depth} · {data.schedule}
             {data.nextRunAt && data.schedule !== "manual" ? ` · next run ${dateTime(data.nextRunAt)}` : ""}
           </span>
         }
@@ -966,7 +979,7 @@ function TrackerView() {
           {num(data.keywordCount)} {data.keywordCount === 1 ? "keyword" : "keywords"} × {data.devices.length} {data.devices.length === 1 ? "device" : "devices"} = <span className="font-mono text-ink tabular">{num(data.estimate.checks)} checks</span>, billed to your YepAPI balance.
         </p>
         <p>
-          Each check reads the top 100 results for $0.10, so the run costs <span className="font-mono text-ink tabular">{usd(data.estimate.min)}</span>.
+          Each check reads the top {data.depth} results for {usd(rankCheckUsd(data.depth))}, so the run costs <span className="font-mono text-ink tabular">{usd(data.estimate.min)}</span>.
         </p>
       </ConfirmDialog>
     </>

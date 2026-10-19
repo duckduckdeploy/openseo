@@ -23,7 +23,7 @@ const textLink = 'font-medium text-accent-text underline decoration-accent-line 
 
 const everything = [
   'Keyword research, SERP checker and keyword ideas',
-  'Rank tracking, top 100, desktop and mobile',
+  'Rank tracking to the top 20, 50 or 100, desktop and mobile',
   'Site audit with Lighthouse',
   'Backlinks, domain overview and competitors',
   'AI visibility tracking',
@@ -147,7 +147,7 @@ export default function PricingPage() {
           <PriceTable caption="Example prices for common lookups" rows={rowsFromPricing(priceRows)} />
           <ul className="mt-6 space-y-3 text-[0.9375rem] text-muted">
             <li>Prices at the time of writing, set by the data provider, which may change them.</li>
-            <li>A rank check reads the top 100 results, 10 pages at $0.01, so it costs $0.10 per keyword and device.</li>
+            <li>A rank check costs $0.01 per 10 results it reads: $0.02 for the top 20, up to $0.10 for the top 100, per keyword and device.</li>
             <li>A 5×5 geo-grid runs 25 Maps searches at $0.07 each, which comes to $1.75.</li>
           </ul>
         </div>

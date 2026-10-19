@@ -40,12 +40,13 @@ export default function CostsPage() {
         the error is shown and you decide whether to try again. Free calls, such as the balance, are retried as usual.
       </p>
 
-      <h3 id="rank-price">Rank checks read the top 100</h3>
+      <h3 id="rank-price">Rank checks: top 20, 50 or 100</h3>
       <p>
-        Every rank check reads the top 100 Google results, 10 pages at $0.01 each, so it records your position wherever
-        it is and the full field of competitors. A check costs $0.10 per keyword and device; desktop and mobile are
-        separate checks. A run costs <code>keywords × devices × $0.10</code>, and the tracker shows it per run and per
-        month on its schedule.
+        Each tracker reads the top 20, 50 or 100 Google results per check, at $0.01 for every 10: $0.02, $0.05 or
+        $0.10 per keyword and device. Top 100, the default, records your position wherever it is and the full field of
+        competitors; top 20 covers the first two pages for a fifth of the price. SERP features count toward the depth.
+        Desktop and mobile are separate checks. A run costs <code>keywords × devices × price per check</code>, and the
+        tracker shows it per run and per month on its schedule.
       </p>
 
       <h3 id="ai-price">AI answers have no fixed price</h3>
@@ -118,7 +119,7 @@ export default function CostsPage() {
         mono={[1]}
         rows={[
           ['Keywords per rank tracker', '1,000'],
-          ['Rank check depth', 'top 10 to top 100'],
+          ['Rank check depth', 'top 20, 50 or 100'],
           ['AI prompts per project', '200'],
           ['AI models per project', '20'],
           ['Competitors per project (AI visibility)', '20'],
