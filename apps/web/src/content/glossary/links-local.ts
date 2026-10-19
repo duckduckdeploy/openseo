@@ -568,9 +568,9 @@ export const terms: GlossaryTerm[] = [
       ],
     },
     openseo: {
-      body: 'The domain overview shows a domain’s authority, traffic and links together, so you can judge a site on more than one number.',
-      href: '/tools/domain-overview',
-      label: 'Check a domain’s authority',
+      body: 'The website authority checker shows the Domain Rating, referring domains and backlinks of up to 10 sites side by side, so you judge a site against its competitors rather than on one number.',
+      href: '/tools/website-authority-checker',
+      label: 'Check Domain Rating',
     },
     related: ['url-rating', 'domain-authority', 'pagerank', 'referring-domain', 'link-profile'],
     faqs: [
@@ -654,9 +654,9 @@ export const terms: GlossaryTerm[] = [
       ],
     },
     openseo: {
-      body: 'The domain overview shows a domain’s authority with its traffic, keywords and links, so you can see whether a strong score comes with a real audience.',
-      href: '/tools/domain-overview',
-      label: 'Check a domain',
+      body: 'The website authority checker compares the authority of up to 10 sites, and the domain overview puts one site’s authority next to its traffic and keywords, so you can see whether a strong score comes with a real audience.',
+      href: '/tools/website-authority-checker',
+      label: 'Check website authority',
     },
     related: ['domain-rating', 'url-rating', 'pagerank', 'link-profile', 'private-blog-network'],
     faqs: [
@@ -1009,9 +1009,9 @@ export const terms: GlossaryTerm[] = [
       ],
     },
     openseo: {
-      body: 'The backlink checker includes link intersect: enter your site and up to several competitors to see the referring domains they share that you do not have.',
-      href: '/tools/backlink-checker',
-      label: 'Run a link intersect',
+      body: 'The backlink gap tool runs a link intersect: enter your site and up to 20 competitors to see the referring domains that link to them and not to you.',
+      href: '/tools/backlink-gap',
+      label: 'Run a backlink gap',
     },
     related: ['link-building', 'referring-domain', 'keyword-gap', 'backlink', 'link-profile'],
     faqs: [

@@ -12,8 +12,12 @@ export interface PriceRow {
 export const priceRows: PriceRow[] = [
   { action: 'Keyword overview', unit: 'One keyword: metrics, ideas, suggestions, top 10, six countries', price: '$0.27 – $0.37', href: '/tools/keyword-overview' },
   { action: 'Keyword ideas', unit: 'Up to 600 ideas and suggestions', price: '$0.07 – $0.25', href: '/tools/keyword-ideas' },
+  { action: 'Keyword difficulty checker', unit: 'Difficulty of 1,000 keywords', price: '$0.33', href: '/tools/keyword-difficulty-checker' },
+  { action: 'AI Overview checker', unit: 'Google’s first page and its AI Overview, per keyword', price: '$0.01', href: '/tools/ai-overview-checker' },
   { action: 'SERP checker', unit: 'Live top 10 and the keyword’s volume', price: '$0.05 – $0.06', href: '/tools/serp-checker' },
   { action: 'Domain overview', unit: 'Totals, rankings, top 100 keywords and pages, competitors', price: '$0.23 – $0.30', href: '/tools/domain-overview' },
+  { action: 'Website traffic checker', unit: 'Organic and paid traffic of up to 100 websites', price: '$0.03 – $0.06', href: '/tools/website-traffic-checker' },
+  { action: 'Website authority checker', unit: 'Domain Rating and links, per website', price: '$0.02', href: '/tools/website-authority-checker' },
   { action: 'Backlink checker', unit: 'Totals, history and four lists of 100', price: '$0.30 – $0.34', href: '/tools/backlink-checker' },
   { action: 'Rank check', unit: 'One keyword and device, the top 100 results', price: '$0.10', href: '/features/rank-tracking' },
   { action: 'Lighthouse', unit: 'One run, mobile or desktop', price: '$0.05', href: '/features/site-audit' },

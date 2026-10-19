@@ -58,7 +58,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Users', them: 'Paid per seat beyond the first', us: 'No seats: self-host it for your whole team' },
       { topic: 'Keyword and backlink data', them: 'Own crawler and index, among the largest', us: 'A large commercial dataset, through a data provider' },
       { topic: 'Rank tracking', them: '750 tracked keywords on Lite', us: '$0.10 per keyword and device for the top 100, on your schedule or on demand' },
-      { topic: 'AI agents', them: 'Check their current plans', us: '63 MCP tools and a REST API on every install, spending capped per call' },
+      { topic: 'AI agents', them: 'Check their current plans', us: '66 MCP tools and a REST API on every install, spending capped per call' },
     ],
     chooseThem: [
       'Link building is your full-time job and you need the deepest backlink index.',
@@ -94,7 +94,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Scope', them: 'SEO plus ads, content, social and more', us: 'SEO: keywords, ranks, backlinks, audits, AI visibility, local' },
       { topic: 'Keyword and backlink data', them: 'Own databases with long history', us: 'A large commercial dataset, through a data provider' },
       { topic: 'Rank tracking', them: '500 tracked keywords on Pro', us: '$0.10 per keyword and device for the top 100, on your schedule or on demand' },
-      { topic: 'AI agents', them: 'Check their current plans', us: '63 MCP tools and a REST API on every install, spending capped per call' },
+      { topic: 'AI agents', them: 'Check their current plans', us: '66 MCP tools and a REST API on every install, spending capped per call' },
     ],
     chooseThem: [
       'You run paid search, content and social from one place as well as SEO.',

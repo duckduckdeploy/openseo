@@ -2,10 +2,11 @@ import { sortLighthouseAudits } from "@openseo/shared";
 import { estimateCost, type KeywordFilter, type YepApi } from "@openseo/yepapi";
 import { z } from "zod";
 import { cleanSources } from "../lib/brand-analysis";
-import { toDomain } from "../lib/domain";
+import { hostMatches, hostOf, toDomain } from "../lib/domain";
 import { buildGrid } from "../lib/geo";
 import { locationInfo } from "../lib/locations";
 import { mapLimit } from "../lib/pool";
+import { serpFeatures } from "../lib/serp";
 
 /**
  * The market a lookup runs in: a project's, or one chosen for a standalone tool (id null).
@@ -219,6 +220,75 @@ export const lookups: Lookup[] = [
     },
   }),
   define({
+    name: "serp_features",
+    title: "SERP features and AI Overviews",
+    description:
+      "For up to 100 keywords: which SERP features Google shows on the first page (AI Overview, featured snippet, People Also Ask, local pack, video and more), the pages each AI Overview cites, and, when a domain is given, the features it owns, whether the AI Overview cites it and its organic position in the top 10. $0.01 per keyword.",
+    feature: "serp",
+    ttl: 6 * HOUR,
+    input: z.object({
+      keywords: z.array(z.string().trim().min(1).max(300)).min(1).max(100),
+      domain: domain.optional().describe("Optional: your domain, to see which features you own and whether AI Overviews cite you"),
+      device: z.enum(["desktop", "mobile"]).default("desktop"),
+      locationCode,
+      language,
+    }),
+    estimate: (i) => {
+      const each = estimateCost("/v1/serp/google", { query: i.keywords[0] ?? "", depth: 10 });
+      return { min: sum(...i.keywords.map(() => each.min)), max: sum(...i.keywords.map(() => each.max ?? each.min)), formula: `$${each.min.toFixed(2)} per keyword` };
+    },
+    run: async (yep, i, p) => {
+      const own = i.domain ?? null;
+      // Each keyword is billed separately; failed ones are reported, the rest returned (and not cached).
+      const rows = await mapLimit(i.keywords, 5, async (keyword) => {
+        try {
+          const res = await yep.serp.google({ query: keyword, depth: 10, device: i.device, ...loc(i, p) });
+          const { features, ownedFeatures, aiOverview } = serpFeatures(res.data, own);
+          const organic = res.data.results.filter((r) => r.type === "organic");
+          const index = own ? organic.findIndex((r) => hostMatches(hostOf(r.url) ?? r.domain?.toLowerCase() ?? null, own)) : -1;
+          return {
+            keyword,
+            features,
+            ownedFeatures,
+            aiOverview: aiOverview ? { cited: own ? ownedFeatures.some((f) => f === "aiOverview" || f === "ai_overview") : null, sources: aiOverview.sources.slice(0, 20) } : null,
+            position: index >= 0 ? index + 1 : null,
+            url: index >= 0 ? (organic[index]?.url ?? null) : null,
+            costUsd: res.costUsd,
+            error: null as string | null,
+            reason: undefined as unknown,
+          };
+        } catch (error) {
+          return { keyword, features: [] as string[], ownedFeatures: [] as string[], aiOverview: null, position: null, url: null, costUsd: 0, error: errorText(error) as string | null, reason: error as unknown };
+        }
+      });
+      const failed = rows.filter((row) => row.error);
+      // All failed: the first error as it came, so a bad key or empty balance reads as such.
+      if (failed.length === rows.length && failed[0]) throw failed[0].reason;
+      return {
+        data: { domain: own, device: i.device, keywords: rows.map(({ costUsd: _cost, reason: _reason, ...row }) => row) },
+        costUsd: sum(...rows.map((row) => row.costUsd)),
+        partial: failed.length > 0,
+      };
+    },
+  }),
+  define({
+    name: "keyword_difficulty",
+    title: "Keyword difficulty",
+    description: "Keyword difficulty (0 easy to 100 hard) for up to 1,000 keywords at once. Cheaper than keyword_metrics when only difficulty is needed. Country-level data.",
+    feature: "keyword_research",
+    ttl: 7 * DAY,
+    input: z.object({
+      keywords: z.array(z.string().trim().min(1).max(200)).min(1).max(1000),
+      country: z.string().length(2).optional().describe("ISO country code, e.g. us. Defaults to the project's country."),
+      language,
+    }),
+    estimate: (i) => est(estimateCost("/v1/seo/keywords/difficulty", { keywords: i.keywords })),
+    run: async (yep, i, p) => {
+      const res = await yep.keywords.difficulty({ keywords: i.keywords, location: (i.country ?? p.country).toLowerCase(), language: i.language ?? p.language });
+      return { data: res.data, costUsd: res.costUsd };
+    },
+  }),
+  define({
     name: "keyword_trends",
     title: "Search trends",
     description: "Google Trends interest over time for up to 5 keywords. $0.02.",
@@ -277,6 +347,28 @@ export const lookups: Lookup[] = [
         costUsd: sum(overview?.costUsd ?? 0, distribution?.costUsd ?? 0, authority?.costUsd ?? 0),
         partial: failures.length > 0,
       };
+    },
+  }),
+  define({
+    name: "domain_traffic",
+    title: "Website traffic",
+    description:
+      "Estimated monthly organic and paid search traffic, with organic and paid keyword counts, for up to 1,000 domains at once, in one country. Use it to compare a site with its competitors.",
+    feature: "domain_overview",
+    ttl: DAY,
+    input: z.object({
+      domains: z.array(domain).min(1).max(1000),
+      country: z.string().length(2).optional().describe("ISO country code, e.g. us. Defaults to the project's country."),
+      language,
+    }),
+    estimate: (i) => est(estimateCost("/v1/seo/domain/traffic", { targets: i.domains })),
+    run: async (yep, i, p) => {
+      const domains = [...new Set(i.domains)];
+      const res = await yep.domain.traffic({ targets: domains, location: (i.country ?? p.country).toLowerCase(), language: i.language ?? p.language });
+      // Returned in the order asked, with a zero row for any domain YepAPI left out.
+      const byDomain = new Map((res.data.domains ?? []).map((row) => [row.domain.toLowerCase(), row]));
+      const rows = domains.map((d) => byDomain.get(d) ?? { domain: d, organicKeywords: 0, organicTraffic: 0, paidKeywords: 0, paidTraffic: 0 });
+      return { data: { domains: rows }, costUsd: res.costUsd };
     },
   }),
   define({

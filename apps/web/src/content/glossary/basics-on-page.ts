@@ -178,9 +178,9 @@ export const terms: GlossaryTerm[] = [
       ],
     },
     openseo: {
-      body: 'The domain overview estimates any site’s organic traffic, traffic value and top pages, so you can compare yourself with competitors.',
-      href: '/tools/domain-overview',
-      label: 'Open the domain overview',
+      body: 'The website traffic checker estimates the organic traffic of up to 100 sites side by side, and the domain overview adds one site’s traffic value and top pages.',
+      href: '/tools/website-traffic-checker',
+      label: 'Check website traffic',
     },
     related: ['organic-search', 'traffic-value', 'google-analytics-4', 'google-search-console', 'click-through-rate', 'striking-distance-keywords'],
     faqs: [

@@ -353,8 +353,8 @@ export const terms: GlossaryTerm[] = [
       body: '"Project management software": KD 85, top 10 full of big software brands and review sites with thousands of referring domains. "Project management template for construction": KD 12, top 10 includes two forum threads and a page with five referring domains. A small construction software company has a real chance on the second.',
     },
     openseo: {
-      body: 'OpenSEO shows keyword difficulty next to volume in the keyword overview, along with the live top 10 and each result’s authority and links so you can check the score against reality.',
-      href: '/tools/keyword-overview',
+      body: 'The keyword difficulty checker scores up to 1,000 keywords at once and sorts them into easy, medium and hard. The keyword analysis tool shows one keyword’s difficulty next to the live top 10 and each result’s links, so you can check the score against reality.',
+      href: '/tools/keyword-difficulty-checker',
       label: 'Check keyword difficulty',
     },
     related: ['keyword-research', 'search-volume', 'referring-domain', 'domain-rating', 'serp', 'head-terms', 'long-tail-keywords', 'backlink'],
@@ -1052,8 +1052,8 @@ export const terms: GlossaryTerm[] = [
       body: 'An accounting software company compares itself with three rivals. All three rank for "invoice template for contractors" and "how to send an invoice by email"; it has no page for either. Both go on the content plan, along with a template download.',
     },
     openseo: {
-      body: 'The competitors tool finds your organic competitors and runs a keyword gap between your domain and theirs.',
-      href: '/tools/competitors',
+      body: 'The keyword gap tool compares your domain with a competitor’s: the keywords only they rank for and the ones you share, with volume, difficulty and both positions.',
+      href: '/tools/keyword-gap',
       label: 'Run a keyword gap',
     },
     related: ['content-gap', 'keyword-research', 'link-intersect', 'share-of-voice', 'seo-strategy'],

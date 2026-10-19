@@ -1017,9 +1017,9 @@ export const terms: GlossaryTerm[] = [
       body: 'For “how to tile a bathroom wall” the results page shows an AI Overview, a video carousel, People Also Ask and then organic results. A site ranking fourth with an article and no video is competing for a fraction of the attention. Adding a step-by-step video to the page, a short direct answer under “How to tile a bathroom wall” and clear numbered steps give it a chance at the carousel, the AI Overview citations and People Also Ask.',
     },
     openseo: {
-      body: 'The OpenSEO SERP checker shows the live top 10 with the SERP features on the page, and rank tracking records which features appear and whether you own them on every check.',
-      href: '/tools/serp-checker',
-      label: 'Open the SERP checker',
+      body: 'The AI Overview checker lists the SERP features on page one for up to 100 keywords at once, with the ones you own, and rank tracking records them on every check.',
+      href: '/tools/ai-overview-checker',
+      label: 'Check SERP features',
     },
     related: ['serp', 'featured-snippet', 'people-also-ask', 'ai-overviews', 'local-pack', 'knowledge-panel', 'rich-results', 'zero-click-searches'],
     faqs: [

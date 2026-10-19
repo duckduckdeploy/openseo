@@ -302,14 +302,14 @@ export const features: Feature[] = [
     slug: 'mcp-and-api',
     seoTitle: 'SEO MCP Server and SEO API for AI Agents',
     h1: 'SEO MCP server and API',
-    description: 'An SEO MCP server with 63 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
+    description: 'An SEO MCP server with 66 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
     whatTitle: 'How the MCP server works',
     glossary: ['mcp', 'ai-seo-agent', 'llm', 'keyword-research', 'rank-tracking'],
     worksWith: ['mcp', 'claude', 'chatgpt', 'claudecode', 'cursor', 'codex', 'geminicli'],
     name: 'MCP server and REST API',
     headline: 'SEO your AI agent can do, with a spending cap',
     summary:
-      'An MCP server with 63 tools and a REST API. Claude, Cursor, Codex and other agents can use every OpenSEO feature, and every paid call takes a spending ceiling.',
+      'An MCP server with 66 tools and a REST API. Claude, Cursor, Codex and other agents can use every OpenSEO feature, and every paid call takes a spending ceiling.',
     icon: Terminal,
     what: [
       'OpenSEO is a web app, a REST API and an MCP server. Everything you can do in the app, an agent can do with an API key: research keywords, check rankings, read your Search Console data, run an audit.',
@@ -317,7 +317,7 @@ export const features: Feature[] = [
     ],
     capabilities: [
       {
-        title: '63 MCP tools',
+        title: '66 MCP tools',
         body: 'One HTTP endpoint at {API_URL}/mcp that MCP clients connect to.',
       },
       {

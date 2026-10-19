@@ -1,4 +1,16 @@
 {
+  "ai-overview-checker": {
+    "width": 1440,
+    "height": 900
+  },
+  "ai-overview-checker-sources": {
+    "width": 1176,
+    "height": 718
+  },
+  "ai-overview-checker-table": {
+    "width": 1176,
+    "height": 739
+  },
   "ai-tracking": {
     "width": 1440,
     "height": 900
@@ -87,6 +99,10 @@
     "width": 1176,
     "height": 347
   },
+  "keyword-difficulty-checker": {
+    "width": 1440,
+    "height": 900
+  },
   "keyword-gap": {
     "width": 1176,
     "height": 894
@@ -159,6 +175,10 @@
     "width": 1176,
     "height": 328
   },
+  "rank-tracker-features": {
+    "width": 1176,
+    "height": 930
+  },
   "rank-tracker-keywords": {
     "width": 1176,
     "height": 1029
@@ -190,5 +210,13 @@
   "site-audit-issues": {
     "width": 1176,
     "height": 854
+  },
+  "website-authority-checker": {
+    "width": 1440,
+    "height": 900
+  },
+  "website-traffic-checker": {
+    "width": 1440,
+    "height": 900
   }
 }

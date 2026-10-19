@@ -160,6 +160,7 @@ export const toolLinks = {
   page: (url: string, market?: Market) => `/tools/page-analyser${qs({ url, ...inMarket(market) })}`,
   competitors: (domain: string, market?: Market) => `/tools/competitors${qs({ domain, ...inMarket(market) })}`,
   gap: (domain: string, competitor: string, market?: Market) => `/tools/competitors${qs({ domain, vs: competitor, ...inMarket(market) })}`,
+  aiOverviews: (keywords: string[], domain?: string | null, market?: Market) => `/tools/ai-overview-checker${qs({ keywords: keywords.join("\n"), domain: domain ?? undefined, ...inMarket(market) })}`,
 };
 
 /**

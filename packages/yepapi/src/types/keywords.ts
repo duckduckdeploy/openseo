@@ -87,7 +87,8 @@ export interface KeywordDifficultyParams {
 }
 
 export interface KeywordDifficultyData {
-  keywords: Array<{ keyword: string; difficulty: number }>;
+  /** `difficulty` is null for a keyword YepAPI has no data for. */
+  keywords: Array<{ keyword: string; difficulty: number | null }>;
 }
 
 export interface KeywordIntentParams {

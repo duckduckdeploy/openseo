@@ -156,6 +156,26 @@ const VIEWS = [
     url: '/tools/competitors?tab=serp&keywords=standing+desk%0Aadjustable+desk%0Aergonomic+chair%0Adesk+converter%0Amonitor+arm&country=us&lang=en',
     shots: { 'competitors-serp': `document.querySelector("[role=tablist]").parentElement` },
   },
+  {
+    url: `/tools/ai-overview-checker?keywords=${encodeURIComponent(['is a standing desk worth it', 'standing desk benefits', 'how tall should a standing desk be', 'best standing desk', 'standing desk vs sitting desk', 'electric standing desk', 'standing desk converter', 'how long should you stand at a standing desk', 'standing desk height calculator', 'standing desk mat', 'l shaped standing desk', 'uplift desk review'].join('\n'))}&domain=upliftdesk.com&country=us&lang=en`,
+    shots: {
+      'ai-overview-checker': 'viewport',
+      'ai-overview-checker-table': `box(document.querySelector("main table"))`,
+      'ai-overview-checker-sources': `heading("h2", "Sites AI Overviews cite most").closest(".grid")`,
+    },
+  },
+  {
+    url: `/tools/website-traffic-checker?domains=${encodeURIComponent('zapier.com\nmake.com\nifttt.com\nn8n.io\nworkato.com\npabbly.com')}&country=us&lang=en`,
+    shots: { 'website-traffic-checker': 'viewport' },
+  },
+  {
+    url: `/tools/website-authority-checker?domains=${encodeURIComponent('zapier.com\nmake.com\nifttt.com\nn8n.io\nworkato.com\npabbly.com')}&country=us&lang=en`,
+    shots: { 'website-authority-checker': 'viewport' },
+  },
+  {
+    url: `/tools/keyword-difficulty-checker?keywords=${encodeURIComponent(['standing desk', 'best standing desk', 'standing desk converter', 'electric standing desk', 'standing desk benefits', 'is a standing desk worth it', 'standing desk height', 'standing desk mat', 'l shaped standing desk', 'corner standing desk', 'standing desk with drawers', 'small standing desk', 'standing desk for two monitors', 'standing desk ergonomics', 'how to use a standing desk', 'standing desk vs treadmill desk', 'cheap standing desk', 'wooden standing desk', 'standing desk frame', 'standing desk accessories'].join('\n'))}&country=us&lang=en`,
+    shots: { 'keyword-difficulty-checker': 'viewport' },
+  },
 ];
 
 // Helpers available to `crop` expressions.
@@ -176,6 +196,11 @@ const PROJECT_VIEWS = [
     url: (ids) => ids.tracker && `/p/${ids.project}/rank/${ids.tracker}?tab=competitors`,
     cap: 820,
     shots: { 'rank-tracker-competitors': `document.querySelector("[role=tabpanel]")` },
+  },
+  {
+    url: (ids) => ids.tracker && `/p/${ids.project}/rank/${ids.tracker}?tab=features`,
+    cap: 900,
+    shots: { 'rank-tracker-features': `document.querySelector("[role=tabpanel]")` },
   },
   {
     url: (ids) => ids.audit && `/p/${ids.project}/audit/${ids.audit}`,

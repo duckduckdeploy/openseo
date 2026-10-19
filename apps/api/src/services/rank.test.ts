@@ -14,7 +14,7 @@ const item = (type: string, domain: string, path = "/") => ({
   url: domain ? `https://${domain}${path}` : "",
   description: "",
   domain,
-  data: null,
+  data: null as unknown,
 });
 
 function serp(results: ReturnType<typeof item>[], extra: Partial<GoogleSerpData> = {}): GoogleSerpData {
@@ -53,6 +53,23 @@ describe("parseSerp", () => {
     expect(parsed.ownedFeatures).toEqual(["featuredSnippet"]);
     expect(parsed.inLocalPack).toBe(false);
     expect(parseSerp(serp([item("organic", "acme.com")]), "acme.com", 10).inLocalPack).toBeNull();
+  });
+});
+
+describe("AI Overview citations", () => {
+  const overview = (urls: string[]) => ({
+    ...item("aiOverview", ""),
+    data: { references: urls.map((url) => ({ url, domain: new URL(url).hostname, title: "t", type: "ai_overview_reference" })) },
+  });
+
+  it("owns the AI Overview when it cites the domain, though the overview's own url is empty", () => {
+    const parsed = parseSerp(serp([overview(["https://rival.com/a", "https://blog.acme.com/guide"]), item("organic", "acme.com")]), "acme.com", 10);
+    expect(parsed.features).toContain("aiOverview");
+    expect(parsed.ownedFeatures).toEqual(["aiOverview"]);
+  });
+
+  it("does not own an AI Overview that cites only others", () => {
+    expect(parseSerp(serp([overview(["https://rival.com/a"]), item("organic", "acme.com")]), "acme.com", 10).ownedFeatures).toEqual([]);
   });
 });
 

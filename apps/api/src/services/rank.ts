@@ -6,6 +6,7 @@ import type { Device, SerpCompetitor } from "../db/schema";
 import { hostMatches, hostOf } from "../lib/domain";
 import { conflict, isUniqueViolation, notFound, runInProgress } from "../lib/errors";
 import { mapLimit } from "../lib/pool";
+import { serpFeatures } from "../lib/serp";
 import { errorMessage, getYep, isFatalForRun } from "../lib/yep";
 
 type Tracker = typeof schema.rankTrackers.$inferSelect;
@@ -45,9 +46,8 @@ export function parseSerp(data: GoogleSerpData, domain: string, requestedDepth: 
   const organic = data.results.filter((r) => r.type === "organic");
   const ranked = organic.map((r, index) => ({ ...r, rank: index + 1, host: hostOf(r.url) ?? r.domain?.toLowerCase() ?? null }));
   const own = ranked.find((r) => hostMatches(r.host, domain));
-  const others = data.results.filter((r) => r.type !== "organic");
-  const features = [...new Set([...(data.itemTypes ?? []), ...others.map((r) => r.type)])].filter((t) => t !== "organic");
-  const ownedFeatures = [...new Set(others.filter((r) => hostMatches(hostOf(r.url), domain)).map((r) => r.type))];
+  // An AI Overview counts as owned when it cites the domain (its sources, not its empty url).
+  const { features, ownedFeatures } = serpFeatures(data, domain);
   const hasLocalPack = features.includes("localPack");
   return {
     position: own?.rank ?? null,

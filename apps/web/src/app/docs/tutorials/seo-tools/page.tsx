@@ -139,6 +139,20 @@ export default function SeoToolsGuide() {
         <Ui>Save selected</Ui> to add them to a project, or <Ui>Export CSV</Ui>.
       </p>
 
+      <h2 id="keyword-difficulty-checker">Keyword difficulty checker</h2>
+      <Screenshot
+        name="keyword-difficulty-checker"
+        window
+        alt="The keyword difficulty checker: 20 keywords with their average difficulty and the split into easy, medium and hard"
+      />
+      <p>
+        Paste up to 1,000 keywords, one per line or separated by commas, and pick the country. Each gets a{' '}
+        <strong>difficulty</strong> from 0 (easy) to 100 (hard), and the list is split into <strong>easy</strong> (under
+        30), <strong>medium</strong> (30 to 59) and <strong>hard</strong> (60 and up), with the average for the whole set.
+        Click a band to show only those keywords, tick rows and <Ui>Save selected</Ui>, or <Ui>Export CSV</Ui>. Keywords
+        with too few searches have no score. In a project, <Ui>Use my saved keywords</Ui> fills the list for you.
+      </p>
+
       <h2 id="serp-checker">SERP checker</h2>
       <Screenshot
         name="serp-checker-table"
@@ -174,6 +188,32 @@ export default function SeoToolsGuide() {
         for the same keywords, each a click from the keyword gap.
       </p>
 
+      <h2 id="website-traffic-checker">Website traffic checker</h2>
+      <Screenshot
+        name="website-traffic-checker"
+        window
+        alt="The website traffic checker comparing six automation sites by organic traffic, share, keywords and paid traffic"
+      />
+      <p>
+        Paste up to 100 domains and pick the country. Each one&apos;s estimated monthly <strong>organic traffic</strong>{' '}
+        from Google, its share of the group&apos;s traffic, its organic keywords, and its <strong>paid traffic</strong> and
+        keywords from Google Ads. The figures are estimates from rankings and search volumes: good for comparing sites,
+        not exact visit counts. Click the arrow next to a site to open it in the domain overview.
+      </p>
+
+      <h2 id="website-authority-checker">Website authority checker</h2>
+      <Screenshot
+        name="website-authority-checker"
+        window
+        alt="The website authority checker comparing six sites by Domain Rating, referring domains and backlinks"
+      />
+      <p>
+        Enter up to 10 domains to compare their <strong>Domain Rating</strong> (0 to 100), <strong>referring
+        domains</strong> and <strong>backlinks</strong>. Authority is worldwide, so there is no country to pick, and each
+        site costs $0.02. In a project, <Ui>Traffic and authority</Ui> puts both checkers on one page as tabs, sharing the
+        same list of sites.
+      </p>
+
       <h2 id="page-analyser">Page analyser</h2>
       <Screenshot name="page-analyser" window alt="Page analyser for a blog post: URL rating, Domain Rating, referring domains, backlinks, traffic and keywords" />
       <p>One page, inside and out. Paste its address to see its authority and links, then its on-page basics:</p>
@@ -199,7 +239,7 @@ export default function SeoToolsGuide() {
       />
       <p>
         <strong>Link intersect</strong> takes competitors and lists the sites that link to all of them: the likeliest to
-        link to you next.
+        link to you next. It is also in the tools list as <Ui>Backlink gap</Ui>.
       </p>
 
       <h2 id="competitors">Competitors and keyword gap</h2>
@@ -216,6 +256,28 @@ export default function SeoToolsGuide() {
       <p>
         <strong>SERP competitors</strong> takes a list of keywords instead and shows which domains rank most for them.
         For the full workflow, see <Link href="/docs/tutorials/competitor-research">Size up a competitor</Link>.
+      </p>
+
+      <h2 id="ai-overview-checker">AI Overview checker</h2>
+      <Screenshot
+        name="ai-overview-checker"
+        window
+        alt="The AI Overview checker: how many keywords show an AI Overview, how many cite your site and the most common feature"
+      />
+      <p>
+        Paste up to 100 keywords and, optionally, your domain. For each keyword the checker reads Google&apos;s first page
+        ($0.01 a keyword) and shows whether there is an <strong>AI Overview</strong>, how many pages it cites, whether one
+        of them is on your domain, and every other SERP feature on the page. Features you appear in are marked green.
+      </p>
+      <Screenshot
+        name="ai-overview-checker-sources"
+        alt="The sites AI Overviews cite most across the keywords, next to how often each SERP feature appears"
+        caption="The domains Google's AI answers cite most across your keywords, and how often each feature shows."
+      />
+      <p>
+        <strong>Page-one rank</strong> is your organic position on the first page; a dash means you are not on it. In a
+        project, the rank tracker also records AI Overview citations on every check: open a tracker and its{' '}
+        <Ui>AI Overviews and features</Ui> tab.
       </p>
 
       <h2 id="ai-visibility">AI visibility checker</h2>

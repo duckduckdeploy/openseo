@@ -52,7 +52,7 @@ import { keywordToolLabel, OpenInTool } from "@/components/research/tool-link";
 import { useProject } from "@/lib/hooks";
 import { toolLinks } from "@/lib/scope";
 
-const TABS = ["keywords", "competitors", "runs", "settings"] as const;
+const TABS = ["keywords", "features", "competitors", "runs", "settings"] as const;
 type TabId = (typeof TABS)[number];
 type SortKey = "keyword" | "position" | "change" | "best";
 type Filter = "all" | "top3" | "top10" | "top20" | "improved" | "declined" | "not_found" | "pinned";
@@ -546,6 +546,93 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
   );
 }
 
+const AIO = new Set(["aiOverview", "ai_overview"]);
+
+/**
+ * SERP features across the tracked keywords at the latest check, AI Overviews first: how many
+ * keywords show one and how many of those cite the site. Read from the stored checks, so free.
+ */
+function FeaturesTab({ tracker, device }: { tracker: TrackerDetail; device: Device }) {
+  const project = useProject(tracker.projectId);
+  const results = useQuery({ queryKey: ["tracker", tracker.id, "results", device], queryFn: () => api<RankResults>(`/trackers/${tracker.id}/results`, { query: { device } }) });
+  if (results.isPending) return <Spinner />;
+  if (results.error) return <ErrorNote error={results.error} />;
+  const checked = results.data.keywords.filter((row) => row.status !== "pending" && row.status !== "error");
+  if (!checked.length) return <EmptyState title="No checks yet">Run the tracker once to see which keywords show AI Overviews and other SERP features.</EmptyState>;
+
+  const withAio = checked.filter((row) => row.features.some((f) => AIO.has(f)));
+  const cited = withAio.filter((row) => row.ownedFeatures.some((f) => AIO.has(f)));
+  const missing = withAio.filter((row) => !row.ownedFeatures.some((f) => AIO.has(f)));
+  const counts = new Map<string, { shown: number; owned: number }>();
+  for (const row of checked) {
+    for (const feature of row.features) {
+      const key = AIO.has(feature) ? "aiOverview" : feature;
+      const entry = counts.get(key) ?? { shown: 0, owned: 0 };
+      entry.shown++;
+      if (row.ownedFeatures.includes(feature)) entry.owned++;
+      counts.set(key, entry);
+    }
+  }
+  const features = [...counts.entries()].sort((a, b) => b[1].shown - a[1].shown);
+  const market = project.data ? { locationCode: project.data.locationCode, locationName: project.data.locationName, country: project.data.country, language: project.data.language } : undefined;
+  const pct = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : "—");
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Stat label="Keywords with an AI Overview" value={`${num(withAio.length)} of ${num(checked.length)}`} sub={pct(withAio.length, checked.length)} />
+        <Stat label={`AI Overviews citing ${tracker.domain}`} value={num(cited.length)} sub={`${pct(cited.length, withAio.length)} of AI Overviews`} />
+        <Stat label="Features you appear in" value={num(features.reduce((sum, [, c]) => sum + c.owned, 0))} sub="across all keywords" />
+      </div>
+      <Card>
+        <CardHeader title="SERP features on your keywords" description={`Latest check, ${device}. A feature is yours when one of its results, or a source an AI Overview cites, is on ${tracker.domain}.`} />
+        <Table>
+          <thead>
+            <tr>
+              <th scope="col">Feature</th>
+              <th scope="col" className="text-right">Keywords</th>
+              <th scope="col" className="text-right">Share</th>
+              <th scope="col" className="text-right">Yours</th>
+            </tr>
+          </thead>
+          <tbody>
+            {features.map(([feature, count]) => (
+              <tr key={feature}>
+                <th scope="row" className="font-medium capitalize">{featureLabel(feature)}</th>
+                <td className="text-right font-mono tabular">{num(count.shown)}</td>
+                <td className="text-right font-mono tabular">{pct(count.shown, checked.length)}</td>
+                <td className="text-right font-mono tabular">{count.owned ? <Badge tone="pos">{num(count.owned)}</Badge> : "0"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Card>
+      {missing.length > 0 && (
+        <Card>
+          <CardHeader
+            title="AI Overviews that do not cite you"
+            description="The keywords where Google shows an AI answer without your site. See which pages it cites instead, then cover what they cover."
+            action={
+              <Link href={toolLinks.aiOverviews(missing.slice(0, 100).map((row) => row.keyword), tracker.domain, market)} className="text-[13px] font-medium text-ink underline underline-offset-2">
+                See the cited sites
+              </Link>
+            }
+          />
+          <ul className="flex flex-wrap gap-1.5 px-4 pb-4">
+            {missing.slice(0, 60).map((row) => (
+              <li key={row.id}>
+                <Badge>{row.keyword}</Badge>
+              </li>
+            ))}
+            {missing.length > 60 && <li className="text-xs text-muted">+{num(missing.length - 60)} more</li>}
+          </ul>
+        </Card>
+      )}
+      <Note>AI Overview citations are recorded from checks run on or after 19 October 2026; earlier checks only show whether an AI Overview appeared.</Note>
+    </div>
+  );
+}
+
 function CompetitorsTab({ trackerId, device }: { trackerId: string; device: Device }) {
   const competitors = useQuery({
     queryKey: ["tracker", trackerId, "competitors", device],
@@ -852,6 +939,7 @@ function TrackerView() {
         onChange={setTab}
         tabs={[
           { id: "keywords", label: "Keywords", count: data.keywordCount },
+          { id: "features", label: "AI Overviews and features" },
           { id: "competitors", label: "Competitors" },
           { id: "runs", label: "Runs", count: data.runs.length },
           { id: "settings", label: "Settings" },
@@ -859,6 +947,7 @@ function TrackerView() {
       />
       <TabPanel id={tab}>
         {tab === "keywords" && <KeywordsTab tracker={data} device={device} />}
+        {tab === "features" && <FeaturesTab tracker={data} device={device} />}
         {tab === "competitors" && <CompetitorsTab trackerId={data.id} device={device} />}
         {tab === "runs" && <RunsTab runs={data.runs} />}
         {tab === "settings" && <SettingsTab tracker={data} projectId={projectId} />}
