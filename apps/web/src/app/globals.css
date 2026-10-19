@@ -433,9 +433,9 @@
     color: var(--color-peach-text);
   }
 
-  .band-peach .tile-peach {
-    background: var(--color-surface);
-    color: var(--color-orange-text);
+  /* On night the peach text is light, so the tile turns dark warm brown */
+  .band-night .tile-peach {
+    background: color-mix(in srgb, var(--color-orange) 22%, var(--color-night-surface));
   }
 
   /* Card titles: one step below section headings, so cards in a grid stay calm */
@@ -571,4 +571,69 @@
   animation-name: slide-progress;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
+}
+
+/*
+ * Comparison tables that stack on phones: each row becomes a block with the row label on top and
+ * every cell labelled from its data-label, so no column ends up off-screen. Unlayered so it wins
+ * over the table's utility classes.
+ */
+@media (max-width: 47.99rem) {
+  .stack-table,
+  .stack-table tbody,
+  .stack-table tr,
+  .stack-table th,
+  .stack-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .stack-table {
+    min-width: 0;
+  }
+
+  .stack-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .stack-table tr {
+    padding: 1.125rem 1.25rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .stack-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .stack-table th,
+  .stack-table td {
+    border: 0;
+    padding: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .stack-table td {
+    margin-top: 0.625rem;
+  }
+
+  .stack-table td[data-highlight] {
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+  }
+
+  .stack-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.125rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+  }
 }

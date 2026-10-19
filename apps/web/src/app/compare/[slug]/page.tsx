@@ -77,7 +77,7 @@ export default async function ComparePage({ params }: ComparePageProps) {
             OpenSEO vs {c.name}: feature comparison
           </h2>
           <div className="mx-auto mt-10 max-w-5xl overflow-x-auto rounded-lg border border-line bg-surface shadow-hard-sm">
-            <table className="w-full min-w-[40rem] border-collapse text-sm">
+            <table className="stack-table w-full min-w-[40rem] border-collapse text-sm">
               <caption className="sr-only">
                 OpenSEO compared with {c.name}
               </caption>
@@ -100,8 +100,12 @@ export default async function ComparePage({ params }: ComparePageProps) {
                     <th scope="row" className={`${td} text-left font-medium whitespace-nowrap`}>
                       {row.topic}
                     </th>
-                    <td className={`${td} text-muted`}>{row.them}</td>
-                    <td className={`${td} bg-accent-soft/40`}>{row.us}</td>
+                    <td data-label={c.name} className={`${td} text-muted`}>
+                      {row.them}
+                    </td>
+                    <td data-label="OpenSEO" data-highlight className={`${td} bg-accent-soft/40`}>
+                      {row.us}
+                    </td>
                   </tr>
                 ))}
               </tbody>

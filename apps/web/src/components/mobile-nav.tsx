@@ -54,7 +54,7 @@ export function MobileNav({ signInUrl, signUpUrl, githubUrl }: MobileNavProps) {
     'flex h-12 items-center justify-between border-b border-line px-5 text-base font-medium text-ink hover:bg-sunken';
 
   return (
-    <div ref={rootRef} className="md:hidden">
+    <div ref={rootRef} className="lg:hidden">
       <button
         ref={buttonRef}
         type="button"

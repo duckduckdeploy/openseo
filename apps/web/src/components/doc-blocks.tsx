@@ -20,7 +20,7 @@ export function DocTable({
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-line bg-surface shadow-hard-sm" tabIndex={0} role="region" aria-label={caption}>
-      <table className="w-full border-collapse text-left text-sm">
+      <table className="stack-table w-full border-collapse text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr>
@@ -40,7 +40,7 @@ export function DocTable({
                     {cell}
                   </th>
                 ) : (
-                  <td key={column} className={`px-4 py-3.5 text-muted ${mono.includes(column) ? 'font-mono text-[0.8125rem] whitespace-nowrap text-ink tabular-nums' : ''}`}>
+                  <td key={column} data-label={head[column]} className={`px-4 py-3.5 text-muted ${mono.includes(column) ? 'font-mono text-[0.8125rem] whitespace-nowrap text-ink tabular-nums' : ''}`}>
                     {cell}
                   </td>
                 ),

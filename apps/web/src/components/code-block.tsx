@@ -22,7 +22,7 @@ export function CodeBlock({ code, label, className = '' }: CodeBlockProps) {
         <span className="truncate font-mono text-xs text-code-muted">{label}</span>
         <CopyButton text={lines.join('\n')} />
       </figcaption>
-      <pre className="overflow-x-auto p-5 font-mono text-[0.8125rem] leading-relaxed" tabIndex={0}>
+      <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed" tabIndex={0}>
         <code>
           {lines.map((line, index) => (
             <span key={index} className={isComment(line) ? 'text-code-muted' : undefined}>

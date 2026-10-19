@@ -2013,7 +2013,7 @@ export const terms: GlossaryTerm[] = [
       ],
     },
     example: {
-      body: '“Thanks, Priya. Sorry the delivery arrived late on Saturday. That is not the standard we aim for. I have passed this to our driver team, and if you email me at hello@example.com I would like to make it right. Sam, owner.”',
+      body: '“Thanks, Priya. Sorry the delivery arrived late on Saturday. That is not the standard we aim for. I have passed this to our driver team, and if you reply to our order email, I would like to make it right. Sam, owner.”',
     },
     openseo: {
       body: 'OpenSEO shows a Google Business profile’s reviews with its owner reply rate, so you can compare your responsiveness with competitors.',

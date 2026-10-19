@@ -11,7 +11,7 @@ export function SiteHeader() {
       <div className="container-page relative flex h-[4.25rem] items-center justify-between gap-4">
         <div className="flex items-center gap-10">
           <Logo />
-          <nav aria-label="Primary" className="hidden md:block">
+          <nav aria-label="Primary" className="hidden lg:block">
             <NavLinks />
           </nav>
         </div>
@@ -20,7 +20,7 @@ export function SiteHeader() {
           {GITHUB_URL ? (
             <a
               href={GITHUB_URL}
-              className="hidden h-10 items-center rounded-md px-3 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink md:inline-flex md:gap-2"
+              className="hidden h-10 items-center rounded-md px-3 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink lg:inline-flex lg:gap-2"
             >
               <BrandIcon brand="github" />
               GitHub

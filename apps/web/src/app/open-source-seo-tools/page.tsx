@@ -62,7 +62,7 @@ export default function OpenSourceSeoToolsPage() {
             lede="Licence, what each one does and where its data comes from. Data that has to be bought, like keyword volumes and backlinks, never comes free with open-source software."
           />
           <div className="mx-auto mt-12 max-w-6xl overflow-x-auto rounded-lg border border-line bg-surface shadow-hard-sm">
-            <table className="w-full min-w-[56rem] border-collapse text-sm">
+            <table className="stack-table w-full min-w-[56rem] border-collapse text-sm">
               <caption className="sr-only">Open-source SEO tools compared</caption>
               <thead>
                 <tr>
@@ -81,10 +81,10 @@ export default function OpenSourceSeoToolsPage() {
                         {tool.name}
                       </a>
                     </th>
-                    <td className={`${td} text-muted`}>{tool.what}</td>
-                    <td className={`${td} font-mono text-xs whitespace-nowrap`}>{tool.licence}</td>
-                    <td className={`${td} text-muted`}>{tool.runs}</td>
-                    <td className={`${td} text-muted`}>{tool.data}</td>
+                    <td data-label="What it does" className={`${td} text-muted`}>{tool.what}</td>
+                    <td data-label="Licence" className={`${td} font-mono text-xs whitespace-nowrap`}>{tool.licence}</td>
+                    <td data-label="Runs as" className={`${td} text-muted`}>{tool.runs}</td>
+                    <td data-label="Data from" className={`${td} text-muted`}>{tool.data}</td>
                   </tr>
                 ))}
               </tbody>
@@ -143,7 +143,7 @@ export default function OpenSourceSeoToolsPage() {
             lede="Open-source tools cover the software. Search data is another matter: Google's own data is free for your site, everything else comes from a paid provider."
           />
           <div className="mx-auto mt-12 max-w-4xl overflow-x-auto rounded-lg border border-line bg-surface shadow-hard-sm">
-            <table className="w-full min-w-[36rem] border-collapse text-sm">
+            <table className="stack-table w-full min-w-[36rem] border-collapse text-sm">
               <caption className="sr-only">A self-hosted SEO stack</caption>
               <thead>
                 <tr>
@@ -160,8 +160,8 @@ export default function OpenSourceSeoToolsPage() {
                     <th scope="row" className={`${td} text-left font-medium`}>
                       {row.job}
                     </th>
-                    <td className={`${td} text-muted`}>{row.tools}</td>
-                    <td className={`${td} text-muted`}>{row.cost}</td>
+                    <td data-label="Open-source option" className={`${td} text-muted`}>{row.tools}</td>
+                    <td data-label="Data cost" className={`${td} text-muted`}>{row.cost}</td>
                   </tr>
                 ))}
               </tbody>
