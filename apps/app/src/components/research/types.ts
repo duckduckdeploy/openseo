@@ -189,7 +189,13 @@ export type LinkedPage = {
 };
 export type LinkedPagesData = { target?: string; total?: N; pages?: LinkedPage[] | null };
 
-export type LinkIntersectData = { intersections?: Record<string, unknown>[] | null };
+/** `links` and `targets` are keyed by each target's 1-based position in the request. */
+export type LinkIntersection = {
+  domain: string;
+  links?: Record<string, { backlinks?: N; referringPages?: N; rank?: N; spamScore?: N; firstSeen?: S } | undefined> | null;
+  targets?: Record<string, boolean> | null;
+};
+export type LinkIntersectData = { intersections?: LinkIntersection[] | null };
 
 // ── Competitors ─────────────────────────────────────────────────────────────
 

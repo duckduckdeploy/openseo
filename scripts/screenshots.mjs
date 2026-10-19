@@ -134,7 +134,7 @@ const VIEWS = [
     shots: { 'backlinks-anchors': `document.querySelector("[role=tablist]").parentElement` },
   },
   {
-    url: '/tools/backlink-checker?target=zapier.com&tab=intersect&vs=make.com,ifttt.com',
+    url: '/tools/backlink-checker?target=activepieces.com&tab=intersect&vs=make.com,zapier.com',
     shots: { 'backlinks-intersect': `document.querySelector("[role=tablist]").parentElement` },
   },
   {

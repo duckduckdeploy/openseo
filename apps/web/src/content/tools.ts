@@ -533,9 +533,9 @@ export const tools: ResearchTool[] = [
       },
       {
         shot: 'backlinks-intersect',
-        alt: 'Link intersect: sites that link to zapier.com, make.com and ifttt.com',
+        alt: 'Link intersect: sites that link to make.com and zapier.com but not to activepieces.com',
         title: 'Link intersect with competitors',
-        body: 'Link intersect takes competitors and lists the sites that link to all of them: the likeliest to link to you next.',
+        body: 'Link intersect takes competitors and lists the sites that link to them but not to you: the likeliest to link to you next.',
       },
     ],
     uses: [
@@ -551,7 +551,7 @@ export const tools: ResearchTool[] = [
       { action: 'Referring domains (100)', price: '$0.05 – $0.06' },
       { action: 'Anchors (100)', price: '$0.05 – $0.06' },
       { action: 'Top linked pages (100, for a domain)', price: '$0.05 – $0.06' },
-      { action: 'Link intersect (when you add competitors)', price: '$0.05 – $0.06' },
+      { action: 'Link intersect (when you add competitors)', price: '$0.05 – $0.08' },
     ],
     total: '$0.30 – $0.34 per domain',
     costNote: 'For one exact page there are no top linked pages, so it costs $0.25 – $0.28. A repeat within a day is free.',
@@ -665,11 +665,11 @@ export const tools: ResearchTool[] = [
     name: 'Backlink gap',
     icon: Link2,
     headline: 'Sites that link to your competitors, but not to you',
-    summary: 'The websites linking to every one of 2 to 20 competitors, with their authority, for a ready list of link building prospects.',
-    lede: 'Enter your domain, then your competitors. You get the websites that link to all of them, ranked by authority, with how many links each gives. A site that links to several competitors already covers your topic: it is the warmest prospect for a link to you.',
-    points: ['Up to 20 competitors', 'Ranked by authority', 'Export your prospect list'],
+    summary: 'The websites linking to your competitors but not to you, most competitors first, with their authority: a ready list of link building prospects.',
+    lede: 'Enter your domain, then your competitors. You get the websites that link to them but not to you, those linking to the most competitors first, with how many links each gives every site and its authority. A site that links to several competitors already covers your topic: it is the warmest prospect for a link to you.',
+    points: ['Up to 19 competitors', 'Only sites not linking to you', 'Export your prospect list'],
     appPath: '/tools/backlink-checker?tab=intersect',
-    hero: { shot: 'backlinks-intersect', alt: 'Link intersect for zapier.com against make.com and ifttt.com: the domains linking to both competitors, with Domain Rating and links' },
+    hero: { shot: 'backlinks-intersect', alt: 'Backlink gap for activepieces.com against make.com and zapier.com: sites linking to both competitors but not to activepieces.com, with the links each gives every site, rank and spam score' },
     parts: [
       {
         shot: 'backlinks-domains',
@@ -684,8 +684,8 @@ export const tools: ResearchTool[] = [
       { title: 'Prioritise outreach', body: 'Sort by authority to start with the links that matter most.' },
       { title: 'Track the gap', body: 'Run it again after a campaign to see which prospects now link to you.' },
     ],
-    costs: [{ action: 'Domains linking to all competitors (up to 100)', price: '$0.05 – $0.06' }],
-    total: '$0.05 – $0.06 per check',
+    costs: [{ action: 'Sites linking to your competitors (up to 300)', price: '$0.05 – $0.08' }],
+    total: '$0.05 – $0.08 per check',
     costNote: 'A repeat within a day is free. Backlink data is worldwide.',
     faqs: [
       {

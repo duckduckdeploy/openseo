@@ -627,13 +627,14 @@ export const lookups: Lookup[] = [
   define({
     name: "link_intersect",
     title: "Link intersect",
-    description: "Domains that link to every one of 2 to 20 targets. Use it with competitors to find sites that link to them and could link to you.",
+    description:
+      "Domains that link to 2 to 20 targets. mode all (default): only domains linking to every target. mode partial: domains linking to the FIRST target and at least one other, with targets[n] true or false for each (n is the target's 1-based position). For a backlink gap, list 2+ competitors first and your own domain last with mode partial, and keep the rows where your flag is false.",
     feature: "backlinks",
     ttl: DAY,
-    input: z.object({ targets: z.array(domain).min(2).max(20), limit: limit(1000, 100) }),
+    input: z.object({ targets: z.array(domain).min(2).max(20), limit: limit(1000, 100), mode: z.enum(["all", "partial"]).default("all") }),
     estimate: (i) => est(estimateCost("/v1/seo/backlinks/domain-intersection", { targets: i.targets, limit: i.limit })),
     run: async (yep, i) => {
-      const res = await yep.backlinks.domainIntersection({ targets: i.targets, limit: i.limit });
+      const res = await yep.backlinks.domainIntersection({ targets: i.targets, limit: i.limit, intersection_mode: i.mode });
       return { data: res.data, costUsd: res.costUsd };
     },
   }),

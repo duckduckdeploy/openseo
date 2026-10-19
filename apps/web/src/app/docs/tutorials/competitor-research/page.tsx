@@ -109,8 +109,8 @@ export default function CompetitorTutorial() {
           <strong>Top pages</strong>: which of their pages attract links. These are the formats worth copying.
         </li>
         <li>
-          <strong>Link intersect</strong>: enter two or more competitors to find sites linking to all of them. Those are
-          the most likely to link to you too.
+          <strong>Link intersect</strong>: enter your competitors to find the sites linking to them but not to you, those
+          linking to the most competitors first. Those are the most likely to link to you too.
         </li>
       </ul>
 

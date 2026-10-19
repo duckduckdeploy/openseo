@@ -189,14 +189,32 @@ export interface BacklinkIntersectionParams {
   targets: string[] | Record<string, string>;
   /** Default 100. */
   limit?: number;
+  /** `all` (default): only sources linking to every target. `partial`: sources linking to the first target and at least one other. */
+  intersection_mode?: 'all' | 'partial';
 }
 
-export interface BacklinkIntersectionData {
-  /** Entry shape is not documented (the docs example is an empty array). */
-  intersections: Array<Record<string, unknown>>;
+/**
+ * One linking domain. `links` and `targets` are keyed by the target's 1-based position in the request;
+ * `targets[n]` is false (and `links[n]` absent) for a target it does not link to. Seen live on 2026-10-20.
+ */
+export interface DomainIntersection {
+  domain: string;
+  links: Record<string, { backlinks: number; referringPages: number; rank: number; spamScore: number; firstSeen: string }>;
+  targets: Record<string, boolean>;
+}
+
+/** One linking page, with the links it holds to each target. Keyed like {@link DomainIntersection}. */
+export interface PageIntersection {
+  url: string;
+  title: string;
+  domain: string;
+  domainRank: number;
+  pageRank: number;
+  links: Record<string, Array<{ to: string; anchor: string; dofollow: boolean; firstSeen: string; lastSeen: string }>>;
+  targets: Record<string, boolean>;
 }
 
 export type DomainIntersectionParams = BacklinkIntersectionParams;
-export type DomainIntersectionData = BacklinkIntersectionData;
+export type DomainIntersectionData = { intersections: DomainIntersection[] };
 export type PageIntersectionParams = BacklinkIntersectionParams;
-export type PageIntersectionData = BacklinkIntersectionData;
+export type PageIntersectionData = { intersections: PageIntersection[] };

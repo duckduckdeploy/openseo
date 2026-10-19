@@ -110,66 +110,64 @@ function HistoryView({ data }: { data: BacklinksHistory }) {
   );
 }
 
-// Link intersect rows are undocumented upstream, so they are rendered as whatever scalar fields come back.
-type Scalar = string | number | boolean | null;
-type FlatRow = Record<string, Scalar>;
+// Link intersect is a backlink gap in one partial-mode call: the competitors, then the target last. Partial mode returns
+// sites linking to the FIRST target and at least one other (seen live 2026-10-20), so every row links to the first
+// competitor, and the last flag says whether it links to you. Rows come keyed by each target's 1-based position.
+type GapRow = { domain: string; rank: number | null; spamScore: number | null; links: (number | null)[]; competitors: number; linksYou: boolean };
 
-function flatten(value: unknown, path: string, out: FlatRow, depth: number) {
-  if (value == null) return;
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    out[path] = value;
-  } else if (Array.isArray(value)) {
-    if (value.every((item) => item == null || typeof item !== "object")) out[path] = value.filter((item) => item != null).join(", ");
-  } else if (typeof value === "object" && depth < 3) {
-    // Wrapper keys such as "targets" add nothing once the nested key (a domain) is in the name.
-    for (const [key, nested] of Object.entries(value)) flatten(nested, depth === 0 ? key : `${path === "targets" ? "" : `${path} › `}${key}`, out, depth + 1);
-  }
+function gapRows(data: LinkIntersectData, count: number): GapRow[] {
+  return (data.intersections ?? []).flatMap((row) => {
+    if (!row?.domain) return [];
+    const links = Array.from({ length: count }, (_, index) => {
+      const key = String(index + 1);
+      return row.targets?.[key] ? (finite(row.links?.[key]?.backlinks) ? (row.links?.[key]?.backlinks as number) : 0) : null;
+    });
+    const stats = Object.values(row.links ?? {}).filter(Boolean);
+    const most = (pick: (link: (typeof stats)[number]) => N) => {
+      const values = stats.map(pick).filter(finite) as number[];
+      return values.length ? Math.max(...values) : null;
+    };
+    return [{ domain: row.domain, rank: most((link) => link?.rank), spamScore: most((link) => link?.spamScore), links, competitors: links.slice(0, -1).filter((n) => n != null).length, linksYou: links[count - 1] != null }];
+  });
 }
 
-const flatCache = new WeakMap<object, FlatRow[]>();
-function flatRows(data: LinkIntersectData): FlatRow[] {
-  const source = Array.isArray(data.intersections) ? data.intersections : [];
-  const hit = flatCache.get(source);
-  if (hit) return hit;
-  const rows = source.map((row) => {
-    const out: FlatRow = {};
-    flatten(row, "", out, 0);
-    return out;
-  });
-  flatCache.set(source, rows);
-  return rows;
-}
-
-const humanise = (key: string) => key.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/_/g, " ");
-
-function flatColumns(rows: FlatRow[]): Column<FlatRow>[] {
-  const keys: string[] = [];
-  for (const row of rows) for (const key of Object.keys(row)) if (!keys.includes(key)) keys.push(key);
-  return keys.slice(0, 40).map((key, index) => {
-    const numeric = rows.every((row) => row[key] == null || typeof row[key] === "number");
-    return {
-      key,
-      header: humanise(key),
-      align: numeric ? "right" : "left",
-      rowHeader: index === 0 && !numeric,
-      sortValue: (row) => {
-        const value = row[key];
-        return typeof value === "boolean" ? (value ? 1 : 0) : value;
-      },
-      render: (row) => {
-        const value = row[key];
-        if (value == null || value === "") return <span className="text-faint">—</span>;
-        if (typeof value === "number") return num(value);
-        if (typeof value === "boolean") return value ? "yes" : "no";
-        return safeHref(value) ? <UrlCell url={value} full /> : <span className={index === 0 ? "block max-w-80 truncate font-medium" : "block max-w-80 truncate"}>{value}</span>;
-      },
-    } satisfies Column<FlatRow>;
-  });
+/** With `hideYou`, the last target (you) is left out: in the gaps-only view it is empty on every row. */
+function gapColumns(targets: string[], hideYou: boolean): Column<GapRow>[] {
+  return [
+    {
+      key: "domain",
+      header: "Linking site",
+      rowHeader: true,
+      sortValue: (row) => row.domain,
+      render: (row) => (
+        <span className="inline-flex items-center gap-1">
+          <a href={safeHref(`https://${row.domain}`) ?? undefined} target="_blank" rel="noreferrer noopener" className="font-medium underline-offset-2 hover:underline">
+            {row.domain}
+          </a>
+          <OpenInTool href={toolLinks.backlinks(row.domain)} label={`Check backlinks of ${row.domain}`} />
+        </span>
+      ),
+    },
+    { key: "competitors", header: "Competitors linked", align: "right", sortValue: (row) => row.competitors, render: (row) => `${row.competitors} of ${targets.length - 1}` },
+    ...(hideYou ? targets.slice(0, -1) : targets).map(
+      (target, index): Column<GapRow> => ({
+        key: `t${index}`,
+        header: index === targets.length - 1 ? `${target} (you)` : target,
+        align: "right",
+        sortValue: (row) => row.links[index] ?? -1,
+        render: (row) => (row.links[index] == null ? <span className="text-faint">—</span> : num(row.links[index])),
+      }),
+    ),
+    { key: "rank", header: "Rank", align: "right", sortValue: (row) => row.rank, render: (row) => (row.rank == null ? <span className="text-faint">—</span> : num(row.rank)) },
+    { key: "spamScore", header: "Spam score", align: "right", sortValue: (row) => row.spamScore, render: (row) => (row.spamScore == null ? <span className="text-faint">—</span> : num(row.spamScore)) },
+  ];
 }
 
 // ── Tables ──────────────────────────────────────────────────────────────────
 
 const ROWS = 100;
+/** The gap reads more rows: some go to sites that already link to you, and the rest are sorted by how many competitors they link to. */
+const GAP_ROWS = 300;
 
 const linkColumns: Column<Backlink>[] = [
   {
@@ -322,11 +320,15 @@ function ListPanel<R extends object>({
 function IntersectPanel({ project, target, others }: { project: Project; target: string; others: string[] }) {
   const nav = useToolNav();
   const [text, setText] = useUrlText(others.join(", "));
+  const [gapsOnly, setGapsOnly] = useState(true);
   const own = hostOf(target);
-  const targets = [...new Set([own, ...others].filter((domain): domain is string => Boolean(domain) && (domain as string).length >= 3))].slice(0, 20);
-  const input = others.length && targets.length >= 2 ? { targets, limit: ROWS } : null;
-  const lookup = useLookupQuery<LinkIntersectData, { targets: string[]; limit: number }>(project.id, "link_intersect", input);
-  const rows = lookup.data ? flatRows(lookup.data) : [];
+  const competitors = [...new Set(others.filter((domain) => domain.length >= 3 && domain !== own))].slice(0, 19);
+  const targets = own ? [...competitors, own] : competitors;
+  const input = own && competitors.length >= 2 ? { targets, limit: GAP_ROWS, mode: "partial" as const } : null;
+  const lookup = useLookupQuery<LinkIntersectData, { targets: string[]; limit: number; mode: "partial" }>(project.id, "link_intersect", input);
+  const all = lookup.data ? gapRows(lookup.data, targets.length) : [];
+  const gaps = all.filter((row) => !row.linksYou && row.competitors > 0);
+  const rows = gapsOnly ? gaps : all;
   return (
     <div className="space-y-4">
       <form
@@ -347,23 +349,39 @@ function IntersectPanel({ project, target, others }: { project: Project; target:
           spellCheck={false}
         />
         <Button type="submit" variant="primary" className="h-10">
-          Find shared links
+          Find link gaps
         </Button>
       </form>
-      <p className="text-xs text-muted">Sites that link to every competitor{own ? ` and to ${own}` : ""}. Those that link to them but not you are the likeliest to link to you next.</p>
+      <p className="text-xs text-muted">
+        Sites that link to your competitors{own ? ` but not to ${own}` : ""}, those linking to the most competitors first. They already link to sites like yours, so they are the likeliest to link to you next.
+      </p>
+      {own && competitors.length === 1 && <p className="text-sm text-muted">Add at least one more competitor: a gap needs two to compare.</p>}
+      {competitors.length >= 2 && <p className="text-xs text-muted">Every site listed links to {competitors[0]}, the first competitor, and at least one other. Put your closest rival first.</p>}
       <ViewErrors lookups={[lookup as LookupQuery<unknown>]} />
       {input && (
         <ListPanel
           lookup={lookup as LookupQuery<unknown>}
           rows={rows}
-          columns={lookup.data ? flatColumns(rows) : []}
-          rowKey={(row) => JSON.stringify(row)}
-          caption="Domains linking to every target"
-          initialSort={{ key: "", order: "desc" }}
-          note={`${num(rows.length)} domains link to all ${targets.length}`}
-          filename={`link-intersect-${slug(own ?? "targets")}-${csvDate()}.csv`}
-          csv={(row) => row}
-          empty="No site links to every one of these domains. Try fewer domains."
+          columns={gapColumns(targets, gapsOnly)}
+          rowKey={(row) => row.domain}
+          caption="Backlink gap"
+          initialSort={{ key: "competitors", order: "desc" }}
+          note={`${num(gaps.length)} sites link to a competitor but not to you`}
+          filename={`backlink-gap-${slug(own ?? "targets")}-${csvDate()}.csv`}
+          csv={(row) => ({
+            linking_site: row.domain,
+            competitors_linked: row.competitors,
+            links_to_you: row.linksYou,
+            ...Object.fromEntries(targets.map((domain, index) => [`backlinks_to_${domain}`, row.links[index] ?? ""])),
+            rank: row.rank ?? "",
+            spam_score: row.spamScore ?? "",
+          })}
+          empty={gapsOnly ? "No gaps: every site linking to these competitors already links to you." : "No site links to these domains."}
+          filters={
+            <Check checked={gapsOnly} onChange={setGapsOnly}>
+              <span className="text-[13px]">Only sites not linking to you</span>
+            </Check>
+          }
         />
       )}
     </div>

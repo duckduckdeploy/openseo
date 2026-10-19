@@ -238,8 +238,8 @@ export default function SeoToolsGuide() {
         caption="The strongest live link from each linking site. The other tabs: referring domains, anchors, top linked pages and link intersect."
       />
       <p>
-        <strong>Link intersect</strong> takes competitors and lists the sites that link to all of them: the likeliest to
-        link to you next. It is also in the tools list as <Ui>Backlink gap</Ui>.
+        <strong>Link intersect</strong> takes competitors and lists the sites that link to them but not to you, those
+        linking to the most competitors first: the likeliest to link to you next. It is also in the tools list as <Ui>Backlink gap</Ui>.
       </p>
 
       <h2 id="competitors">Competitors and keyword gap</h2>
