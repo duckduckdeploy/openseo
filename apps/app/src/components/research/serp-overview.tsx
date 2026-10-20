@@ -2,7 +2,7 @@
 
 import { FileSearch, Link2 } from "lucide-react";
 import Link from "next/link";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cx } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { LookupQuery } from "@/lib/lookup";
@@ -13,7 +13,11 @@ import type { SerpData, SerpInput, SerpResult, UrlMetricsData, UrlMetricsRow } f
 import { csvDate, estimatedVisits, finite, slug } from "./util";
 
 export type Device = SerpInput["device"];
-export const serpInput = (keyword: string, device: Device): SerpInput => ({ query: keyword, depth: 20, device });
+/** How many organic results a SERP view shows: Google's pages 1 to 10, ten results each. */
+export const SERP_RESULTS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as const;
+
+/** A SERP lookup for the top `results` organic results; features take places too, so it asks for ten more, up to 100. */
+export const serpInput = (keyword: string, device: Device, results = 10): SerpInput => ({ query: keyword, depth: Math.min(100, results + 10), device });
 
 const FEATURE_LABELS: Record<string, string> = {
   paid: "Ads",
@@ -63,45 +67,6 @@ export function suggestionsOf(data: SerpData | undefined) {
     return text?.trim() ?? "";
   });
   return [...new Set(found.filter(Boolean))];
-}
-
-// ── Authority metrics setting, remembered in this browser ────────────────────
-
-const AUTHORITY_KEY = "openseo.serp.authority";
-
-/**
- * Whether every SERP also loads DR, UR, referring domains and traffic for its results. A setting,
- * not a separate action: when on, it is part of each run and of its price.
- */
-export function useAuthoritySetting() {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    try {
-      setOn(localStorage.getItem(AUTHORITY_KEY) === "1");
-    } catch {
-      // Storage blocked: the switch still works for this visit.
-    }
-  }, []);
-  const set = (value: boolean) => {
-    setOn(value);
-    try {
-      localStorage.setItem(AUTHORITY_KEY, value ? "1" : "0");
-    } catch {
-      // As above.
-    }
-  };
-  return [on, set] as const;
-}
-
-export function Switch({ checked, onChange, label, children }: { checked: boolean; onChange: (value: boolean) => void; label: string; children?: ReactNode }) {
-  return (
-    <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className="inline-flex items-center gap-2 text-left text-[13px]">
-      <span className={cx("relative h-5 w-9 shrink-0 rounded-full border transition-colors", checked ? "border-accent bg-accent" : "border-line bg-sunken")}>
-        <span className={cx("absolute top-0.5 size-3.5 rounded-full bg-surface shadow-sm transition-all", checked ? "left-[18px]" : "left-0.5")} />
-      </span>
-      {children}
-    </button>
-  );
 }
 
 // ── Pieces of the table ────────────────────────────────────────────────────
@@ -180,8 +145,8 @@ function SkeletonRows({ columns }: { columns: number }) {
 export type SerpLookup = LookupQuery<SerpData>;
 export type MetricsLookup = LookupQuery<UrlMetricsData>;
 
-/** The top organic results of a SERP result, at most 10. */
-export const topOrganic = (data: SerpData | undefined) => (data?.results ?? []).filter((r) => r.type === "organic" && r.url).slice(0, 10);
+/** The top organic results of a SERP result, at most `limit`. */
+export const topOrganic = (data: SerpData | undefined, limit = 10) => (data?.results ?? []).filter((r) => r.type === "organic" && r.url).slice(0, limit);
 
 /** Input for authority metrics of a SERP's top 10, when the setting is on and the SERP is in. */
 export function authorityInput(serp: SerpData | undefined, authority: boolean) {
@@ -189,21 +154,36 @@ export function authorityInput(serp: SerpData | undefined, authority: boolean) {
   return authority && urls.length ? { urls } : null;
 }
 
+/**
+ * Inputs for authority metrics of a SERP's top `limit` results, ten URLs per lookup (the most one
+ * takes): always ten slots, so a page can call its hooks in a fixed order; unused slots are null.
+ */
+export function authorityInputs(serp: SerpData | undefined, limit: number) {
+  const urls = topOrganic(serp, limit).map((r) => r.url as string);
+  return Array.from({ length: 10 }, (_, index) => {
+    const chunk = urls.slice(index * 10, index * 10 + 10);
+    return chunk.length ? { urls: chunk } : null;
+  });
+}
+
 type Block =
   | { kind: "organic"; result: SerpResult; rank: number }
-  | { kind: "feature"; type: string; position: number | null; items: SerpResult[] };
+  | { kind: "feature"; type: string; position: number | null; items: SerpResult[] }
+  | { kind: "page"; page: number };
 
 /**
- * The page as Google lays it out, up to the 10th organic result: organic results with their rank
- * among organic results, and each SERP feature (several local pack places, say) as one block.
- * Positions are absolute, as YepAPI gives them, so a feature takes its place in the count.
+ * The page as Google lays it out, up to the `limit`th organic result: organic results with their
+ * rank among organic results, and each SERP feature (several local pack places, say) as one block.
+ * Positions are absolute, as YepAPI gives them, so a feature takes its place in the count. Past
+ * the first ten, a marker starts each further page of ten.
  */
-function layout(data: SerpData | undefined): Block[] {
+function layout(data: SerpData | undefined, limit = 10): Block[] {
   const blocks: Block[] = [];
   let rank = 0;
   for (const result of data?.results ?? []) {
     if (result.type === "organic" && result.url) {
-      if (rank === 10) break;
+      if (rank === limit) break;
+      if (rank > 0 && rank % 10 === 0) blocks.push({ kind: "page", page: rank / 10 + 1 });
       rank += 1;
       blocks.push({ kind: "organic", result, rank });
       continue;
@@ -241,18 +221,21 @@ export function SerpOverview({
   metrics,
   authority,
   loading,
+  limit = 10,
 }: {
   market: Market;
   keyword: string;
   volume?: number | null;
   serp: SerpLookup;
-  metrics: MetricsLookup;
+  metrics: Pick<MetricsLookup, "data" | "error">;
   authority: boolean;
+  /** Organic results to show, 10 to 100. */
+  limit?: number;
   /** Show the skeleton whatever is on hand. */
   loading?: boolean;
 }) {
   const data = loading ? undefined : serp.data;
-  const blocks = useMemo(() => layout(data), [data]);
+  const blocks = useMemo(() => layout(data, limit), [data, limit]);
   const organic = useMemo(() => blocks.filter((b): b is Extract<Block, { kind: "organic" }> => b.kind === "organic"), [blocks]);
   const byUrl = useMemo(() => new Map((metrics.data?.urls ?? []).map((row) => [row.url, row] as const)), [metrics.data]);
   const showMetrics = authority;
@@ -269,7 +252,7 @@ export function SerpOverview({
     <div className="space-y-3">
       <div className="relative overflow-x-auto rounded-lg border border-line" aria-busy={pending}>
         <table className={cx("w-full border-collapse text-[13px]", showMetrics ? "min-w-[64rem]" : "min-w-[36rem]")}>
-          <caption className="sr-only">Top Google results for {keyword}</caption>
+          <caption className="sr-only">Top {limit} Google results for {keyword}</caption>
           <thead>
             <tr className="border-b border-line bg-sunken/50 text-left">
               <th scope="col" className={cx(head, "w-10 text-right")}>
@@ -319,6 +302,15 @@ export function SerpOverview({
               <SkeletonRows columns={metricColumns + 2} />
             ) : (
               blocks.map((block, index) => {
+                if (block.kind === "page") {
+                  return (
+                    <tr key={`p-${block.page}`} className="border-b border-line bg-sunken">
+                      <th scope="rowgroup" colSpan={metricColumns + 4} className="px-3 py-1.5 text-left font-mono text-[11px] font-medium uppercase tracking-wide text-muted">
+                        Page {block.page}
+                      </th>
+                    </tr>
+                  );
+                }
                 if (block.kind === "feature") {
                   const summary = featureSummary(block);
                   return (

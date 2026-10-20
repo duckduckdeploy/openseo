@@ -3,10 +3,9 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo } from "react";
 import { VolumeTrend } from "@/components/research/charts";
-import { type Column, DataTable } from "@/components/research/data-table";
-import { ExportButton, Price, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { DifficultyPill, IntentBadge } from "@/components/research/pills";
 import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import {
@@ -18,18 +17,15 @@ import {
   serpInput,
   Skeleton,
   suggestionsOf,
-  Switch,
   topOrganic,
-  useAuthoritySetting,
 } from "@/components/research/serp-overview";
-import { Sparkline } from "@/components/research/sparkline";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { KeywordIdeasData, KeywordIdeasInput, KeywordMetrics, SerpData, SerpInput, TrendPoint, UrlMetricsData, UrlMetricsInput } from "@/components/research/types";
-import { chronological, csvDate, estimatedVisits, finite, isQuestion, money, slug, toSave } from "@/components/research/util";
+import { chronological, estimatedVisits, finite, isQuestion, money } from "@/components/research/util";
 import { Badge, Card, cx, PageHeader } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type Estimate, type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { countryByIso } from "@/lib/countries";
 import { languageFor, lookupMarket, type Market, marketName, toolLinks } from "@/lib/scope";
 import { safeHref } from "@/lib/url";
@@ -38,8 +34,6 @@ type MetricsInput = { keywords: string[]; country?: string; cityLocationCode?: n
 type MetricsData = { keywords?: KeywordMetrics[] | null };
 type SuggestInput = { query: string; locationCode?: number; language?: string };
 
-/** Authority metrics for the top 10 at $0.02 per result, when the setting is on. */
-const AUTHORITY: Estimate = { min: 0.2, max: 0.2 };
 
 // ── Small visual pieces ────────────────────────────────────────────────────
 
@@ -57,27 +51,56 @@ function difficulty(value: number | null | undefined) {
   return { word: "Very hard", color: "var(--color-neg)" };
 }
 
-/** Keyword difficulty as a half-circle gauge. */
+/** The difficulty bands along the gauge, easy (green) to very hard (red). */
+const KD_BANDS = [
+  { to: 15, color: "#16a34a" },
+  { to: 30, color: "#6bb52f" },
+  { to: 50, color: "#e2a800" },
+  { to: 70, color: "#ee7b1f" },
+  { to: 100, color: "#dc3a26" },
+] as const;
+
+// The arc runs 240 degrees, open at the bottom, like a speedometer.
+const ARC_START = 150;
+const ARC_SWEEP = 240;
+const polar = (degrees: number, radius: number) => {
+  const radians = (degrees * Math.PI) / 180;
+  return [100 + radius * Math.cos(radians), 100 + radius * Math.sin(radians)] as const;
+};
+const arcPath = (from: number, to: number, radius = 78) => {
+  const [x1, y1] = polar(ARC_START + (from / 100) * ARC_SWEEP, radius);
+  const [x2, y2] = polar(ARC_START + (to / 100) * ARC_SWEEP, radius);
+  const large = ((to - from) / 100) * ARC_SWEEP > 180 ? 1 : 0;
+  return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${radius} ${radius} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+};
+
+/** Keyword difficulty as a full-width banded gauge with the score in the middle. */
 function DifficultyGauge({ value }: { value: number | null | undefined }) {
   const { word, color } = difficulty(value);
-  const share = finite(value) ? Math.min(100, Math.max(0, value)) / 100 : 0;
-  const length = Math.PI * 40;
+  const score = finite(value) ? Math.min(100, Math.max(0, value)) : 0;
+  const gap = 0.9;
+  let from = 0;
   return (
-    <div className="flex items-end gap-4">
-      <svg viewBox="0 0 100 56" className="w-28 shrink-0" role="img" aria-label={finite(value) ? `Difficulty ${Math.round(value)} of 100, ${word}` : "Difficulty not rated"}>
-        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="var(--color-line)" strokeWidth="9" strokeLinecap="round" />
-        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke={color} strokeWidth="9" strokeLinecap="round" strokeDasharray={`${share * length} ${length}`} />
-        <text x="50" y="48" textAnchor="middle" className="fill-ink font-display" style={{ fontSize: 22, fontWeight: 700 }}>
-          {finite(value) ? Math.round(value) : "—"}
-        </text>
-      </svg>
-      <div className="pb-1">
-        <p className="font-display text-lg font-semibold" style={{ color }}>
-          {word}
-        </p>
-        <p className="text-xs text-muted">out of 100</p>
-      </div>
-    </div>
+    <svg viewBox="0 0 200 168" className="mx-auto block w-full max-w-64" role="img" aria-label={finite(value) ? `Difficulty ${Math.round(value)} of 100, ${word}` : "Difficulty not rated"}>
+      {KD_BANDS.map((band) => {
+        const start = from + (from ? gap : 0);
+        const end = band.to - (band.to < 100 ? gap : 0);
+        from = band.to;
+        const filled = Math.min(end, score);
+        return (
+          <g key={band.to}>
+            <path d={arcPath(start, end)} fill="none" stroke="var(--color-sunken)" strokeWidth="20" />
+            {filled > start && <path d={arcPath(start, filled)} fill="none" stroke={band.color} strokeWidth="20" />}
+          </g>
+        );
+      })}
+      <text x="100" y="112" textAnchor="middle" className="fill-ink font-display tabular" style={{ fontSize: 56, fontWeight: 600 }}>
+        {finite(value) ? Math.round(value) : "—"}
+      </text>
+      <text x="100" y="140" textAnchor="middle" className="font-display" style={{ fontSize: 17, fontWeight: 700, fill: color }}>
+        {word}
+      </text>
+    </svg>
   );
 }
 
@@ -243,23 +266,6 @@ const globalFor = (keyword: string, market: Market, clickstream: boolean): Metri
     .slice(0, 5)
     .map((country) => ({ keywords: [keyword], country, language: languageFor(country), ...(clickstream ? { includeClickstream: true } : {}) }));
 
-/** The price of searching what is typed, with every part of the view. */
-function DraftPrice({ project, market, inputs, authority }: { project: Project; market: Market; inputs: Inputs | null; authority: boolean }) {
-  const price = useViewPrice(
-    project.id,
-    [
-      ["keyword_metrics", inputs?.metrics ?? null],
-      ["keyword_metrics", inputs?.local ?? null],
-      ["keyword_ideas", inputs?.terms ?? null],
-      ["keyword_ideas", inputs?.related ?? null],
-      ["autocomplete", inputs?.suggest ?? null],
-      ["serp", inputs?.serp ?? null],
-      ...(inputs ? globalFor(inputs.metrics.keywords[0] as string, market, false) : []).map((input) => ["keyword_metrics", input] as [string, object]),
-    ],
-    authority ? [AUTHORITY] : [],
-  );
-  return <Price estimate={price} active={inputs !== null} note="per keyword; a repeat within a day is free" />;
-}
 
 const dedupe = (rows: KeywordMetrics[] | null | undefined, seed: string) => {
   const seen = new Map<string, KeywordMetrics>();
@@ -308,13 +314,8 @@ export function KeywordOverview({ project }: { project: Project }) {
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
   const keyword = params.get("q")?.trim() ?? "";
-  const [authority, setAuthority] = useAuthoritySetting();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [selectedFor, setSelectedFor] = useState(keyword);
-  if (selectedFor !== keyword) {
-    setSelectedFor(keyword);
-    setSelected(new Set());
-  }
+  // DR, UR, links and traffic of the top 10 always load with the SERP.
+  const authority = true;
 
   const inputs = useMemo(() => inputsFor(keyword, market), [keyword, market]);
   const metrics = useLookupQuery<MetricsData, MetricsInput>(project.id, "keyword_metrics", inputs?.metrics ?? null);
@@ -394,38 +395,12 @@ export function KeywordOverview({ project }: { project: Project }) {
     ...(globalInputs ?? []).map((input, index) => ({ country: input.country as string, volume: volumeOf(findRow(global[index]?.data)) })),
   ];
 
-  const columns = useMemo<Column<KeywordMetrics>[]>(
-    () => [
-      { key: "keyword", header: "Keyword", rowHeader: true, sortValue: (r) => r.keyword, render: (r) => <KeywordLink keyword={r.keyword} market={market} /> },
-      { key: "volume", header: "Volume", align: "right", sortValue: (r) => r.volume, render: (r) => num(r.volume) },
-      { key: "difficulty", header: "KD", title: "Keyword difficulty, 0 (easy) to 100 (hard)", align: "right", sortValue: (r) => r.difficulty, render: (r) => <DifficultyPill value={r.difficulty} /> },
-      { key: "cpc", header: "CPC", align: "right", sortValue: (r) => r.cpc, render: (r) => money(r.cpc) },
-      { key: "intent", header: "Intent", sortValue: (r) => r.intent, render: (r) => <IntentBadge intent={r.intent} /> },
-      { key: "trend", header: "12-mo trend", render: (r) => <Sparkline trend={r.trend} /> },
-    ],
-    [market],
-  );
-  const allIdeas = useMemo(() => dedupe([...termRows, ...relatedRows], keyword), [termRows, relatedRows, keyword]);
-
   const loading = metrics.loading || local.loading;
   const ideasLink = (view?: string) => toolLinks.ideas(keyword, market, view);
 
   return (
     <>
-      <SearchBar value={keyword} onSearch={search} label="Keyword" placeholder="Enter a keyword, e.g. emergency plumber" market={market} onMarket={changeMarket} areas pending={loading}>
-        {(draft) => (
-          <>
-            <Switch checked={authority} onChange={setAuthority} label="Include authority metrics">
-              <span>
-                Authority metrics <span className="text-muted">(DR, UR, links, traffic and value of the top 10)</span>
-              </span>
-            </Switch>
-            <span className="sm:ml-auto">
-              <DraftPrice project={project} market={market} inputs={inputsFor(draft, market)} authority={authority} />
-            </span>
-          </>
-        )}
-      </SearchBar>
+      <SearchBar value={keyword} onSearch={search} label="Keyword" placeholder="Enter a keyword, e.g. emergency plumber" market={market} onMarket={changeMarket} areas pending={loading} />
 
       <ViewErrors lookups={lookups} />
 
@@ -465,20 +440,15 @@ export function KeywordOverview({ project }: { project: Project }) {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Panel title="Keyword difficulty">
                 <DifficultyGauge value={row?.difficulty} />
-                <p className="mt-3 text-xs text-muted">
+                <p className="-mt-3 text-center text-[13px] text-muted">
                   {finite(row?.avgReferringDomains) && row.avgReferringDomains > 0
-                    ? `≈ ${num(Math.round(row.avgReferringDomains))} linking domains to rank in the top 10`
+                    ? `~${num(Math.round(row.avgReferringDomains))} ref. domains to rank in the top 10`
                     : "Links needed to rank are not known for this keyword."}
                   {authority && finite(top.avgDr) && ` · top 10 average DR ${top.avgDr}`}
                 </p>
               </Panel>
               <Panel title={market.area ? "Local search volume" : "Search volume"} action={<CountryChip country={market.country} />}>
                 <p className="font-display text-4xl font-bold tabular">{restricted && !market.area && fallback.loading ? <Skeleton className="h-9 w-24" /> : compact(volume)}</p>
-                {restricted && !market.area && (
-                  <p className="text-xs text-muted" title="Google Ads gives no volume for this topic, so this is estimated from clickstream data">
-                    clickstream estimate
-                  </p>
-                )}
                 {market.area && finite(countryVolume) && <p className="text-xs text-muted">{compact(countryVolume)} in all of {market.locationName}</p>}
                 <div className="mt-3">
                   <MiniBars trend={trend} />
@@ -548,43 +518,8 @@ export function KeywordOverview({ project }: { project: Project }) {
               <h2 className="font-display text-base font-semibold">
                 SERP overview for “{keyword}”{market.area ? ` · ${marketName(market)}` : ""}
               </h2>
-              {!authority && (
-                <button type="button" onClick={() => setAuthority(true)} className="text-[13px] font-medium text-accent-text hover:underline">
-                  Show DR, backlinks and traffic
-                </button>
-              )}
             </div>
             <SerpOverview market={market} keyword={keyword} volume={volume} serp={serp} metrics={urlMetrics} authority={authority} />
-          </section>
-
-          <section className="rounded-xl border border-line bg-surface">
-            <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-4">
-              <h2 className="font-display text-base font-semibold">All keyword ideas</h2>
-              <span className="font-mono text-xs text-muted tabular">{num(allIdeas.length)}</span>
-              {market.area && <span className="text-xs text-muted">volumes for all of {market.locationName}</span>}
-              <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-                <SaveSelected
-                  projectId={project.id}
-                  count={selected.size}
-                  locationCode={market.locationCode}
-                  keywords={() => allIdeas.filter((r) => selected.has(r.keyword)).map(toSave)}
-                  onSaved={() => setSelected(new Set())}
-                />
-                <ExportButton
-                  filename={`ideas-${slug(keyword)}-${csvDate()}.csv`}
-                  rows={() => allIdeas.map((r) => ({ keyword: r.keyword, volume: r.volume ?? "", difficulty: r.difficulty ?? "", cpc: r.cpc ?? "", intent: r.intent ?? "" }))}
-                />
-              </div>
-            </div>
-            <DataTable
-              rows={allIdeas}
-              columns={columns}
-              rowKey={(r) => r.keyword}
-              caption={`Keyword ideas for ${keyword}`}
-              initialSort={{ key: "volume", order: "desc" }}
-              selection={{ selected, onChange: setSelected, label: (r) => r.keyword }}
-              empty={terms.loading || related.loading ? "Loading keyword ideas…" : "No keyword ideas came back for this keyword."}
-            />
           </section>
         </div>
       )}

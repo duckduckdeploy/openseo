@@ -5,9 +5,9 @@ import { Check as CheckIcon, Download, RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
 import { Button, CostNote, ErrorNote, Select } from "@/components/ui";
-import { ApiError, api, dateTime, num, usd } from "@/lib/api";
+import { ApiError, api, dateTime, num } from "@/lib/api";
 import { useProjects } from "@/lib/hooks";
-import { downloadCsv, type Estimate, type LookupQuery, type LookupResult, useEstimate, useLookup } from "@/lib/lookup";
+import { downloadCsv, type Estimate, type LookupQuery, type LookupResult, useLookup } from "@/lib/lookup";
 import { isToolsScope } from "@/lib/scope";
 import type { KeywordToSave } from "./types";
 
@@ -44,12 +44,6 @@ export function Price({ estimate, active = true, note }: { estimate: EstimateQue
   return <span className="font-mono text-xs text-faint">Checking price…</span>;
 }
 
-/** The price of re-running the input that produced a result, shown on its Refresh button. */
-function RefreshPrice({ projectId, name, input }: { projectId: string; name: string; input: object }) {
-  const estimate = useEstimate(projectId, name, input);
-  return <Price estimate={estimate} note="to refresh" />;
-}
-
 export function sumEstimates(...parts: (Estimate | undefined)[]): Estimate | undefined {
   if (parts.some((part) => !part)) return undefined;
   const all = parts as Estimate[];
@@ -60,20 +54,17 @@ export function sumEstimates(...parts: (Estimate | undefined)[]): Estimate | und
   };
 }
 
-/** What a finished lookup cost, when it was fetched, and the pay-again refresh. */
+/** When a finished lookup was fetched, and its refresh. */
 export function ResultMeta({
   result,
   label,
   onRefresh,
-  refreshPrice,
   pending,
   children,
 }: {
-  result: Pick<LookupResult<unknown>, "costUsd" | "cached" | "fetchedAt">;
+  result: Pick<LookupResult<unknown>, "fetchedAt">;
   label?: ReactNode;
   onRefresh?: () => void;
-  /** The lookup and the input `onRefresh` re-runs, so the button shows what the refresh costs. */
-  refreshPrice?: { projectId: string; name: string; input: object };
   pending?: boolean;
   children?: ReactNode;
 }) {
@@ -81,23 +72,15 @@ export function ResultMeta({
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <p className="min-w-0 font-mono text-xs text-muted">
         {label && <span className="text-ink">{label} · </span>}
-        {result.cached ? (
-          <span className="rounded-sm bg-sunken px-1.5 py-0.5 text-ink">cached, free</span>
-        ) : (
-          <>
-            cost <span className="rounded-sm bg-sunken px-1.5 py-0.5 text-ink tabular">{usd(result.costUsd)}</span>
-          </>
-        )}{" "}
-        · fetched {dateTime(result.fetchedAt)}
+        fetched {dateTime(result.fetchedAt)}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         {children}
         {onRefresh && (
           <span className="inline-flex flex-wrap items-center gap-2">
             <Button size="sm" variant="ghost" onClick={onRefresh} loading={pending}>
-              {!pending && <RefreshCw className="size-3.5" aria-hidden />} Refresh (pay again)
+              {!pending && <RefreshCw className="size-3.5" aria-hidden />} Refresh
             </Button>
-            {refreshPrice && <RefreshPrice {...refreshPrice} />}
           </span>
         )}
       </div>
@@ -106,24 +89,22 @@ export function ResultMeta({
 }
 
 /**
- * What a whole view cost and when it was fetched, with one refresh for all its lookups. A view is
+ * When a whole view was fetched, with one refresh for all its lookups. A view is
  * one search: its lookups run together and are refreshed together.
  */
 export function ViewMeta({ lookups, label }: { lookups: LookupQuery<unknown>[]; label?: ReactNode }) {
   const done = lookups.filter((lookup) => lookup.result);
   if (!done.length) return null;
-  const spent = done.reduce((total, lookup) => total + (lookup.result && !lookup.result.cached ? lookup.result.costUsd : 0), 0);
-  const allCached = done.every((lookup) => lookup.result?.cached);
   const fetched = done.map((lookup) => lookup.result?.fetchedAt ?? "").sort().at(-1);
   const refreshing = lookups.some((lookup) => lookup.refreshing);
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <p className="min-w-0 text-[13px] text-muted">
         {label && <>{label} · </>}
-        {allCached ? "from the cache, free" : `cost ${usd(spent)}`} · fetched {dateTime(fetched)}
+        fetched {dateTime(fetched)}
       </p>
       <Button size="sm" variant="ghost" loading={refreshing} onClick={() => void Promise.all(lookups.map((lookup) => lookup.refresh()))}>
-        {!refreshing && <RefreshCw className="size-3.5" aria-hidden />} Refresh (pay again)
+        {!refreshing && <RefreshCw className="size-3.5" aria-hidden />} Refresh
       </Button>
     </div>
   );

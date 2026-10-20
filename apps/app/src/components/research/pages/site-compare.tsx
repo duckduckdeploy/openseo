@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
 import { listParam, ListForm } from "@/components/research/list-form";
-import { ExportButton, Price, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { RatingRing, Skeleton } from "@/components/research/serp-overview";
 import { domainToolLabel, OpenInTool } from "@/components/research/tool-link";
@@ -15,7 +15,7 @@ import { csvDate, finite, splitLines } from "@/components/research/util";
 import { Badge, Card, PageHeader } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { lookupMarket, type Market, marketName, toolLinks } from "@/lib/scope";
 import { hostOf } from "@/lib/url";
 
@@ -118,12 +118,11 @@ export function TrafficChecker({ project, embedded }: { project: Project; embedd
         button="Check traffic"
         pending={lookup.loading}
       >
-        {(entries) => <TrafficPrice project={project} input={entries.length ? { domains: entries, country: market.country, language: market.language } : null} />}
       </ListForm>
       <ViewErrors lookups={lookups} />
       {!domains.length ? (
         <Card>
-          <RunPrompt title="Start with a website">Enter your site and its competitors to compare their search traffic in {marketName(market)}. A repeat within a day is free.</RunPrompt>
+          <RunPrompt title="Start with a website">Enter your site and its competitors to compare their search traffic in {marketName(market)}.</RunPrompt>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -142,10 +141,6 @@ export function TrafficChecker({ project, embedded }: { project: Project; embedd
   );
 }
 
-function TrafficPrice({ project, input }: { project: Project; input: TrafficInput | null }) {
-  const price = useViewPrice(project.id, [["domain_traffic", input]]);
-  return <Price estimate={price} active={input !== null} note="a repeat within a day is free" />;
-}
 
 // ── Website authority ─────────────────────────────────────────────────────────
 
@@ -200,12 +195,11 @@ export function AuthorityChecker({ project, embedded }: { project: Project; embe
         button="Check authority"
         pending={lookup.loading}
       >
-        {(entries) => <AuthorityPrice project={project} input={entries.length ? { urls: entries } : null} />}
       </ListForm>
       <ViewErrors lookups={lookups} />
       {!domains.length ? (
         <Card>
-          <RunPrompt title="Start with a website">Enter up to 10 sites to compare their authority. Authority is worldwide: no country to pick. $0.02 a site, and a repeat within a week is free.</RunPrompt>
+          <RunPrompt title="Start with a website">Enter up to 10 sites to compare their authority. Authority is worldwide: no country to pick.</RunPrompt>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -224,10 +218,6 @@ export function AuthorityChecker({ project, embedded }: { project: Project; embe
   );
 }
 
-function AuthorityPrice({ project, input }: { project: Project; input: UrlMetricsInput | null }) {
-  const price = useViewPrice(project.id, [["url_metrics", input]]);
-  return <Price estimate={price} active={input !== null} note="a repeat within a week is free" />;
-}
 
 /** Hands the same list to the sister tool. In a project both live on one page as tabs. */
 function NextStep({ domains, market, to }: { domains: string[]; market: Market; to: "traffic" | "authority" }) {

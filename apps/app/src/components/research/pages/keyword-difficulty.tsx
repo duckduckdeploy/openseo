@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
 import { listParam, ListForm } from "@/components/research/list-form";
-import { ExportButton, Price, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { DifficultyPill } from "@/components/research/pills";
 import { useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { Skeleton } from "@/components/research/serp-overview";
@@ -15,7 +15,7 @@ import { csvDate, finite, splitLines, toSave } from "@/components/research/util"
 import { Button, Card, cx, ErrorNote, PageHeader } from "@/components/ui";
 import { api, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { isToolsScope, type Market, marketName } from "@/lib/scope";
 
 const MAX = 1000;
@@ -73,14 +73,13 @@ export function KeywordDifficultyChecker({ project }: { project: Project }) {
           )
         }
       >
-        {(entries) => <DraftPrice project={project} input={inputFor(entries, market)} />}
       </ListForm>
       <ErrorNote error={saved.error} />
       <ViewErrors lookups={lookups} />
 
       {!keywords.length ? (
         <Card>
-          <RunPrompt title="Paste your keyword list">Difficulty estimates how hard it is to reach Google&apos;s top 10, from the links the current top pages have. A repeat within a week is free.</RunPrompt>
+          <RunPrompt title="Paste your keyword list">Difficulty estimates how hard it is to reach Google&apos;s top 10, from the links the current top pages have.</RunPrompt>
         </Card>
       ) : lookup.loading ? (
         <Card>
@@ -97,10 +96,6 @@ export function KeywordDifficultyChecker({ project }: { project: Project }) {
   );
 }
 
-function DraftPrice({ project, input }: { project: Project; input: Input | null }) {
-  const price = useViewPrice(project.id, [["keyword_difficulty", input]]);
-  return <Price estimate={price} active={input !== null} note="a repeat within a week is free" />;
-}
 
 function Results({ project, rows, market, lookups }: { project: Project; rows: Row[]; market: Market; lookups: LookupQuery<unknown>[] }) {
   const [band, setBand] = useState<Band>("all");

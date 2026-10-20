@@ -4,7 +4,7 @@ import { ExternalLink, Grid3x3, MapPinned, MoveHorizontal, Star } from "lucide-r
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
-import { ExportButton, Price, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { Skeleton } from "@/components/research/serp-overview";
 import { GridMap } from "@/components/research/grid-map";
@@ -12,7 +12,7 @@ import { csvDate, finite, oneOf, slug } from "@/components/research/util";
 import { Card, cx, PageHeader, Select, WithIcon } from "@/components/ui";
 import { num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { type Market, marketName } from "@/lib/scope";
 import { safeHref } from "@/lib/url";
 
@@ -114,7 +114,6 @@ export function LocalRank({ project }: { project: Project }) {
     { key: "reviews", header: "Reviews", align: "right", sortValue: (b) => b.reviews, render: (b) => num(b.reviews) },
   ];
 
-  const price = useViewPrice(project.id, [["maps_grid", input]]);
   const center = data ? Math.floor(data.size / 2) : 0;
 
   return (
@@ -155,9 +154,6 @@ export function LocalRank({ project }: { project: Project }) {
         {(draft) => (
           <>
             <span className="text-xs text-muted">{market.area ? `A ${size} × ${size} grid around ${marketName(market)}.` : "Pick a city or area in the field next to the country."}</span>
-            <span className="sm:ml-auto">
-              <DraftPrice project={project} input={inputFor(draft, market, size, spacing)} />
-            </span>
           </>
         )}
       </SearchBar>
@@ -305,7 +301,3 @@ export function LocalRank({ project }: { project: Project }) {
   );
 }
 
-function DraftPrice({ project, input }: { project: Project; input: GridInput | null }) {
-  const price = useViewPrice(project.id, [["maps_grid", input]]);
-  return <Price estimate={price} active={input !== null} note="a repeat within a day is free" />;
-}

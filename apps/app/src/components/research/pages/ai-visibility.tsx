@@ -44,8 +44,6 @@ function AssistantIcon({ model, className = "size-4" }: { model: string; classNa
   }
   return <img src={src} alt="" aria-hidden className={cx("inline-block shrink-0", className)} />;
 }
-/** Roughly what one answer with web search cost when last measured: a guide, not a quote. */
-const TYPICAL: Record<string, number> = { chatgpt: 0.17, gemini: 0.06, claude: 0.12, perplexity: 0.03, grok: 0.28 };
 
 const siteOf = (url: string) => (hostOf(url) ?? url).replace(/^www\./, "");
 const sameSite = (host: string, site: string) => host === site || host.endsWith(`.${site}`);
@@ -189,7 +187,6 @@ export function AiVisibility({ project }: { project: Project }) {
     { key: "links", header: "Links", title: "Cited pages of the site, across all answers", align: "right", sortValue: (row) => row.count, render: (row) => num(row.count) },
   ];
 
-  const typical = chosen.reduce((total, key) => total + (TYPICAL[key] ?? 0.1), 0);
 
   return (
     <>
@@ -240,9 +237,6 @@ export function AiVisibility({ project }: { project: Project }) {
             );
           })}
         </div>
-        <span className="font-mono text-xs text-muted sm:ml-auto">
-          Usually about <span className="rounded-sm bg-sunken px-1.5 py-0.5 text-ink">${typical.toFixed(2)}</span> for these assistants; a repeat within a day is free
-        </span>
       </SearchBar>
 
       <ViewErrors lookups={lookups} />

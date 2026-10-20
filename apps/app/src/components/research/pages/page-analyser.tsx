@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
-import { ExportButton, Price, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { UrlCell } from "@/components/research/pills";
 import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { RatingRing, Skeleton } from "@/components/research/serp-overview";
@@ -15,7 +15,7 @@ import { csvDate, finite, money, slug, toSave } from "@/components/research/util
 import { Badge, Card, CardHeader, PageHeader, Stat } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { lookupMarket, type Market, toolLinks } from "@/lib/scope";
 import { hostOf, safeHref } from "@/lib/url";
 
@@ -136,9 +136,6 @@ export function PageAnalyser({ project }: { project: Project }) {
         {(draft) => (
           <>
             <span className="text-xs text-muted">Keywords and traffic are for the country. Links are worldwide.</span>
-            <span className="sm:ml-auto">
-              <DraftPrice project={project} inputs={inputsFor(toUrl(draft), market)} />
-            </span>
           </>
         )}
       </SearchBar>
@@ -301,12 +298,3 @@ export function PageAnalyser({ project }: { project: Project }) {
   );
 }
 
-function DraftPrice({ project, inputs }: { project: Project; inputs: ReturnType<typeof inputsFor> }) {
-  const price = useViewPrice(project.id, [
-    ["url_metrics", inputs?.metrics ?? null],
-    ["onpage_check", inputs?.onpage ?? null],
-    ["domain_keywords", inputs?.keywords ?? null],
-    ["backlinks_list", inputs?.links ?? null],
-  ]);
-  return <Price estimate={price} active={inputs !== null} note="per page; a repeat within a day is free" />;
-}

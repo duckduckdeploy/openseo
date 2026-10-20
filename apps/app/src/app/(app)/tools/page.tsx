@@ -12,7 +12,7 @@ export default function ToolsIndex() {
     <>
       <PageHeader
         title="SEO tools"
-        description="Research any keyword or website without setting up a project. Each run shows its price first and is billed to your YepAPI key; a repeat within the cache window is free."
+        description="Research any keyword or website without setting up a project."
       />
       <div className="space-y-8">
         {GROUPS.map((group) => (

@@ -4,7 +4,7 @@ import { Sprout } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
-import { ExportButton, Price, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { Competition, DifficultyPill, INTENTS, IntentBadge } from "@/components/research/pills";
 import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { Skeleton, suggestionsOf } from "@/components/research/serp-overview";
@@ -15,7 +15,7 @@ import { csvDate, isQuestion, money, oneOf, optInt, slug, toSave } from "@/compo
 import { Card, cx, Input, PageHeader, Select } from "@/components/ui";
 import { num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { lookupMarket, type Market, marketName } from "@/lib/scope";
 
 const LIMIT = 300;
@@ -142,9 +142,6 @@ export function KeywordResearch({ project }: { project: Project }) {
         {(draft) => (
           <>
             <span className="text-xs text-muted">Ideas are national; with a city or state the top {LOCAL} also get their local volume.</span>
-            <span className="sm:ml-auto">
-              <DraftPrice project={project} inputs={inputsFor(draft, market)} local={Boolean(market.area)} />
-            </span>
           </>
         )}
       </SearchBar>
@@ -251,15 +248,3 @@ export function KeywordResearch({ project }: { project: Project }) {
   );
 }
 
-function DraftPrice({ project, inputs, local }: { project: Project; inputs: ReturnType<typeof inputsFor>; local: boolean }) {
-  const price = useViewPrice(
-    project.id,
-    [
-      ["keyword_ideas", inputs?.terms ?? null],
-      ["keyword_ideas", inputs?.related ?? null],
-      ["autocomplete", inputs?.suggest ?? null],
-    ],
-    local ? [{ min: 0.15, max: 0.15 }] : [],
-  );
-  return <Price estimate={price} active={inputs !== null} note="per seed; a repeat within a week is free" />;
-}

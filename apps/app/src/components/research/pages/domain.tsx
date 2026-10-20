@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { type ReactNode, useMemo, useState } from "react";
 import { PositionDistribution } from "@/components/research/charts";
 import { type Column, DataTable } from "@/components/research/data-table";
-import { ExportButton, Price, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { UrlCell } from "@/components/research/pills";
 import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { RatingRing, Skeleton } from "@/components/research/serp-overview";
@@ -17,7 +17,7 @@ import { csvDate, finite, fixed, money, oneOf, percent, slug, toSave } from "@/c
 import { Card, cx, Input, PageHeader, Select } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { lookupMarket, type Market, toolLinks } from "@/lib/scope";
 import { hostOf } from "@/lib/url";
 
@@ -137,9 +137,6 @@ export function DomainOverview({ project }: { project: Project }) {
         {(draft) => (
           <>
             <span className="text-xs text-muted">Domain data is for the whole country. Backlinks are worldwide.</span>
-            <span className="sm:ml-auto">
-              <DraftPrice project={project} inputs={inputsFor(cleanDomain(draft), market)} />
-            </span>
           </>
         )}
       </SearchBar>
@@ -228,15 +225,6 @@ export function DomainOverview({ project }: { project: Project }) {
   );
 }
 
-function DraftPrice({ project, inputs }: { project: Project; inputs: ReturnType<typeof inputsFor> }) {
-  const price = useViewPrice(project.id, [
-    ["domain_overview", inputs?.overview ?? null],
-    ["domain_keywords", inputs?.keywords ?? null],
-    ["domain_pages", inputs?.pages ?? null],
-    ["competitors_domain", inputs?.competitors ?? null],
-  ]);
-  return <Price estimate={price} active={inputs !== null} note="per domain; a repeat within a day is free" />;
-}
 
 function TableLoading({ lookup, label, children }: { lookup: LookupQuery<unknown>; label: string; children: ReactNode }) {
   if (lookup.loading)

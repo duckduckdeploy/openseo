@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
 import { listParam, ListForm } from "@/components/research/list-form";
-import { ExportButton, Price, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { UrlCell } from "@/components/research/pills";
 import { useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { featureLabel, Skeleton } from "@/components/research/serp-overview";
@@ -16,7 +16,7 @@ import { csvDate, slug, splitLines } from "@/components/research/util";
 import { Badge, Button, Card, CardHeader, ErrorNote, Input, PageHeader, Select, Stat, WithIcon } from "@/components/ui";
 import { api, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { isToolsScope, lookupMarket, type Market, marketName } from "@/lib/scope";
 import { hostOf } from "@/lib/url";
 
@@ -103,7 +103,6 @@ export function AiOverviewChecker({ project }: { project: Project }) {
           </>
         )}
       >
-        {(entries) => <DraftPrice project={project} input={inputFor(entries, domain, device, market)} />}
       </ListForm>
       <ErrorNote error={saved.error} />
       <ViewErrors lookups={lookups} />
@@ -111,7 +110,7 @@ export function AiOverviewChecker({ project }: { project: Project }) {
       {!keywords.length ? (
         <Card>
           <RunPrompt title="Start with your keywords">
-            Paste the keywords you care about. Each check reads Google&apos;s first page as searchers in {marketName(market)} see it, for $0.01 a keyword. A repeat within 6 hours is free.
+            Paste the keywords you care about. Each check reads Google&apos;s first page as searchers in {marketName(market)} see it.
           </RunPrompt>
         </Card>
       ) : lookup.loading ? (
@@ -152,10 +151,6 @@ function DomainField({ domain, onChange }: { domain: string; onChange: (value: s
   );
 }
 
-function DraftPrice({ project, input }: { project: Project; input: Input | null }) {
-  const price = useViewPrice(project.id, [["serp_features", input]]);
-  return <Price estimate={price} active={input !== null} note="a repeat within 6 hours is free" />;
-}
 
 function Results({ data, market, lookups }: { data: Data; market: Market; lookups: LookupQuery<unknown>[] }) {
   const rows = data.keywords;

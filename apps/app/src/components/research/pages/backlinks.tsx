@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { HistoryLine, NewLostBars } from "@/components/research/charts";
 import { type Column, DataTable } from "@/components/research/data-table";
-import { ExportButton, Price, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { Fact, UrlCell } from "@/components/research/pills";
 import { SearchBar, useToolNav, useUrlText } from "@/components/research/search-bar";
 import { Skeleton } from "@/components/research/serp-overview";
@@ -31,7 +31,7 @@ import { Check } from "@/components/tracking/kit";
 import { Badge, Button, Card, Input, PageHeader, Stat } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { isToolsScope, type Market, projectMarket, toolLinks } from "@/lib/scope";
 import { hostOf, safeHref } from "@/lib/url";
 
@@ -449,9 +449,6 @@ export function Backlinks({ project }: { project: Project }) {
         {(draft) => (
           <>
             <span className="text-xs text-muted">Backlinks are worldwide, so there is no country to pick.</span>
-            <span className="sm:ml-auto">
-              <DraftPrice project={project} target={cleanTarget(draft)} />
-            </span>
           </>
         )}
       </SearchBar>
@@ -606,15 +603,3 @@ export function Backlinks({ project }: { project: Project }) {
   );
 }
 
-function DraftPrice({ project, target }: { project: Project; target: string }) {
-  const ok = validTarget(target);
-  const price = useViewPrice(project.id, [
-    ["backlinks_summary", ok ? { target } : null],
-    ["backlinks_history", ok ? { target } : null],
-    ["backlinks_list", ok ? { target, limit: ROWS, onePerDomain: true, status: "live", sort: "rank:desc" } : null],
-    ["backlinks_referring_domains", ok ? { target, limit: ROWS, status: "live", sort: "rank:desc" } : null],
-    ["backlinks_anchors", ok ? { target, limit: ROWS } : null],
-    ["backlinks_pages", ok && !isPage(target) ? { target, limit: ROWS, sort: "referring_domains:desc" } : null],
-  ]);
-  return <Price estimate={price} active={ok} note="per target; a repeat within a day is free" />;
-}

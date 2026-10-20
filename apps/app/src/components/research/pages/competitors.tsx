@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
-import { ExportButton, Price, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
+import { ExportButton, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { DifficultyPill, IntentBadge, UrlCell } from "@/components/research/pills";
 import { SearchBar, useChangeMarket, useMarket, useToolNav, useUrlText } from "@/components/research/search-bar";
 import { Skeleton } from "@/components/research/serp-overview";
@@ -17,7 +17,7 @@ import { csvDate, finite, fixed, money, oneOf, percent, slug, splitLines, toSave
 import { Badge, Button, Card, ErrorNote, Input, PageHeader, Textarea } from "@/components/ui";
 import { api, compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { type LookupQuery, useLookupQuery, useViewPrice } from "@/lib/lookup";
+import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { isToolsScope, lookupMarket, type Market, toolLinks } from "@/lib/scope";
 import { hostOf } from "@/lib/url";
 
@@ -83,9 +83,6 @@ export function Competitors({ project }: { project: Project }) {
         {(draft) => (
           <>
             <span className="text-xs text-muted">Competitor data is for the whole country.</span>
-            <span className="sm:ml-auto">
-              <DraftPrice project={project} domain={cleanDomain(draft)} market={market} />
-            </span>
           </>
         )}
       </SearchBar>
@@ -125,10 +122,6 @@ export function Competitors({ project }: { project: Project }) {
   );
 }
 
-function DraftPrice({ project, domain, market }: { project: Project; domain: string; market: Market }) {
-  const price = useViewPrice(project.id, [["competitors_domain", validDomain(domain) ? { domain, limit: COMPETITORS, ...lookupMarket(market) } : null]]);
-  return <Price estimate={price} active={validDomain(domain)} note="a repeat within a week is free" />;
-}
 
 function OrganicTable({ domain, market, lookup, ok }: { domain: string; market: Market; lookup: LookupQuery<DomainCompetitorsData>; ok: boolean }) {
   if (!ok) return <Card><RunPrompt title="Enter your domain">Organic competitors are found from the domain in the search bar.</RunPrompt></Card>;
