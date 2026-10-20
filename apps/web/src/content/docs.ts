@@ -39,7 +39,7 @@ export const docPages: DocPage[] = [
     title: 'Costs, caching and limits',
     h1: 'Costs, caching and spending limits',
     seoTitle: 'SEO Data Costs, Caching and Spending Limits',
-    description: 'How prices are worked out before anything runs, when results are free, and the controls that stop spending.',
+    description: 'How prices are worked out, when results are free, where to see what you spent, and the controls that stop spending.',
     section: 'Start here',
   },
   {

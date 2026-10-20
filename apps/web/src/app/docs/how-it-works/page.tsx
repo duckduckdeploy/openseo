@@ -13,8 +13,8 @@ export default function HowItWorksPage() {
   return (
     <DocArticle slug={slug}>
       <p>
-        OpenSEO is a workspace, not a data company. It decides what to ask for, asks YepAPI with your key, shows you
-        the price first, and keeps what comes back so you can compare it over time. This page explains the moving
+        OpenSEO is a workspace, not a data company. It decides what to ask for, asks YepAPI with your key, stays under
+        your monthly limit, and keeps what comes back so you can compare it over time. This page explains the moving
         parts, so the rest of the docs make sense.
       </p>
 

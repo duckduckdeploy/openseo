@@ -95,7 +95,7 @@ export const tools: ResearchTool[] = [
         shot: 'search-bar',
         alt: 'The search row: keyword, country, city or state, language and the Analyse button, with the price of the search',
         title: 'Keyword metrics in one search',
-        body: 'Keyword, country, city or state, and language sit side by side. The price of the whole search shows before it runs, and the market you pick is remembered for every other tool.',
+        body: 'Keyword, country, city or state, and language sit side by side. The market you pick is remembered for every other tool.',
       },
       {
         shot: 'keyword-overview-cards',
@@ -113,7 +113,7 @@ export const tools: ResearchTool[] = [
         shot: 'keyword-overview-serp',
         alt: 'The top Google results with product, image and question blocks in place, and the words, DR, UR, backlinks, linking domains, traffic and value of each page',
         title: 'Top 10 SERP analysis',
-        body: 'The results page as Google lays it out, features in their places, with how many visits this keyword sends each result. Turn on authority metrics for each page’s Domain Rating, URL Rating, backlinks, linking domains, traffic and its value.',
+        body: 'The results page as Google lays it out, features in their places, with how many visits this keyword sends each result, and each page’s Domain Rating, URL Rating, backlinks, linking domains, traffic and its value.',
       },
     ],
     uses: [
@@ -128,10 +128,10 @@ export const tools: ResearchTool[] = [
       { action: 'Google suggestions', price: '$0.01' },
       { action: 'Live top 10', price: '$0.02' },
       { action: 'Volume in five other countries', price: '$0.15 – $0.20' },
-      { action: 'Authority metrics of the top 10 (optional)', price: '$0.20' },
+      { action: 'Authority metrics of the top 10', price: '$0.20' },
       { action: 'Local volume for a city or state (optional)', price: '$0.15' },
     ],
-    total: '$0.27 – $0.37 per keyword',
+    total: '$0.47 – $0.57 per keyword',
     costNote: 'A repeat within a day is free. Keyword data is cached for a week, the live results for an hour.',
     faqs: [
       {
@@ -141,8 +141,8 @@ export const tools: ResearchTool[] = [
         ],
       },
       {
-        question: 'Why does a keyword show a clickstream estimate?',
-        answer: ['Google Ads reports no volume for some topics, such as VPNs or gambling. For those, the overview uses a volume estimate from clickstream data instead, and says so.'],
+        question: 'Where does the volume come from for VPN or gambling keywords?',
+        answer: ['Google Ads reports no volume for some topics, such as VPNs or gambling. For those, the overview and the SERP checker use a volume estimate from clickstream data instead.'],
       },
       ...shared,
     ],
@@ -247,13 +247,13 @@ export const tools: ResearchTool[] = [
     freeTool: 'serp',
     seoTitle: 'SERP Checker: Check Live Google Results Online',
     h1: 'SERP checker',
-    description: 'Check the live Google top 10 online for any keyword, on desktop or mobile, in any country, state or city, with each result’s authority, links and traffic.',
+    description: 'Check the live Google results online for any keyword, from page 1 to page 10, on desktop or mobile, in any country, state or city, with each result’s authority, links and traffic.',
     glossary: ['serp', 'serp-features', 'featured-snippet', 'people-also-ask', 'ai-overviews', 'domain-rating'],
     name: 'SERP checker',
     icon: ListOrdered,
     headline: 'The live results page, measured',
-    summary: 'The live top 10 for any keyword on desktop or mobile, in any country, state or city, with every result’s authority, links and traffic.',
-    lede: 'See the results page as searchers see it today: on desktop or mobile, in any country, state or city. Every result comes with the visits this keyword sends it, and with authority metrics on, its Domain Rating, links and traffic.',
+    summary: 'The live top 10 to top 100 for any keyword on desktop or mobile, in any country, state or city, with every result’s authority, links and traffic.',
+    lede: 'See the results page as searchers see it today: on desktop or mobile, in any country, state or city. Go from page 1 to page 10. Every result comes with the visits this keyword sends it, its Domain Rating, links and traffic.',
     points: ['Desktop or mobile', 'Down to a city', 'SERP features in place'],
     appPath: '/tools/serp-checker',
     hero: { shot: 'serp-checker', alt: 'The SERP checker for standing desk with the search row and the top results' },
@@ -278,11 +278,11 @@ export const tools: ResearchTool[] = [
       { title: 'Open any result', body: 'Each result opens its domain overview, its page analysis or its backlinks.' },
     ],
     costs: [
-      { action: 'Live results (top 20 positions)', price: '$0.02' },
+      { action: 'Live results, top 10 to top 100', price: '$0.02 – $0.10' },
       { action: 'The keyword’s volume and difficulty', price: '$0.03 – $0.04' },
-      { action: 'Authority metrics of the top 10 (optional)', price: '$0.20' },
+      { action: 'Authority metrics, per 10 results shown', price: '$0.20' },
     ],
-    total: '$0.05 – $0.06 per check',
+    total: 'About $0.25 per check for the top 10, $2.14 for the top 100',
     costNote: 'Live results are cached for an hour. With a city or state, the keyword’s local volume costs $0.15 instead.',
     faqs: [
       {

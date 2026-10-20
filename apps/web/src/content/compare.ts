@@ -33,7 +33,7 @@ export interface Comparison {
 const freeAlternative = (name: string): Faq => ({
   question: `Is OpenSEO a free ${name} alternative?`,
   answer: [
-    `The software is: OpenSEO is open source under the MIT licence and free to self-host, with no seats and no plan. Search data, like keyword volumes, rankings and backlinks, is paid per lookup at the price shown before it runs, so a quiet month costs little. The crawler, the site audit and your Search Console data cost nothing.`,
+    `The software is: OpenSEO is open source under the MIT licence and free to self-host, with no seats and no plan. Search data, like keyword volumes, rankings and backlinks, is paid per lookup under a monthly limit you set, so a quiet month costs little. The crawler, the site audit and your Search Console data cost nothing.`,
   ],
 });
 
@@ -47,7 +47,7 @@ const sharedFaqs: Faq[] = [
   {
     question: 'What does OpenSEO actually cost?',
     answer: [
-      'The software is open source and free to self-host. Search data is paid per lookup, at the price shown before it runs: about $0.08 for a keyword search of 150 ideas, $0.02 to $0.10 for a rank check (top 20 to top 100). Tracking 100 keywords daily on desktop costs about $60 a month at the top 20.',
+      'The software is open source and free to self-host. Search data is paid per lookup: about $0.08 for a keyword search of 150 ideas, $0.02 to $0.10 for a rank check (top 20 to top 100). Tracking 100 keywords daily on desktop costs about $60 a month at the top 20.',
     ],
   },
 ];

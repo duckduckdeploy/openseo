@@ -10,11 +10,11 @@ export interface PriceRow {
 
 /** Example prices for common actions, at the time of writing. */
 export const priceRows: PriceRow[] = [
-  { action: 'Keyword overview', unit: 'One keyword: metrics, ideas, suggestions, top 10, six countries', price: '$0.27 – $0.37', href: '/tools/keyword-analysis-tool' },
+  { action: 'Keyword overview', unit: 'One keyword: metrics, ideas, suggestions, top 10 with authority, six countries', price: '$0.47 – $0.57', href: '/tools/keyword-analysis-tool' },
   { action: 'Keyword ideas', unit: 'Up to 600 ideas and suggestions', price: '$0.07 – $0.25', href: '/tools/keyword-generator' },
   { action: 'Keyword difficulty checker', unit: 'Difficulty of 1,000 keywords', price: '$0.33', href: '/tools/keyword-difficulty-checker' },
   { action: 'AI Overview checker', unit: 'Google’s first page and its AI Overview, per keyword', price: '$0.01', href: '/tools/ai-overview-checker' },
-  { action: 'SERP checker', unit: 'Live top 10 and the keyword’s volume', price: '$0.05 – $0.06', href: '/tools/serp-checker' },
+  { action: 'SERP checker', unit: 'Live top 10 with each result’s authority, and the keyword’s volume', price: '$0.25 – $0.26', href: '/tools/serp-checker' },
   { action: 'Domain overview', unit: 'Totals, rankings, top 100 keywords and pages, competitors', price: '$0.23 – $0.30', href: '/tools/website-seo-analysis' },
   { action: 'Website traffic checker', unit: 'Organic and paid traffic of up to 100 websites', price: '$0.03 – $0.06', href: '/tools/website-traffic-checker' },
   { action: 'Website authority checker', unit: 'Domain Rating and links, per website', price: '$0.02', href: '/tools/website-authority-checker' },
@@ -86,7 +86,7 @@ export const pricingFaqs: Faq[] = [
   {
     question: 'How do I know what an action will cost?',
     answer: [
-      'The app shows the price of every action before it runs. The table on this page gives examples at the time of writing; the data provider sets those prices and can change them.',
+      'Settings and usage lists every call with its cost, and a monthly limit caps spending. The table on this page gives examples at the time of writing; the data provider sets those prices and can change them.',
     ],
   },
   {

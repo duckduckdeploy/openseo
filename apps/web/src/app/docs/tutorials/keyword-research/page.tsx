@@ -33,9 +33,9 @@ export default function KeywordResearchTutorial() {
             state as well to get local volume for the top 100 ideas.
           </p>
         </Step>
-        <Step title="Check the price, then press Enter">
+        <Step title="Press Enter">
           <p>
-            The price of the whole search shows under the search box before anything runs. Press Enter: matching terms,
+            Press Enter: matching terms,
             related terms, questions and Google&apos;s suggestions all load together into one list. The same search
             within 7 days is free.
           </p>

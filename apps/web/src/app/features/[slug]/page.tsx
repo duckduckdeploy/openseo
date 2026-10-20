@@ -194,7 +194,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
               {feature.name} pricing
             </h2>
             <p className="mt-6 text-xl leading-relaxed text-pretty text-muted">
-              Prices at the time of writing, billed by the data provider to your own key. The app shows the price of every action before it runs.
+              Prices at the time of writing, billed by the data provider to your own key. Settings and usage lists every call with its cost.
             </p>
           </div>
           <div className="mx-auto mt-12 max-w-3xl">

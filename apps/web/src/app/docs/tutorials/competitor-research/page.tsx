@@ -38,8 +38,8 @@ export default function CompetitorTutorial() {
 
       <h2 id="size">2. Compare competitor traffic and authority</h2>
       <p>
-        Open <Ui>Domain overview</Ui>, enter a competitor and press Enter. One search loads everything below; the
-        price shows before it runs. You get:
+        Open <Ui>Domain overview</Ui>, enter a competitor and press Enter. One search loads everything below. You
+        get:
       </p>
       <Screenshot name="domain-overview-metrics" alt="Domain Rating, organic traffic, organic keywords, backlinks, referring domains and paid keywords of zapier.com" />
       <DocTable

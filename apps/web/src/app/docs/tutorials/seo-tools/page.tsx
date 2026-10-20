@@ -323,9 +323,9 @@ export default function SeoToolsGuide() {
 
       <h2 id="costs">What a search costs</h2>
       <p>
-        Each view runs several lookups, so its price is the sum of theirs, shown before you search. Results are cached for
-        a day or more: searching the same thing again, reloading, or going back is free until then. The line above each
-        result says what it cost, or that it came from the cache, and <Ui>Refresh (pay again)</Ui> fetches fresh data. See{' '}
+        Each view runs several lookups, so its price is the sum of theirs. Results are cached for a day or more:
+        searching the same thing again, reloading, or going back is free until then. <Ui>Refresh</Ui> fetches fresh data,
+        and <Ui>Settings and usage</Ui> lists every call with its cost. See{' '}
         <Link href="/docs/costs-and-limits">Costs, caching and limits</Link>.
       </p>
     </DocArticle>

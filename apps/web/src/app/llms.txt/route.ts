@@ -34,7 +34,7 @@ export function GET() {
     '',
     '## Optional',
     '',
-    link('Pricing', '/pricing', 'What each action costs, shown before it runs.'),
+    link('Pricing', '/pricing', 'What each action costs, paid per lookup with a monthly limit.'),
     ...comparisons.map((c) => link(`${c.name} alternative`, `/compare/${c.slug}`, c.summary)),
     link('SEO glossary', '/glossary', 'SEO terms explained in plain English.'),
     '',

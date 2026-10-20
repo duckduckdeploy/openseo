@@ -48,7 +48,7 @@ export default function PricingPage() {
           <p className="mt-6 font-display text-2xl font-semibold text-balance text-ink md:text-[1.75rem]">Every feature, hosted or on your own server.</p>
           <p className="mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-pretty text-muted">
             Use OpenSEO online at no cost, or run the whole suite on your own server. The only thing you pay for is search
-            data, per lookup, at the price shown before it runs.
+            data, per lookup, under a monthly limit you set.
           </p>
         </div>
       </section>
@@ -141,7 +141,7 @@ export default function PricingPage() {
           eyebrow="Cost per action"
           id="table-title"
           title="SEO data cost per lookup"
-          lede="Examples for common actions. The app shows the price of every action before it runs, including the ones not listed here."
+          lede="Examples for common actions at the time of writing. Settings and usage lists every call you make with its cost."
         />
         <div className="mx-auto mt-14 max-w-4xl md:mt-16">
           <PriceTable caption="Example prices for common lookups" rows={rowsFromPricing(priceRows)} />

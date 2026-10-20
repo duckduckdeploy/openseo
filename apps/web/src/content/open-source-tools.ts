@@ -41,7 +41,7 @@ export const openSourceTools: OpenSourceTool[] = [
     summary:
       'Ours. An all-in-one SEO suite you can self-host with one Docker compose file: keyword research, rank tracking to the top 20, 50 or 100, backlinks and link gap, a site audit with Lighthouse, AI visibility across 120+ models, geo-grid local rankings and Search Console reports, with an MCP server and REST API for AI agents.',
     goodFor: ['One tool instead of five', 'AI agents, with a spending cap on every call', 'Free checks on openseo.gg with no account'],
-    keepInMind: ['Search data is paid per lookup, shown before it runs', 'No backlink index of its own: links come from the data provider'],
+    keepInMind: ['Search data is paid per lookup, under a monthly limit', 'No backlink index of its own: links come from the data provider'],
     ours: true,
   },
   {

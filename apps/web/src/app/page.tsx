@@ -47,7 +47,7 @@ const control = [
   {
     icon: ShieldCheck,
     title: 'No surprise bills',
-    body: 'Every action shows its cost before it runs. Set a monthly limit and nothing is spent past it, by you or by any agent.',
+    body: 'Pay per lookup, with every call and its cost listed in the app. Set a monthly limit and nothing is spent past it, by you or by any agent.',
   },
   {
     icon: Bot,

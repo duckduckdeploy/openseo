@@ -52,7 +52,7 @@ export default function ToolsPage() {
             </h1>
             <p className="mt-7 text-xl leading-relaxed text-pretty text-muted md:text-[1.375rem]">
               Type a keyword, a domain or a page, pick a country (and a city or state where it helps), press Enter. Everything
-              the tool shows loads together, with its price shown first.
+              the tool shows loads together.
             </p>
             <div className="mt-10 flex justify-center">
               <ButtonLink href={SIGN_UP_URL} size="lg">

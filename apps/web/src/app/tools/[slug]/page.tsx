@@ -40,7 +40,7 @@ const textLink = 'inline-flex items-center gap-1.5 font-medium text-accent-text 
 
 const steps = [
   { title: 'Search', body: 'A keyword, a domain or a page, with the country, city or state, and language next to it.' },
-  { title: 'See the price', body: 'The cost of the whole search shows before anything runs. A repeat is free.' },
+  { title: 'Read the results', body: 'Volume, difficulty, rankings and links side by side. A repeat search loads at once.' },
   { title: 'Get the whole picture', body: 'Everything loads together. The address holds the search, so you can share it.' },
 ];
 
@@ -131,7 +131,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
                 </ButtonLink>
               </div>
               <p className="mt-5 text-[0.9375rem] text-muted">
-                {tool.total}, shown before it runs.{' '}
+                {tool.total}, paid per lookup from your own key.{' '}
                 <a href="#costs" className={textLink}>
                   What it costs
                 </a>
@@ -214,7 +214,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
               {tool.h1} pricing
             </h2>
             <p className="mt-6 text-xl leading-relaxed text-pretty text-muted">
-              <strong className="font-semibold text-ink">{tool.total}.</strong> You pay the data provider for the lookups a search runs, from your own key, and see the price before it runs. {tool.costNote}
+              <strong className="font-semibold text-ink">{tool.total}.</strong> You pay the data provider for the lookups a search runs, from your own key, under a monthly limit you set. {tool.costNote}
             </p>
           </div>
           <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-lg border border-line bg-surface shadow-hard-sm">

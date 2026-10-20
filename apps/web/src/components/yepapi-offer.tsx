@@ -58,7 +58,7 @@ export function YepapiOffer({ examples = false, tone = 'white' }: YepapiOfferPro
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-center text-sm text-muted">Each figure is an alternative, not a bundle. The app shows every price before it runs.</p>
+            <p className="mt-4 text-center text-sm text-muted">Each figure is an alternative, not a bundle. Prices at the time of writing.</p>
           </div>
         ) : null}
 

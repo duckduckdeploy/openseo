@@ -65,7 +65,7 @@ export interface Feature {
   worksWith?: Brand[];
 }
 
-export const UNLISTED_PRICE_LABEL = 'Shown in the app before it runs';
+export const UNLISTED_PRICE_LABEL = 'Listed in Settings and usage';
 
 export const features: Feature[] = [
   {

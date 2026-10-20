@@ -13,9 +13,9 @@ export default function CostsPage() {
   return (
     <DocArticle slug={slug}>
       <p>
-        OpenSEO charges nothing. Every paid action is billed by YepAPI to your own key at YepAPI&apos;s price, and the
-        app shows that price before anything runs. This page explains how the prices are worked out and the controls
-        you have over spending. Prices are YepAPI&apos;s at the time of writing; YepAPI sets them.
+        OpenSEO charges nothing. Every paid action is billed by YepAPI to your own key at YepAPI&apos;s price. This
+        page explains how the prices are worked out, where to see what you spent, and the controls you have over
+        spending. Prices are YepAPI&apos;s at the time of writing; YepAPI sets them.
       </p>
 
       <h2 id="price-kinds">How prices are worked out</h2>
@@ -59,7 +59,8 @@ export default function CostsPage() {
       <h2 id="caching">When results are free</h2>
       <p>
         Results are kept for your account. Repeating the same request within its cache time costs nothing, and the
-        result says <Ui>cached, free</Ui>. To pay for fresh data, use <Ui>Refresh (pay again)</Ui>; it shows its price next to it.
+        next search loads at once. To pay for fresh data, use <Ui>Refresh</Ui>. Every paid call is listed with its cost in
+        <Ui>Settings and usage</Ui>.
       </p>
       <DocTable
         caption="How long results are reused"

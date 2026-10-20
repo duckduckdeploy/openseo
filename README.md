@@ -36,7 +36,7 @@
 
 **OpenSEO** ([openseo.gg](https://openseo.gg)) is an open-source alternative to Ahrefs and Semrush. It covers keyword research, rank tracking, backlinks, site audits, AI visibility and local rank tracking, and reads your own Google Search Console and Analytics data. Run it on your own machine or server, read every line of it, and hand it to your AI agent.
 
-No monthly plan: the software is free, and search data is paid per lookup at the price shown before it runs. A rank check is from $0.02, a keyword search of 150 ideas about $0.08.
+No monthly plan: the software is free, and search data is paid per lookup, under a monthly limit you set. A rank check is from $0.02, a keyword search of 150 ideas about $0.08.
 
 ⭐ **If OpenSEO is useful to you, a star helps other people find it.**
 
@@ -82,7 +82,7 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 
 - 🔓 **Open source, all of it.** The app, the API, the crawler and the agent server are MIT licensed. Change what you need and keep your changes.
 - 🏠 **Your server, your data.** One Docker command runs the whole suite on your own computer or server. Your keywords, rankings and audits stay in your own database.
-- 💸 **No surprise bills.** Every action shows its cost before it runs, and a monthly limit stops all spending once it is reached.
+- 💸 **No surprise bills.** Every call is listed with its cost, and a monthly limit stops all spending once it is reached.
 - 🤖 **Agents on a leash.** 66 MCP tools cover the whole workspace. Every paid tool takes `dry_run` and `max_cost_usd`, so an agent cannot spend more than you agreed.
 - 📈 **Your own Google data.** Connect Search Console and GA4 read-only. You get queries one push from page one, and pages scored by where improving them is most worth it.
 - 🎯 **Focused workflows.** The SEO work most sites actually do, without the hundred reports nobody opens.

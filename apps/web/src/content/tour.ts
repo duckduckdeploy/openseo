@@ -25,7 +25,7 @@ export const tour: TourStop[] = [
         name: 'search-bar',
         title: 'One search',
         alt: 'The search row: keyword, country, city or state, language and the Analyse button, with the price of the search',
-        body: 'Keyword, country, city or state and language sit in one row. The price of the whole search shows before it runs, and a repeat within a day is free.',
+        body: 'Keyword, country, city or state and language sit in one row. One search loads everything, and a repeat within a day is free.',
       },
       {
         name: 'keyword-overview-cards',

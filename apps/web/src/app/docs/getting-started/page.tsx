@@ -18,8 +18,8 @@ export default function GettingStartedPage() {
       </p>
       <p>
         OpenSEO is open-source software. Search data, such as keyword volumes, rankings and backlinks, comes from our
-        data provider, YepAPI: you add your own key, and YepAPI bills each lookup to it. The app shows the cost of every
-        lookup before it runs.
+        data provider, YepAPI: you add your own key, and YepAPI bills each lookup to it. A monthly limit in Settings caps
+        what you spend.
       </p>
 
       <h2 id="yepapi-account">1. Create a YepAPI account</h2>
@@ -45,8 +45,8 @@ export default function GettingStartedPage() {
 
       <h2 id="run-research">4. Run research</h2>
       <p>
-        Pick an action, such as a keyword research run or a rank check. <strong>The app shows the price before the
-        action runs</strong>, so you always know what you are about to spend.
+        Pick an action, such as a keyword research run or a rank check. <strong>Each lookup is billed to your key, and
+        Settings and usage lists every call with its cost</strong>, so you always know what you have spent.
       </p>
       <p>As a guide, $5 of credit covers roughly one of these:</p>
       <ul>
