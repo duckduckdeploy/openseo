@@ -59,16 +59,19 @@ export function SerpChecker({ project }: { project: Project }) {
   const volume = restricted ? (fallbackRow?.clickstreamVolume ?? fallbackRow?.volume ?? null) : (row?.volume ?? null);
 
   // DR, UR, links and traffic of every result shown: one lookup per ten results, ten slots always.
-  // Each starts when the one before it has finished, so a top 100 never sends YepAPI 40 calls at
-  // once (it answers 429). The loop always runs ten times, so the hooks keep their order.
   const chunks = useMemo(() => authorityInputs(serp.data, results), [serp.data, results]);
-  const authority: LookupQuery<UrlMetricsData>[] = [];
-  for (let index = 0; index < 10; index++) {
-    const previous = authority[index - 1];
-    const ready = !previous || Boolean(previous.data || previous.error);
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    authority.push(useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", ready ? (chunks[index] ?? null) : null));
-  }
+  const authority = [
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[0] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[1] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[2] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[3] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[4] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[5] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[6] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[7] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[8] ?? null),
+    useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", chunks[9] ?? null),
+  ];
   const used = authority.filter((_, index) => chunks[index] !== null);
   const urlMetrics = {
     data: { urls: used.flatMap((lookup) => lookup.data?.urls ?? []) } as UrlMetricsData,
