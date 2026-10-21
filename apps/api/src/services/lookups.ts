@@ -8,6 +8,7 @@ import { buildGrid } from "../lib/geo";
 import { locationInfo } from "../lib/locations";
 import { mapLimit } from "../lib/pool";
 import { serpFeatures } from "../lib/serp";
+import { backlinkGap, type CompetitorRow, findings, keywordGapOpportunities, pickCompetitors, strikingDistance, topicWords } from "../lib/seo-audit";
 
 /**
  * The market a lookup runs in: a project's, or one chosen for a standalone tool (id null).
@@ -843,5 +844,153 @@ export const lookups: Lookup[] = [
     },
   }),
 ];
+
+// ── SEO audit ─────────────────────────────────────────────────────────────────
+// A whole-domain audit made of the lookups above, so every number matches the tool it comes from.
+// Not the Site audit, which crawls pages: this one reads search data only.
+
+const partOf = (name: string): Lookup => {
+  const found = lookups.find((l) => l.name === name);
+  if (!found) throw new Error(`Unknown lookup ${name}`);
+  return found;
+};
+
+/** A part with no data (a new site has no backlink summary) is an empty section, not a failure. */
+const isNoData = (error: unknown) => /\bempty\b|no data/i.test(errorText(error));
+
+type AuditInput = { domain: string; competitors?: string[]; locationCode?: number; language?: string };
+
+/** The parts of an audit and their inputs. Gaps need competitors, so they run second. */
+function auditParts(i: AuditInput, competitors: string[]) {
+  const market = { locationCode: i.locationCode, language: i.language };
+  const first = {
+    overview: ["domain_overview", { domain: i.domain, ...market }],
+    keywords: ["domain_keywords", { domain: i.domain, limit: 50, ...market }],
+    striking: ["domain_keywords", { domain: i.domain, limit: 100, sort: "volume:desc", minPosition: 4, maxPosition: 20, ...market }],
+    pages: ["domain_pages", { domain: i.domain, limit: 20, ...market }],
+    backlinks: ["backlinks_summary", { target: i.domain }],
+    referringDomains: ["backlinks_referring_domains", { target: i.domain, limit: 20 }],
+    anchors: ["backlinks_anchors", { target: i.domain, limit: 10 }],
+    competitors: ["competitors_domain", { domain: i.domain, limit: 20, ...market }],
+  } as const;
+  const [top, second] = competitors;
+  const gaps = {
+    ...(top ? { keywordGap: ["keyword_gap", { domain: i.domain, competitor: top, limit: 200, maxDifficulty: 60, ...market }] as const } : {}),
+    ...(top ? { backlinkGap: ["link_intersect", { targets: [top, ...(second ? [second] : []), i.domain], mode: "partial", limit: 100 }] as const } : {}),
+  };
+  return { first, gaps };
+}
+
+lookups.push(
+  define({
+    name: "seo_audit",
+    title: "SEO audit",
+    description:
+      "A full SEO audit of a domain from search data, in one call: traffic, Domain Rating, ranking spread and movement, top keywords and pages, backlink profile, organic competitors, and opportunities (keywords close to the top 3, a competitor's keywords the domain lacks, sites linking to competitors but not to it) with findings in order of importance. It does not crawl the site; for technical issues use start_site_audit. Pass up to 3 competitors to compare with, or the top organic competitors are used.",
+    feature: "seo_audit",
+    ttl: DAY,
+    input: z.object({
+      domain,
+      competitors: z.array(domain).max(3).optional().describe("Competitors to compare with. Default: the top organic competitors, leaving out platforms like YouTube and Reddit."),
+      locationCode,
+      language,
+    }),
+    estimate: (i, p) => {
+      const { first, gaps } = auditParts(i, ["competitor-a.com", "competitor-b.com"]);
+      return addEstimates(...[...Object.values(first), ...Object.values(gaps)].map(([name, input]) => partOf(name).estimate(partOf(name).input.parse(input), p)));
+    },
+    run: async (yep, i, p) => {
+      let costUsd = 0;
+      const errors: { part: string; message: string }[] = [];
+      const runParts = async <K extends string>(parts: Record<K, readonly [string, object]>) => {
+        const keys = Object.keys(parts) as K[];
+        const settled = await Promise.allSettled(keys.map((key) => {
+          const [name, input] = parts[key];
+          const lookup = partOf(name);
+          return lookup.run(yep, lookup.input.parse(input), p, {});
+        }));
+        const out = {} as Record<K, any>;
+        settled.forEach((result, index) => {
+          const key = keys[index] as K;
+          if (result.status === "fulfilled") {
+            costUsd = sum(costUsd, result.value.costUsd);
+            out[key] = result.value.data;
+          } else {
+            out[key] = null;
+            if (!isNoData(result.reason)) errors.push({ part: key, message: errorText(result.reason) });
+          }
+        });
+        return { out, failed: settled.filter((r) => r.status === "rejected" && !isNoData(r.reason)).length, reasons: settled.flatMap((r) => (r.status === "rejected" ? [r.reason] : [])) };
+      };
+
+      const { first } = auditParts(i, []);
+      const one = await runParts(first);
+      // Nothing came back: the key, the balance or the domain is wrong. Say so as the provider did.
+      if (one.failed === Object.keys(first).length) throw one.reasons[0];
+      const r = one.out;
+
+      const competitorRows = ((r.competitors?.competitors ?? []) as CompetitorRow[]).filter((row) => toDomain(row.domain) !== i.domain);
+      const compared = i.competitors?.length ? i.competitors : pickCompetitors(i.domain, competitorRows, 2).map((row) => row.domain);
+      const { gaps } = auditParts(i, compared);
+      const two = Object.keys(gaps).length ? (await runParts(gaps as Record<string, readonly [string, object]>)).out : {};
+
+      const overview = r.overview?.overview ?? null;
+      const organic = r.overview?.distribution?.organic ?? null;
+      const authority = r.overview?.authority?.domainMetrics ?? null;
+      const positions = organic?.positions
+        ? { top3: organic.positions.pos1 + organic.positions.pos2_3, top10: organic.positions.pos1 + organic.positions.pos2_3 + organic.positions.pos4_10, page2: organic.positions.pos11_20 }
+        : null;
+      const pages = (r.pages?.pages ?? []) as { url: string; traffic: number }[];
+      const organicTraffic = overview?.organicTraffic ?? organic?.traffic ?? null;
+      const topPage = pages[0];
+      const striking = strikingDistance(r.striking?.keywords ?? []);
+      // What the domain is about, from what it already ranks for, to keep the gap on topic.
+      const topic = topicWords([...(r.keywords?.keywords ?? []), ...(r.striking?.keywords ?? [])].map((row: { keyword: string }) => row.keyword));
+      const keywordGap = { competitor: compared[0] ?? null, keywords: keywordGapOpportunities((two as Record<string, any>).keywordGap?.keywords ?? [], topic) };
+      const gapCompetitors = compared.slice(0, 2);
+      const linkGap = { competitors: gapCompetitors, domains: backlinkGap((two as Record<string, any>).backlinkGap?.intersections ?? [], gapCompetitors, i.domain) };
+      const summary = {
+        domainRating: authority?.domainRating ?? null,
+        organicTraffic,
+        trafficValue: organic?.trafficCost ?? null,
+        organicKeywords: overview?.organicKeywords ?? organic?.keywords ?? null,
+        backlinks: r.backlinks?.totalBacklinks ?? overview?.backlinks ?? null,
+        referringDomains: r.backlinks?.referringDomains ?? overview?.referringDomains ?? null,
+        positions,
+        movement: organic?.movement ?? null,
+      };
+
+      return {
+        data: {
+          domain: i.domain,
+          summary,
+          findings: findings({
+            domain: i.domain,
+            organicKeywords: summary.organicKeywords,
+            organicTraffic,
+            domainRating: summary.domainRating,
+            referringDomains: summary.referringDomains,
+            movement: summary.movement,
+            positions,
+            topPageShare: topPage && organicTraffic ? { url: topPage.url, share: topPage.traffic / organicTraffic } : null,
+            striking,
+            keywordGap,
+            backlinkGap: linkGap,
+          }),
+          opportunities: { strikingDistance: striking, keywordGap, backlinkGap: linkGap },
+          // Keywords per position bucket (pos1, pos2_3 … pos91_100), for the ranking chart.
+          positionBuckets: organic?.positions ?? null,
+          keywords: { total: r.keywords?.total ?? null, top: r.keywords?.keywords ?? [] },
+          pages: { total: r.pages?.total ?? null, top: pages },
+          backlinks: { summary: r.backlinks ?? null, referringDomains: r.referringDomains?.referringDomains ?? [], anchors: r.anchors?.anchors ?? [] },
+          competitors: competitorRows.slice(0, 10).map((row) => ({ ...row, compared: compared.includes(toDomain(row.domain)) })),
+          ...(errors.length ? { errors } : {}),
+        },
+        costUsd,
+        partial: errors.length > 0,
+      };
+    },
+  }),
+);
 
 export const lookupByName = new Map(lookups.map((l) => [l.name, l]));

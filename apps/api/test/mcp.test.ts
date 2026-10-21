@@ -33,13 +33,13 @@ describe("MCP server", () => {
     expect((await app.inject({ method: "GET", url: "/mcp" })).statusCode).toBe(405);
   });
 
-  it("initialises and lists all 66 tools, with spending controls on every lookup", async () => {
+  it("initialises and lists all 67 tools, with spending controls on every lookup", async () => {
     const { key } = await agent();
     const init = await rpc({ apiKey: key }, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } });
     expect(init.body.result.serverInfo.name).toBe("openseo");
     const { body } = await rpc({ apiKey: key }, "tools/list");
     const tools = body.result.tools as { name: string; inputSchema: { properties: Record<string, unknown> } }[];
-    expect(tools).toHaveLength(66);
+    expect(tools).toHaveLength(67);
     // Google tools are free and read-only.
     for (const name of ["get_google_connections", "get_search_performance", "get_search_console_rows", "inspect_urls", "get_analytics_overview", "get_analytics_landing_pages", "get_search_opportunities"]) {
       const found = tools.find((t) => t.name === name) as { annotations?: { readOnlyHint?: boolean }; inputSchema: { properties: Record<string, unknown> } } | undefined;
@@ -170,7 +170,7 @@ describe("MCP server", () => {
 
     const skillsDir = new URL("plugins/openseo/skills/", root);
     const skills = readdirSync(skillsDir);
-    expect(skills.sort()).toEqual(["competitor-analysis", "keyword-research", "local-seo", "search-console-review", "seo-audit", "seo-coach"]);
+    expect(skills.sort()).toEqual(["competitor-analysis", "keyword-research", "local-seo", "search-console-review", "seo-audit", "seo-coach", "site-audit"]);
     for (const skill of skills) {
       const text = readFileSync(new URL(`${skill}/SKILL.md`, skillsDir), "utf8");
       expect(text, skill).toMatch(new RegExp(`^---\\nname: ${skill}\\ndescription: .{40,}\\n---`));
@@ -235,6 +235,21 @@ describe("MCP server", () => {
     const all = (await call("list_ai_models", { all: true })).json.models;
     expect(all.length).toBe(curated.otherModels);
     expect(Object.keys(all[0])).toEqual(expect.arrayContaining(["id", "name", "inputPerM", "outputPerM"]));
+  });
+
+  it("audits a domain with seo_audit, priced first, and keeps the answer to the head of each list", async () => {
+    const { call } = await agent();
+    const priced = await call("seo_audit", { domain: "acme.com", dry_run: true });
+    expect(priced.json).toMatchObject({ dryRun: true, costUsd: 0 });
+    expect(priced.json.estimate.max).toBeLessThan(1);
+    const audit = await call("seo_audit", { domain: "acme.com", max_cost_usd: 1 });
+    expect(audit.isError).toBe(false);
+    expect(Object.keys(audit.json).slice(0, 2)).toEqual(["name", "costUsd"]);
+    expect(audit.json.data.findings.length).toBeGreaterThan(0);
+    expect(audit.json.data.keywords.top.length).toBeLessThanOrEqual(15);
+    expect(audit.json.data.opportunities.strikingDistance.length).toBeGreaterThan(0);
+    expect((await call("seo_audit", { domain: "acme.com", max_cost_usd: 0.1 })).isError).toBe(false); // cached: free
+    expect((await call("seo_audit", { domain: "globex.io", max_cost_usd: 0.1 })).text).toMatch(/ceiling/);
   });
 
   it("does not cache an empty Google Trends answer as a result", async () => {

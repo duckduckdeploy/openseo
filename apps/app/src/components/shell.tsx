@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   BarChart3,
+  ClipboardCheck,
   Bot,
   ChevronLeft,
   FolderKanban,
@@ -39,6 +40,7 @@ import { cx, Spinner } from "./ui";
 
 const projectNav = [
   { href: "", label: "Overview", icon: LayoutDashboard },
+  { href: "/seo-audit", label: "SEO audit", icon: ClipboardCheck },
   { href: "/keywords", label: "Keyword research", icon: Search },
   { href: "/saved", label: "Saved keywords", icon: Star },
   { href: "/difficulty", label: "Keyword difficulty", icon: Gauge },

@@ -16,8 +16,8 @@ describe("agent setup prompt", () => {
     expect(prompt).toMatch(/do not run any paid lookup/);
   });
 
-  it("lists six skills with unique names", () => {
-    expect(new Set(AGENT_SKILLS.map((s) => s.name)).size).toBe(6);
+  it("lists seven skills with unique names", () => {
+    expect(new Set(AGENT_SKILLS.map((s) => s.name)).size).toBe(7);
   });
 });
 

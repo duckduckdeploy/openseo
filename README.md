@@ -5,7 +5,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge" alt="MIT licence"></a>
   <a href="#-self-host-with-docker"><img src="https://img.shields.io/badge/self--host-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Self-host with Docker"></a>
-  <a href="https://openseo.gg/docs/mcp"><img src="https://img.shields.io/badge/MCP-66%20tools-7c3aed?style=for-the-badge" alt="66 MCP tools"></a>
+  <a href="https://openseo.gg/docs/mcp"><img src="https://img.shields.io/badge/MCP-67%20tools-7c3aed?style=for-the-badge" alt="67 MCP tools"></a>
   <a href="https://openseo.gg"><img src="https://img.shields.io/badge/openseo.gg-live-2563eb?style=for-the-badge" alt="openseo.gg"></a>
 </p>
 
@@ -83,7 +83,7 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 - 🔓 **Open source, all of it.** The app, the API, the crawler and the agent server are MIT licensed. Change what you need and keep your changes.
 - 🏠 **Your server, your data.** One Docker command runs the whole suite on your own computer or server. Your keywords, rankings and audits stay in your own database.
 - 💸 **No surprise bills.** Every call is listed with its cost, and a monthly limit stops all spending once it is reached.
-- 🤖 **Agents on a leash.** 66 MCP tools cover the whole workspace. Every paid tool takes `dry_run` and `max_cost_usd`, so an agent cannot spend more than you agreed.
+- 🤖 **Agents on a leash.** 67 MCP tools cover the whole workspace. Every paid tool takes `dry_run` and `max_cost_usd`, so an agent cannot spend more than you agreed.
 - 📈 **Your own Google data.** Connect Search Console and GA4 read-only. You get queries one push from page one, and pages scored by where improving them is most worth it.
 - 🎯 **Focused workflows.** The SEO work most sites actually do, without the hundred reports nobody opens.
 
@@ -123,7 +123,7 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 | Where it runs | Their cloud | openseo.gg, or your own server with Docker |
 | Price | Monthly plans from $49 (Moz) to $140 (Semrush) to start | Free software; data paid per lookup |
 | Seats | Paid per user | No seats |
-| AI agents | API or MCP on some plans | 66 MCP tools and a REST API, spending capped per call |
+| AI agents | API or MCP on some plans | 67 MCP tools and a REST API, spending capped per call |
 | Data depth | Their own crawlers and indexes, the deepest | A large commercial dataset through a provider |
 
 Honest side-by-sides, including when each one is the better buy: [Ahrefs](https://openseo.gg/compare/ahrefs-alternative) · [Semrush](https://openseo.gg/compare/semrush-alternative) · [SE Ranking](https://openseo.gg/compare/se-ranking-alternative) · [Mangools](https://openseo.gg/compare/mangools-alternative) · [Ubersuggest](https://openseo.gg/compare/ubersuggest-alternative) · [Moz](https://openseo.gg/compare/moz-alternative) · [Screaming Frog](https://openseo.gg/compare/screaming-frog-alternative) · [Otterly.AI](https://openseo.gg/compare/otterly-alternative)
@@ -185,12 +185,13 @@ Set `OPENSEO_MCP_URL` to point it at a self-hosted install.
 
 ### 🧩 Skills
 
-Ready-made SEO workflows in [`plugins/openseo/skills`](plugins/openseo/skills), built on the 66 MCP tools:
+Ready-made SEO workflows in [`plugins/openseo/skills`](plugins/openseo/skills), built on the 67 MCP tools:
 
 | Skill | What it does |
 |---|---|
 | [`seo-coach`](plugins/openseo/skills/seo-coach/SKILL.md) | Learn SEO on your own site, and pick the first thing worth doing |
-| [`seo-audit`](plugins/openseo/skills/seo-audit/SKILL.md) | The one or two fixes most likely to bring more traffic |
+| [`seo-audit`](plugins/openseo/skills/seo-audit/SKILL.md) | Any domain's rankings, links and competitors, as a short plan |
+| [`site-audit`](plugins/openseo/skills/site-audit/SKILL.md) | Crawl your site: the one or two technical fixes that matter most |
 | [`keyword-research`](plugins/openseo/skills/keyword-research/SKILL.md) | Topics worth writing about, grouped and saved |
 | [`competitor-analysis`](plugins/openseo/skills/competitor-analysis/SKILL.md) | Their strategy, the keyword gap, and where you can win |
 | [`search-console-review`](plugins/openseo/skills/search-console-review/SKILL.md) | Quick wins from your own Google data, free |

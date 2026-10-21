@@ -155,6 +155,7 @@ export const toolLinks = {
   keyword: (keyword: string, market?: Market) => `/tools/keyword-overview${qs({ q: keyword, ...inMarket(market) })}`,
   ideas: (keyword: string, market?: Market, view?: string) => `/tools/keyword-ideas${qs({ q: keyword, view, ...inMarket(market) })}`,
   domain: (domain: string, market?: Market) => `/tools/domain-overview${qs({ domain, ...inMarket(market) })}`,
+  seoAudit: (domain: string, market?: Market) => `/tools/seo-audit${qs({ domain, ...inMarket(market) })}`,
   backlinks: (target: string) => `/tools/backlink-checker${qs({ target })}`,
   serp: (keyword: string, market?: Market) => `/tools/serp-checker${qs({ q: keyword, ...inMarket(market) })}`,
   page: (url: string, market?: Market) => `/tools/page-analyser${qs({ url, ...inMarket(market) })}`,

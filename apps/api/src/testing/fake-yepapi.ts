@@ -93,7 +93,7 @@ export function handle(path: string, body: any): unknown {
     case "/v1/seo/domain/whois":
       return { domain: body.domain, registrar: "Example Registrar", createdDate: "2009-04-01", updatedDate: "2026-04-01", expiryDate: "2027-04-01", nameServers: ["ns1.example.net"] };
     case "/v1/seo/domain/keywords":
-      return { domain: body.domain, total: 3120, keywords: Array.from({ length: Math.min(body.limit ?? 100, 50) }, (_, i) => ({ keyword: `${body.domain.split(".")[0]} keyword ${i + 1 + (body.offset ?? 0)}`, position: (i % 30) + 1, url: `https://${body.domain}/page-${i % 9}`, volume: 5000 - i * 60, cpc: 1.2, traffic: 900 - i * 15, trafficPercent: 2.1 })) };
+      return { domain: body.domain, total: 3120, keywords: Array.from({ length: Math.min(body.limit ?? 100, 50) }, (_, i) => ({ keyword: `${body.domain.split(".")[0]} keyword ${i + 1 + (body.offset ?? 0)}`, position: (i % 30) + 1, url: `https://${body.domain}/page-${i % 9}`, volume: 5000 - i * 60, cpc: 1.2, traffic: Math.round(((5000 - i * 60) * 0.3) / ((i % 30) + 1)), trafficPercent: 2.1 })) };
     case "/v1/seo/domain/pages":
       return { domain: body.domain, total: 240, pages: Array.from({ length: Math.min(body.limit ?? 100, 30) }, (_, i) => ({ url: `https://${body.domain}/page-${i}`, traffic: 9000 - i * 250, trafficValue: 4000 - i * 100, keywords: 300 - i * 8, top3: 20 - (i % 20), top10: 60 - i })) };
     case "/v1/seo/competitors/domain":
@@ -102,7 +102,7 @@ export function handle(path: string, body: any): unknown {
     case "/v1/seo/competitors/serp":
       return { competitors: sites.slice(0, 8).map((d, i) => ({ domain: d, avgPosition: 4 + i, medianPosition: 4 + i, rating: 900 - i * 80, etv: 5000 - i * 400, keywordsCount: body.keywords.length - (i % 3), visibility: 0.9 - i * 0.08 })) };
     case "/v1/seo/competitors/keywords":
-      return { domain1: body.domain1, domain2: body.domain2, intersections: body.intersections ?? true, keywords: Array.from({ length: Math.min(body.limit ?? 100, 40) }, (_, i) => ({ ...keyword(`gap keyword ${i + 1}`), domain1: { position: (i % 10) + 1, url: `https://${body.domain1}/a-${i}`, etv: 300 - i }, ...(body.intersections === false ? {} : { domain2: { position: (i % 40) + 5, url: `https://${body.domain2}/b-${i}`, etv: 100 } }) })) };
+      return { domain1: body.domain1, domain2: body.domain2, intersections: body.intersections ?? true, keywords: Array.from({ length: Math.min(body.limit ?? 100, 40) }, (_, i) => ({ ...keyword(`keyword ${i + 1}`), domain1: { position: (i % 10) + 1, url: `https://${body.domain1}/a-${i}`, etv: 300 - i }, ...(body.intersections === false ? {} : { domain2: { position: (i % 40) + 5, url: `https://${body.domain2}/b-${i}`, etv: 100 } }) })) };
     case "/v1/seo/backlinks/summary":
       return { target: body.target, totalBacklinks: 15400, referringDomains: 1280, referringMainDomains: 1190, referringPages: 9800, referringIps: 1100, referringSubnets: 980, dofollow: 11200, nofollow: 4200, brokenBacklinks: 140, brokenPages: 12, spamScore: 7, rank: 412, firstSeen: "2019-03-02" };
     case "/v1/seo/backlinks/history":
@@ -116,7 +116,21 @@ export function handle(path: string, body: any): unknown {
     case "/v1/seo/backlinks/pages":
       return { target: body.target, total: 240, pages: Array.from({ length: 20 }, (_, i) => ({ url: `https://${body.target}/page-${i}`, statusCode: 200, title: `Page ${i}`, backlinks: 2000 - i * 90, referringDomains: 300 - i * 12, referringMainDomains: 280 - i * 11, rank: 300 - i * 5, spamScore: 4, brokenBacklinks: 0, firstSeen: "2022-05-05" })) };
     case "/v1/seo/backlinks/domain-intersection":
-      return { intersections: sites.slice(0, 6).map((d, i) => ({ domain: d, rank: 400 - i * 30, targets: Object.fromEntries((Array.isArray(body.targets) ? body.targets : Object.values(body.targets)).map((t: string) => [t, { backlinks: 5 + i }])) })) };
+    {
+      // As YepAPI answers (seen live): rows keyed by each target's 1-based position. In partial mode every
+      // row links to the first target; here every other row also links to the last one.
+      const targets: string[] = Array.isArray(body.targets) ? body.targets : Object.values(body.targets);
+      return {
+        intersections: sites.slice(0, 6).map((d, i) => {
+          const flags = targets.map((_, t) => t === 0 || body.intersection_mode !== "partial" || (t === targets.length - 1 ? i % 2 === 0 : t % 2 === i % 2));
+          return {
+            domain: `links-${i}-${d}`,
+            targets: Object.fromEntries(flags.map((on, t) => [String(t + 1), on])),
+            links: Object.fromEntries(flags.flatMap((on, t) => (on ? [[String(t + 1), { backlinks: 5 + i, referringPages: 3, rank: 400 - i * 30, spamScore: 2, firstSeen: "2025-01-01" }]] : []))),
+          };
+        }),
+      };
+    }
     case "/v1/seo/onpage/instant":
       return { pages: [{ url: body.url, statusCode: 200, title: "Example page", description: "An example description.", h1: ["Example"], wordCount: 640, internalLinks: 32, externalLinks: 5, images: 9, timeToInteractive: 1800 }] };
     case "/v1/seo/onpage/lighthouse":

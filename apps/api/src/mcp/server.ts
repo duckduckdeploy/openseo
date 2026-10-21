@@ -93,6 +93,18 @@ const AGENT_VIEWS: Record<string, (data: Json) => unknown> = {
   maps_search: slimPlace,
   maps_place: slimPlace,
   maps_reviews: slimPlace,
+  // The app shows every row; an agent gets the findings, opportunities and the head of each list.
+  seo_audit: (data) => {
+    const keywords = (data.keywords ?? {}) as Json;
+    const pages = (data.pages ?? {}) as Json;
+    const backlinks = (data.backlinks ?? {}) as Json;
+    return {
+      ...data,
+      keywords: { total: keywords.total, top: rows(keywords.top).slice(0, 15).map((row) => pick(row, ["keyword", "position", "volume", "traffic", "url"])) },
+      pages: { total: pages.total, top: rows(pages.top).slice(0, 10) },
+      backlinks: { summary: backlinks.summary, referringDomains: rows(backlinks.referringDomains).slice(0, 10).map((row) => pick(row, ["domain", "rank", "backlinks", "spamScore"])), anchors: rows(backlinks.anchors).slice(0, 10).map((row) => pick(row, ["anchor", "backlinks", "referringDomains"])) },
+    };
+  },
   // The provider lists the domain itself as its own top competitor.
   competitors_domain: (data) => ({ ...data, competitors: rows(data.competitors).filter((row) => hostOnly(row.domain) !== hostOnly(data.domain)) }),
   // domain1/domain2 swap with the mode, so name the sides; and drop a side the provider left blank.

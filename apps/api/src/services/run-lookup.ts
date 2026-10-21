@@ -29,11 +29,12 @@ export async function runLookup(userId: string, project: Market, name: string, r
   const input = parse(lookup.input, rawInput ?? {});
   const estimate = lookup.estimate(input, project);
   if (options.dryRun) return { name, estimate, dryRun: true as const };
-  assertWithinCeiling(estimate, options.maxCostUsd);
 
   // The project's market is part of the cache key because it fills in omitted location fields.
   const cacheParams = { input, market: [project.locationCode, project.country, project.language] };
   const result = await cached(userId, name, cacheParams, lookup.ttl, options.refresh ?? false, async () => {
+    // Checked only when the lookup is about to pay: a cached answer is free under any ceiling.
+    assertWithinCeiling(estimate, options.maxCostUsd);
     const yep = await getYep({ userId, projectId: project.id, feature: lookup.feature });
     return lookup.run(yep, input, project, { maxCostUsd: estimate.max == null ? options.maxCostUsd : undefined });
   });

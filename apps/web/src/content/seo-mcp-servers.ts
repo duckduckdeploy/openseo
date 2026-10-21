@@ -39,7 +39,7 @@ export const seoMcpServers: SeoMcpServer[] = [
     covers: 'Keywords, SERPs to the top 100, backlinks, competitors, rank tracking, site audit, AI visibility, local, Search Console and GA4',
     runs: 'Hosted (OAuth or API key), or self-hosted with Docker',
     cost: 'Free; data billed per lookup to your own YepAPI key, no plan',
-    tools: '66',
+    tools: '67',
     summary:
       'Ours. One open-source server that covers what usually takes three or four: keyword research, live SERPs, backlinks and link gap, competitors, rank tracking, site audits with Lighthouse, AI visibility across ChatGPT, Gemini, Claude and Perplexity, geo-grid local rankings, and seven free tools for your own Search Console and GA4 data. Every paid tool takes a dry run and a spending ceiling.',
     goodFor: ['One server for the whole SEO workflow', 'Agents with a hard spending cap per call', 'Your own Search Console data, free'],

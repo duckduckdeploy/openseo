@@ -25,6 +25,6 @@ Everything in this skill is free: it reads the user's own Google data.
    - Without it, suggest connecting GA4 for better scores.
 5. **Losses.** Compare the queries or pages that dropped:
    - call `get_search_console_rows` for `last_28_days` and for `last_3_months`, with `dimensions: ["page"]`
-   - flag large declines and suggest checking them with the `seo-audit` skill
+   - flag large declines and suggest checking them with the `site-audit` skill
 6. **Index check, if something looks wrong.** For up to ten important URLs, `inspect_urls` shows whether Google has them indexed and which canonical it chose.
 7. **Report.** One paragraph on the state of the site, then a numbered list of up to five improvements, most valuable first. Offer to save striking-distance queries as keywords with `save_keywords`, tagged `search-console`.

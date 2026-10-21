@@ -71,6 +71,17 @@ const VIEWS = [
     shots: { 'serp-checker': 'viewport', 'serp-checker-table': `heading("h2", "standing desk").closest("section")` },
   },
   {
+    url: '/tools/seo-audit?domain=zapier.com&country=us&lang=en',
+    shots: {
+      'seo-audit': 'viewport',
+      'seo-audit-findings': `heading("h2", "What to do first").closest("section")`,
+      'seo-audit-close-to-top': `heading("h2", "Opportunities").closest("section").querySelector(".space-y-6 > :nth-child(1)")`,
+      'seo-audit-keyword-gap': `heading("h2", "Opportunities").closest("section").querySelector(".space-y-6 > :nth-child(2)")`,
+      'seo-audit-backlink-gap': `heading("h2", "Opportunities").closest("section").querySelector(".space-y-6 > :nth-child(3)")`,
+      'seo-audit-backlinks': `heading("h2", "Backlink profile").closest("section")`,
+    },
+  },
+  {
     url: '/tools/domain-overview?domain=zapier.com&country=us&lang=en',
     shots: {
       'domain-overview': 'viewport',

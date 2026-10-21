@@ -1,5 +1,5 @@
 import type { FreeToolKind } from '@/components/free-tool';
-import { BarChart3, Bot, FileSearch, Gauge, Globe, Grid3x3, Lightbulb, Link2, ListOrdered, Network, Search, Sparkles, Swords, TrendingUp, type LucideIcon } from 'lucide-react';
+import { BarChart3, Bot, ClipboardCheck, FileSearch, Gauge, Globe, Grid3x3, Lightbulb, Link2, ListOrdered, Network, Search, Sparkles, Swords, TrendingUp, type LucideIcon } from 'lucide-react';
 import { ASSISTANT_BRANDS, type Brand } from '@/components/brand-icon';
 import type { ScreenName } from '@/components/screenshot';
 import type { Faq } from './pricing';
@@ -292,6 +292,87 @@ export const tools: ResearchTool[] = [
       ...shared,
     ],
     guide: '/docs/tutorials/seo-tools#serp-checker',
+  },
+  {
+    slug: 'seo-audit',
+    seoTitle: 'SEO Audit Tool: Full Website SEO Audit in One Page',
+    h1: 'SEO audit tool',
+    description: 'Free open-source SEO audit tool: enter any domain for a full SEO audit of traffic, keywords, backlinks and competitors, with the opportunities to act on first.',
+    glossary: ['seo-audit', 'striking-distance-keywords', 'keyword-gap', 'referring-domain', 'domain-rating', 'ranking-distribution'],
+    name: 'SEO audit',
+    icon: ClipboardCheck,
+    headline: 'A full SEO audit of any website, in one page',
+    summary: 'Traffic, rankings, keywords, backlinks and competitors of any domain, with findings and the opportunities to act on first.',
+    lede: 'Enter any domain: yours, a client’s or a competitor’s. The SEO audit reads its search data and puts everything on one page: what to do first, its traffic and authority, how its rankings are spread and moving, keywords close to the top 3, keywords a competitor has and it lacks, sites that link to competitors but not to it, and its backlink profile.',
+    points: ['Findings in order of importance', 'Keyword and backlink gaps', 'Works for any domain'],
+    appPath: '/tools/seo-audit',
+    hero: { shot: 'seo-audit', alt: 'SEO audit of zapier.com: findings on keywords close to the top, lost rankings, a keyword gap and a backlink gap, above Domain Rating 91 and 6.8M organic traffic' },
+    parts: [
+      {
+        shot: 'seo-audit-findings',
+        alt: 'Findings of an SEO audit, each with a severity: keywords close to the top, lost rankings, a keyword gap with techradar.com and sites linking to competitors',
+        title: 'Findings, most important first',
+        body: 'Each finding names the number it rests on and what to do about it: keywords that are nearly there, rankings slipping away, low authority, too few links or all the traffic on one page.',
+      },
+      {
+        shot: 'seo-audit-close-to-top',
+        alt: 'Keywords ranking at positions 4 to 20 with volume, the extra visits a top-3 spot could bring and the ranking page',
+        title: 'Keywords close to the top',
+        body: 'Keywords ranking 4 to 20, by the visits a top-3 spot could add, with the page that ranks. Improving those pages is usually the fastest win.',
+      },
+      {
+        shot: 'seo-audit-keyword-gap',
+        alt: 'Keywords techradar.com ranks for and zapier.com does not, with volume, difficulty, CPC and intent',
+        title: 'Keyword gap with the closest competitor',
+        body: 'Keywords the closest competitor ranks for and the domain doesn’t, kept to its topic and to difficulty 60 or less, easiest first. Other sites’ brand names are left out.',
+      },
+      {
+        shot: 'seo-audit-backlink-gap',
+        alt: 'Sites that link to two competitors but not to zapier.com, with the strength of each linking site',
+        title: 'Backlink gap',
+        body: 'Sites that link to the two closest competitors but not to the domain, those linking to both first: the most likely to link to it too.',
+      },
+      {
+        shot: 'seo-audit-backlinks',
+        alt: 'Backlink profile: dofollow share, nofollow links, broken backlinks, spam score, the strongest referring domains and the most used anchor texts',
+        title: 'Backlink profile',
+        body: 'Dofollow share, broken backlinks and spam score, the strongest referring domains and the most used anchor texts.',
+      },
+    ],
+    uses: [
+      { title: 'Audit your own site', body: 'Find the few changes most likely to bring more traffic, with the evidence for each.' },
+      { title: 'Win a client', body: 'Run it on a prospect’s domain before the first call and walk in with their opportunities.' },
+      { title: 'Size up a competitor', body: 'See what is working for them, where they are slipping and who links to them.' },
+      { title: 'Check before you buy', body: 'Vet a site you might acquire, partner with or get a link from.' },
+    ],
+    costs: [
+      { action: 'Totals, ranking spread and authority', price: '$0.14' },
+      { action: 'Top keywords and keywords close to the top', price: '$0.07 – $0.09' },
+      { action: 'Top pages and competitors', price: '$0.07 – $0.08' },
+      { action: 'Backlink summary, referring domains and anchors', price: '$0.15' },
+      { action: 'Keyword gap and backlink gap', price: '$0.08 – $0.19' },
+    ],
+    total: '$0.49 – $0.65 per domain',
+    costNote: 'A repeat within a day is free. Rankings are for one country; backlinks are worldwide. It reads search data and does not crawl pages: for technical issues on your own site, run a Site audit.',
+    faqs: [
+      {
+        question: 'How is this different from a Site audit?',
+        answer: [
+          'The SEO audit reads search data about a domain: traffic, rankings, backlinks and competitors. It works for any website, including ones you don’t own.',
+          'The Site audit crawls your own pages for technical problems such as broken links, redirect chains, missing titles and slow pages. Run both for the full picture.',
+        ],
+      },
+      {
+        question: 'Which competitors does it compare with?',
+        answer: ['The two that share the most keywords with the domain, leaving out platforms such as YouTube, Reddit and Wikipedia that rank for everything. In the app you can pick others from the competitor list, and agents can pass up to three.'],
+      },
+      {
+        question: 'Can my AI assistant run it?',
+        answer: ['Yes. The OpenSEO MCP server has a seo_audit tool, and the Claude Code plugin adds a /seo-audit command that turns the result into a short action plan.'],
+      },
+      ...shared,
+    ],
+    guide: '/docs/tutorials/seo-tools#seo-audit',
   },
   {
     slug: 'website-seo-analysis',

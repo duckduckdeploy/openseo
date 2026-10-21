@@ -31,11 +31,11 @@ const POSITIONS = [
   ["20", "Top 20"],
 ] as const;
 
-const big = (value: N) => (finite(value) && Math.abs(value) >= 1_000_000 ? compact(value) : num(value));
-const validDomain = (value: string) => value.length >= 3 && !/\s/.test(value) && value.includes(".");
+export const big = (value: N) => (finite(value) && Math.abs(value) >= 1_000_000 ? compact(value) : num(value));
+export const validDomain = (value: string) => value.length >= 3 && !/\s/.test(value) && value.includes(".");
 
 /** "https://www.Example.com/path" → "example.com". */
-function cleanDomain(value: string) {
+export function cleanDomain(value: string) {
   const host = hostOf(/^https?:\/\//i.test(value) ? value : `https://${value}`) ?? value;
   return host.toLowerCase().replace(/^www\./, "");
 }
@@ -52,7 +52,7 @@ function inputsFor(domain: string, market: Market) {
   };
 }
 
-function Movement({ label, value, tone, icon }: { label: string; value: N; tone: "pos" | "neg"; icon: ReactNode }) {
+export function Movement({ label, value, tone, icon }: { label: string; value: N; tone: "pos" | "neg"; icon: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-line py-2 last:border-b-0">
       <dt className="flex items-center gap-2 text-[13px] text-muted">
@@ -66,7 +66,7 @@ function Movement({ label, value, tone, icon }: { label: string; value: N; tone:
   );
 }
 
-function Metric({ label, value, sub, loading }: { label: string; value: ReactNode; sub?: ReactNode; loading?: boolean }) {
+export function Metric({ label, value, sub, loading }: { label: string; value: ReactNode; sub?: ReactNode; loading?: boolean }) {
   return (
     <div className="min-w-0 rounded-xl border border-line bg-surface px-4 py-3">
       <p className="text-[13px] font-medium text-muted">{label}</p>

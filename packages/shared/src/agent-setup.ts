@@ -1,7 +1,8 @@
 /** The skills that ship in the OpenSEO plugin (plugins/openseo/skills). */
 export const AGENT_SKILLS = [
   { name: "seo-coach", title: "SEO coach", summary: "Learn SEO on your own site, and pick the first thing worth doing." },
-  { name: "seo-audit", title: "SEO audit", summary: "The one or two fixes most likely to bring more traffic." },
+  { name: "seo-audit", title: "SEO audit", summary: "Any domain's rankings, links and competitors, as a short plan." },
+  { name: "site-audit", title: "Site audit", summary: "Crawl your site: the one or two technical fixes that matter most." },
   { name: "keyword-research", title: "Keyword research", summary: "Topics worth writing about, grouped and saved." },
   { name: "competitor-analysis", title: "Competitor analysis", summary: "Their strategy, the keyword gap, and where you can win." },
   { name: "search-console-review", title: "Search Console review", summary: "Quick wins from your own Google data. Free." },

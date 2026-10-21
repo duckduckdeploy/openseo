@@ -1,4 +1,4 @@
-import { BarChart3, Bot, FileSearch, Gauge, Globe, Grid3x3, Lightbulb, Link2, ListOrdered, Network, Search, Sparkles, Swords, TrendingUp } from "lucide-react";
+import { BarChart3, Bot, ClipboardCheck, FileSearch, Gauge, Globe, Grid3x3, Lightbulb, Link2, ListOrdered, Network, Search, Sparkles, Swords, TrendingUp } from "lucide-react";
 
 /** The standalone SEO tools, in the order the tools page and the sidebar show them. */
 export const TOOLS = [
@@ -6,6 +6,7 @@ export const TOOLS = [
   { slug: "keyword-ideas", title: "Keyword ideas", blurb: "Hundreds of ideas or related searches from a seed term, with filters for volume, difficulty and length.", icon: Lightbulb, group: "Keywords" },
   { slug: "keyword-difficulty-checker", title: "Keyword difficulty checker", blurb: "Difficulty of up to 1,000 keywords at once, sorted into easy, medium and hard.", icon: Gauge, group: "Keywords" },
   { slug: "serp-checker", title: "SERP checker", blurb: "The live top 20 Google results for a keyword, on desktop or mobile, with features and questions.", icon: ListOrdered, group: "Keywords" },
+  { slug: "seo-audit", title: "SEO audit", blurb: "A full SEO audit of any website: traffic, keywords, backlinks, competitors and the opportunities to act on first.", icon: ClipboardCheck, group: "Domains" },
   { slug: "domain-overview", title: "Domain overview", blurb: "Estimated traffic, ranking spread, top keywords and top pages of any website.", icon: Globe, group: "Domains" },
   { slug: "website-traffic-checker", title: "Website traffic checker", blurb: "Estimated Google traffic of up to 100 websites side by side, organic and paid.", icon: TrendingUp, group: "Domains" },
   { slug: "website-authority-checker", title: "Website authority checker", blurb: "Domain Rating, backlinks and referring domains of up to 10 sites compared.", icon: Network, group: "Domains" },

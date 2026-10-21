@@ -191,6 +191,30 @@
     "width": 1176,
     "height": 110
   },
+  "seo-audit": {
+    "width": 1440,
+    "height": 900
+  },
+  "seo-audit-backlink-gap": {
+    "width": 1176,
+    "height": 739
+  },
+  "seo-audit-backlinks": {
+    "width": 1176,
+    "height": 900
+  },
+  "seo-audit-close-to-top": {
+    "width": 1176,
+    "height": 739
+  },
+  "seo-audit-findings": {
+    "width": 1176,
+    "height": 380
+  },
+  "seo-audit-keyword-gap": {
+    "width": 1176,
+    "height": 417
+  },
   "serp-checker": {
     "width": 1440,
     "height": 900

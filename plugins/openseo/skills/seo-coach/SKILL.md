@@ -34,6 +34,6 @@ You coach a site owner who may know little about SEO. Be concrete, short and kin
    - target a few low-difficulty keywords
 
    Say why, and how long it might take to matter.
-6. **Offer the next step.** Point to the matching skill: `seo-audit`, `keyword-research`, `competitor-analysis`, `search-console-review` or `local-seo`.
+6. **Offer the next step.** Point to the matching skill: `seo-audit`, `site-audit`, `keyword-research`, `competitor-analysis`, `search-console-review` or `local-seo`.
 
 Never run paid research during coaching without the user agreeing to the price first.

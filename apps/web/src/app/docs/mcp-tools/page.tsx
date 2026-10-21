@@ -15,7 +15,7 @@ export default function McpToolsPage() {
   return (
     <DocArticle slug={slug}>
       <p>
-        The MCP server at <code>{'{API_URL}'}/mcp</code> offers 66 tools. Each one calls the same REST route the
+        The MCP server at <code>{'{API_URL}'}/mcp</code> offers 67 tools. Each one calls the same REST route the
         dashboard uses, with the caller&apos;s API key, so validation, prices, caching and limits are identical. Most
         tools take an optional <code>project_id</code>; leave it out when the account has one project. With no project
         at all, paid lookups run on their own in the market their input names (the United States by default).
@@ -70,6 +70,7 @@ export default function McpToolsPage() {
           ['autocomplete', 'Google autocomplete suggestions.', '$0.01'],
           ['keyword_difficulty', 'Keyword difficulty for up to 1,000 keywords at once.', '$0.03 + $0.03/100'],
           ['keyword_trends', 'Google Trends interest for up to 5 keywords.', '$0.02'],
+          ['seo_audit', 'A full SEO audit of a domain in one call: traffic, rankings, top keywords and pages, backlink profile, competitors, keywords close to the top 3, keyword and backlink gaps, and findings in order of importance. Search data only, no crawl.', '$0.49 – $0.65'],
           ['domain_overview', 'Traffic and totals, ranking distribution and authority for a domain.', '$0.14 ($0.08 totals only)'],
           ['domain_traffic', 'Estimated organic and paid traffic and keyword counts of up to 1,000 domains, in one country.', '$0.03 + $0.03/100'],
           ['domain_keywords', 'Keywords a domain ranks for; filter by position or URL path.', '$0.03 + $0.03/100'],

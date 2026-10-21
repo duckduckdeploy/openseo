@@ -316,21 +316,21 @@ export const features: Feature[] = [
     slug: 'seo-mcp-server',
     seoTitle: 'SEO MCP Server: 20+ Free SEO Tools - Fresh Data',
     h1: 'SEO MCP server and API',
-    description: 'An SEO MCP server with 66 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
+    description: 'An SEO MCP server with 67 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
     whatTitle: 'How the MCP server works',
     glossary: ['mcp', 'ai-seo-agent', 'llm', 'keyword-research', 'rank-tracking'],
     worksWith: ['mcp', 'claude', 'chatgpt', 'claudecode', 'cursor', 'codex', 'geminicli'],
     name: 'MCP server and REST API',
     headline: 'SEO your AI agent can do, with a spending cap',
     summary:
-      'An open-source SEO MCP server with 66 tools: keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your own Search Console data, for Claude, ChatGPT, Cursor and any MCP client.',
+      'An open-source SEO MCP server with 67 tools: keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your own Search Console data, for Claude, ChatGPT, Cursor and any MCP client.',
     icon: Terminal,
     what: [
       'OpenSEO is an open-source SEO MCP server and REST API. Connect Claude, ChatGPT, Cursor, Codex, Gemini CLI or any MCP client, and your agent can research keywords, check live Google results, analyse backlinks and competitors, track rankings, audit a site, check AI visibility and read your Google Search Console and Analytics data. One server covers what usually takes three or four separate MCP servers.',
       'It is free: OpenSEO charges nothing for the software, the hosted app or the MCP server. Search data is billed per lookup by the data provider to your own YepAPI key, with no subscription. Agents spend real money, so every paid tool can price itself first with a dry run and takes a ceiling: a call that could cost more is refused before anything is spent. Connecting takes a couple of minutes.',
     ],
     facts: [
-      { value: '66', label: 'MCP tools' },
+      { value: '67', label: 'MCP tools' },
       { value: '7', label: 'free Search Console and Analytics tools' },
       { value: '$0', label: 'OpenSEO fee, bring your own key' },
     ],
@@ -379,7 +379,7 @@ export const features: Feature[] = [
       {
         question: 'What is the best SEO MCP server?',
         answer: [
-          'It depends on what your agent needs. If you want one server that covers keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your Search Console data, OpenSEO does all of it with 66 tools, is open source, and charges no subscription: you pay the data provider per lookup from your own key.',
+          'It depends on what your agent needs. If you want one server that covers keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your Search Console data, OpenSEO does all of it with 67 tools, is open source, and charges no subscription: you pay the data provider per lookup from your own key.',
           'If you already pay for Ahrefs or Semrush, their own MCP servers use the data in your plan. Raw data APIs such as DataForSEO suit developers who want to build their own tools. See [the best SEO MCP servers compared](/best-seo-mcp-servers).',
         ],
       },

@@ -142,8 +142,8 @@ export const docPages: DocPage[] = [
     slug: 'mcp-tools',
     title: 'MCP tools',
     h1: 'SEO MCP tools reference',
-    seoTitle: 'SEO MCP Tools: All 66 Tools Explained',
-    description: 'All 66 tools of the OpenSEO SEO MCP server: keyword research, rank tracking, site audits, AI visibility and Search Console, and which ones spend.',
+    seoTitle: 'SEO MCP Tools: All 67 Tools Explained',
+    description: 'All 67 tools of the OpenSEO SEO MCP server: keyword research, rank tracking, site audits, AI visibility and Search Console, and which ones spend.',
     section: 'Reference',
   },
   {

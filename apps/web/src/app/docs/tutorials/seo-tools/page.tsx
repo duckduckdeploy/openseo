@@ -166,6 +166,21 @@ export default function SeoToolsGuide() {
         (pages 1 to 10). Use it to check a results page in a city, or on phones, without the rest of the overview.
       </p>
 
+      <h2 id="seo-audit">SEO audit</h2>
+      <Screenshot name="seo-audit-findings" alt="Findings of an SEO audit, each with a severity and the number it rests on" />
+      <p>
+        A full SEO audit of any domain on one page. It starts with <strong>what to do first</strong>: findings in order of
+        importance, each with the number it rests on. Below them are the domain&apos;s traffic, authority and ranking
+        spread, then the <strong>opportunities</strong>: keywords ranking 4 to 20 that a top-3 spot would pay off for, a{' '}
+        <strong>keyword gap</strong> with its closest competitor (kept to its topic and to difficulty 60 or less), and a{' '}
+        <strong>backlink gap</strong>: sites linking to the two closest competitors but not to it. Top keywords and pages,
+        the backlink profile and the competitor list close the page.
+      </p>
+      <p>
+        It reads search data and does not crawl pages, so it works for any website. For technical problems on your own
+        pages, run a <Link href="/docs/tutorials/site-audit">Site audit</Link>.
+      </p>
+
       <h2 id="domain-overview">Domain overview</h2>
       <Screenshot name="domain-overview-metrics" alt="Domain Rating, organic traffic, organic keywords, backlinks, referring domains and paid keywords" />
       <p>

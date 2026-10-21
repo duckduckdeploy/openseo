@@ -15,6 +15,7 @@ export const toolImages: Record<string, ToolImage> = {
   'keyword-generator': image('keyword-generator', 'A seed card growing into a tree whose branches end in dozens of keyword cards, like a keyword generator.'),
   'keyword-difficulty-checker': image('keyword-difficulty-checker', 'Keyword cards on a conveyor belt sorted into bins of rising height beside a gauge, for checking keyword difficulty.'),
   'serp-checker': image('serp-checker', 'A tall stack of search result slabs behind a desktop monitor and a phone, under a magnifying glass: a SERP checker.'),
+  'seo-audit': image('seo-audit', 'A website block with a clipboard of check marks, beside tiles for a rising chart, a chain link and a target: a full SEO audit.'),
   'website-seo-analysis': image('website-seo-analysis', 'A website window surrounded by floating trend, donut and bar chart tiles and a globe, for website SEO analysis.'),
   'website-traffic-checker': image('website-traffic-checker', 'Website towers of different heights with streams of visitors flowing into them, comparing website traffic.'),
   'website-authority-checker': image('website-authority-checker', 'Cylinders rising from short to tall, wrapped in glowing link lines and small cubes: website authority growing.'),
