@@ -103,8 +103,13 @@
     color-scheme: light dark;
   }
 
+  :root[data-theme='light'] {
+    color-scheme: light;
+  }
+
+  /* Dark: the system setting, unless the reader picked light (lib/theme.ts)… */
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme='light']) {
       --color-bg: #100d0b;
       --color-surface: #1a1613;
       --color-sunken: #231e1a;
@@ -137,6 +142,42 @@
       --shadow-hard-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 36px 72px -28px rgb(0 0 0 / 0.75);
       --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.4), 0 18px 40px -16px rgb(0 0 0 / 0.6);
     }
+  }
+
+  /* …or the reader picked dark. */
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --color-bg: #100d0b;
+    --color-surface: #1a1613;
+    --color-sunken: #231e1a;
+    --color-ink: #f4ede4;
+    --color-muted: #bcae9f;
+    --color-faint: #93877a;
+    --color-line: #2c2621;
+    --color-edge: #3c342d;
+    --color-accent: #3463f5;
+    --color-accent-hover: #4a75ff;
+    --color-accent-fg: #ffffff;
+    --color-accent-text: #9db7ff;
+    --color-accent-soft: #172243;
+    --color-accent-line: #2c3f7a;
+    --color-peach: #26190f;
+    --color-peach-strong: #6b3d1c;
+    --color-peach-text: #ffc7a1;
+    --color-orange: #ff8a3d;
+    --color-orange-text: #ff9c5c;
+    --color-night: #090706;
+    --color-night-surface: #15110e;
+    --color-pos: #4ade94;
+    --color-neg: #ff7a66;
+    --color-code: #090706;
+    --color-code-fg: #f2ebe2;
+    --color-code-muted: #a09385;
+    --color-code-line: #241e19;
+    --shadow-hard-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-hard: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px -10px rgb(0 0 0 / 0.55);
+    --shadow-hard-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 36px 72px -28px rgb(0 0 0 / 0.75);
+    --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.4), 0 18px 40px -16px rgb(0 0 0 / 0.6);
   }
 
   /*
@@ -335,9 +376,13 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    .mark {
+    :root:not([data-theme='light']) .mark {
       color: var(--color-accent-text);
     }
+  }
+
+  :root[data-theme='dark'] .mark {
+    color: var(--color-accent-text);
   }
 
 
@@ -637,3 +682,4 @@
     color: var(--color-faint);
   }
 }
+

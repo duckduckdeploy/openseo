@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { ScreenImage, type ScreenName, WindowFrame } from './screenshot';
+import { isDark } from '@/lib/theme';
 
 export interface Slide {
   name: ScreenName;
@@ -40,7 +41,7 @@ export function ShotSlides({ slides, label, glow = false }: { slides: Slide[]; l
       ([entry]) => {
         if (!entry?.isIntersecting) return;
         observer.disconnect();
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches ? '-dark' : '';
+        const dark = isDark() ? '-dark' : '';
         for (const slide of slides) new Image().src = `/screens/${slide.name}${dark}.webp`;
       },
       { rootMargin: '400px' },

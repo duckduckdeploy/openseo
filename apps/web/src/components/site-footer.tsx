@@ -6,6 +6,7 @@ import { tools } from '@/content/tools';
 import { GITHUB_URL, NEWS_URL, SIGN_IN_URL, SIGN_UP_URL } from '@/lib/site';
 import { BrandIcon } from './brand-icon';
 import { Logo } from './logo';
+import { ThemeSwitcher } from './theme-switcher';
 
 const linkClass = 'text-[0.9375rem] text-muted transition-colors duration-150 hover:text-ink';
 
@@ -145,8 +146,9 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-line">
-        <div className="container-page flex flex-col gap-2 py-6 text-sm text-faint sm:flex-row sm:items-center sm:justify-between">
+        <div className="container-page flex flex-col gap-4 py-6 text-sm text-faint md:flex-row md:items-center md:justify-between">
           <p>MIT licence. Open source and self-hostable.</p>
+          <ThemeSwitcher />
           <p>Free to self-host. Your data stays where you put it.</p>
         </div>
       </div>

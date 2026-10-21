@@ -1,4 +1,5 @@
 import screens from '@/content/screens.json';
+import { DARK_MEDIA } from '@/lib/theme';
 
 export type ScreenName = keyof typeof screens;
 
@@ -6,7 +7,8 @@ const sizeOf = (name: ScreenName) => screens[name];
 
 /**
  * A real screenshot of the app (taken by scripts/screenshots.mjs), in the light or dark theme to
- * match the reader's system. `window` frames a whole screen like an app window; crops of one
+ * match the page's. The dark source's media query follows the system setting; lib/theme.ts rewrites
+ * it when the reader has picked a theme, so only the image on screen is downloaded. `window` frames a whole screen like an app window; crops of one
  * part of a page sit in a plain frame.
  */
 export function ScreenImage({
@@ -26,7 +28,7 @@ export function ScreenImage({
   return (
     <div className="overflow-x-auto overscroll-x-contain">
       <picture>
-        <source srcSet={`/screens/${name}-dark.webp`} media="(prefers-color-scheme: dark)" />
+        <source srcSet={`/screens/${name}-dark.webp`} media={DARK_MEDIA} data-theme-dark="" suppressHydrationWarning />
         <img
           src={`/screens/${name}.webp`}
           alt={alt}
