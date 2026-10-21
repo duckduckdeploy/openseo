@@ -56,7 +56,8 @@ describe("MCP server", () => {
     expect((await call("list_projects")).json[0].id).toBe(project.id);
     const before = harness.fake.requests.length;
     const priced = await call("keyword_ideas", { keyword: "plumber", dry_run: true });
-    expect(priced.json).toMatchObject({ dryRun: true, estimate: { max: 0.08 } });
+    // Agents get 50 rows unless they ask for more, so the default price is lower than in the app.
+    expect(priced.json).toMatchObject({ dryRun: true, estimate: { max: 0.05 } });
     expect(harness.fake.requests.length).toBe(before);
     const ran = await call("keyword_ideas", { keyword: "plumber", limit: 10 });
     expect(ran.json.data.keywords).toHaveLength(10);
@@ -104,6 +105,32 @@ describe("MCP server", () => {
     const { body } = await rpc({ apiKey: (await agent()).key }, "tools/list");
     const tool = (body.result.tools as { name: string; description: string }[]).find((t) => t.name === "create_rank_tracker")!;
     expect(tool.description).toMatch(/paid run every period/);
+  });
+
+  it("keeps lookup answers small for agents: 50 rows by default, cost first, trends only on request", async () => {
+    const { call, key } = await agent();
+    const ran = await call("keyword_ideas", { keyword: "standing desk" });
+    expect(Object.keys(ran.json).slice(0, 2)).toEqual(["name", "costUsd"]);
+    expect(typeof ran.json.costUsd).toBe("number");
+    expect(ran.json.data.keywords).toHaveLength(50);
+    expect(ran.json.data.keywords[0]).not.toHaveProperty("trend");
+    const withTrend = await call("keyword_ideas", { keyword: "standing desk", limit: 5, include_trend: true });
+    expect(withTrend.json.data.keywords[0].trend.length).toBeGreaterThan(0);
+    expect(JSON.stringify((await call("list_projects")).json)).not.toContain("userId");
+    const { body } = await rpc({ apiKey: key }, "tools/list");
+    const description = (body.result.tools as { name: string; description: string }[]).find((t) => t.name === "keyword_ideas")!.description;
+    expect(description).toContain("Keyword ideas for a seed keyword");
+    expect(description).toContain("Returns 50 rows unless you pass limit.");
+  });
+
+  it("prices a geo-grid by size alone, and asks for the business only to run it", async () => {
+    const { call } = await agent();
+    const before = harness.fake.requests.length;
+    expect((await call("run_geo_grid", { size: 5, dry_run: true })).json).toMatchObject({ dryRun: true, estimate: { max: 1.75 }, size: 5 });
+    const missing = await call("run_geo_grid", { size: 3, max_cost_usd: 1 });
+    expect(missing.isError).toBe(true);
+    expect(missing.text).toMatch(/place_id/);
+    expect(harness.fake.requests.length).toBe(before);
   });
 
   it("prices geo-grids, rank checks and audits with dry_run without starting them", async () => {

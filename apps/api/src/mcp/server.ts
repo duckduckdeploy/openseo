@@ -26,6 +26,32 @@ const text = (value: unknown): ToolResult => {
   return { content: [{ type: "text", text: body }] };
 };
 const dryRun = z.boolean().optional().describe("Return the price estimate only. Spends nothing.");
+
+// Rows an agent gets when it doesn't pass a limit. Large tables overflow a client's context: 150
+// keyword ideas with their monthly trends came to about 120 KB in a test with Claude Code.
+const MCP_DEFAULT_LIMIT = 50;
+const TREND_KEYS = new Set(["trend", "monthlySearches"]);
+
+/** A lookup result for an agent: what it cost first, then the data, without monthly trends unless asked. */
+function forAgent(result: unknown, includeTrend: boolean): unknown {
+  if (!result || typeof result !== "object" || (result as Json).dryRun) return result;
+  const { name, estimate, data, costUsd, cached, fetchedAt, ...rest } = result as Json;
+  const strip = (value: unknown): unknown =>
+    Array.isArray(value)
+      ? value.map(strip)
+      : value && typeof value === "object"
+        ? Object.fromEntries(Object.entries(value as Json).filter(([key]) => !TREND_KEYS.has(key)).map(([key, inner]) => [key, strip(inner)]))
+        : value;
+  return { name, costUsd, cached, fetchedAt, estimate, ...rest, data: includeTrend ? data : strip(data) };
+}
+
+/** Drops fields an agent has no use for (internal user ids) from account-level answers. */
+const withoutUserIds = (value: unknown): unknown =>
+  Array.isArray(value)
+    ? value.map(withoutUserIds)
+    : value && typeof value === "object"
+      ? Object.fromEntries(Object.entries(value as Json).filter(([key]) => key !== "userId").map(([key, inner]) => [key, withoutUserIds(inner)]))
+      : value;
 const fail = (message: string): ToolResult => ({ content: [{ type: "text", text: message }], isError: true });
 
 /**
@@ -64,9 +90,15 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   ) {
     server.registerTool(name, { description, inputSchema: shape, annotations: { readOnlyHint: readOnly } }, (async (args: unknown) => {
       try {
-        return text(await handler(args as z.infer<z.ZodObject<S>>));
+        const value = await handler(args as z.infer<z.ZodObject<S>>);
+        // A dry run says outright that it spent nothing, like a paid result says what it spent.
+        const isDryRun = value !== null && typeof value === "object" && (value as Json).dryRun === true;
+        return text(isDryRun ? { dryRun: true, costUsd: 0, ...(value as Json) } : value);
       } catch (error) {
-        return fail(error instanceof Error ? error.message : "Tool failed");
+        const message = error instanceof Error ? error.message : "Tool failed";
+        // The REST message points to the dashboard; an agent also needs the tool that checks it.
+        if (/^Connect Google (Search Console|Analytics)/.test(message)) return fail(`${message} Check with get_google_connections; only the user can connect Google, in the OpenSEO dashboard.`);
+        return fail(message);
       }
     }) as never);
   }
@@ -74,8 +106,8 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   // ── Account and projects ────────────────────────────────────────────────
   tool("whoami", "The signed-in user and whether a YepAPI key is connected.", {}, () => rest("GET", "/me"), true);
   tool("get_balance", "Remaining YepAPI balance for the user's key, whether auto top-up is on, and this month's paid calls, spend and monthly limit. Free.", {}, () => rest("GET", "/balance"), true);
-  tool("get_usage", "What OpenSEO has spent with the user's YepAPI key this month, by feature. Free.", {}, () => rest("GET", "/usage"), true);
-  tool("list_projects", "List the user's projects with their website, market and language.", {}, () => rest("GET", "/projects"), true);
+  tool("get_usage", "What OpenSEO has spent with the user's YepAPI key this month, by feature. Free.", {}, async () => withoutUserIds(await rest("GET", "/usage")), true);
+  tool("list_projects", "List the user's projects with their website, market and language.", {}, async () => withoutUserIds(await rest("GET", "/projects")), true);
   tool(
     "create_project",
     "Create a project for a website.",
@@ -114,18 +146,31 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   // ── Paid lookups (keyword, domain, backlink, competitor, SERP, on-page, Maps, AI) ──
   for (const lookup of lookups) {
     const cache = lookup.ttl ? ` Cached ${lookup.ttl >= 86400 ? `${Math.round(lookup.ttl / 86400)} day(s)` : `${Math.round(lookup.ttl / 3600)} hour(s)`}; a cached result is free.` : "";
+    const shape = lookup.input.shape as Shape;
+    // Lookups with a row limit default to MCP_DEFAULT_LIMIT here, so an omitted limit is left
+    // optional in the schema (the SDK would otherwise fill in the lookup's larger default).
+    const hasLimit = "limit" in shape;
+    const hasTrend = /trend/i.test(lookup.description) && lookup.name !== "keyword_trends";
+    const notes = [
+      hasLimit ? `Returns ${MCP_DEFAULT_LIMIT} rows unless you pass limit.` : "",
+      hasTrend ? "Monthly trends are left out unless include_trend is true." : "",
+      "The result starts with costUsd, what this call actually spent (0 when cached).",
+    ].join(" ");
     tool(
       lookup.name,
-      `${lookup.description}${cache}`,
+      `${lookup.description}${cache} ${notes}`.replace(/\s+/g, " ").trim(),
       {
-        ...(lookup.input.shape as Shape),
+        ...shape,
+        ...(hasLimit ? { limit: z.number().int().min(1).max(1000).optional().describe(`Rows to return (default ${MCP_DEFAULT_LIMIT}, max 1000). More rows cost more.`) } : {}),
+        ...(hasTrend ? { include_trend: z.boolean().optional().describe("Include the 12-month trend for every row. Large: keep the limit small.") } : {}),
         project_id: projectId,
         max_cost_usd: maxCost.optional(),
         dry_run: dryRun,
         refresh: z.boolean().optional().describe("Ignore the cache and pay for fresh data."),
       },
       async (a) => {
-        const { project_id, max_cost_usd, dry_run, refresh, ...input } = a as Json;
+        const { project_id, max_cost_usd, dry_run, refresh, include_trend, ...input } = a as Json;
+        if (hasLimit && input.limit === undefined) input.limit = MCP_DEFAULT_LIMIT;
         const query = new URLSearchParams();
         if (dry_run) query.set("dryRun", "1");
         if (refresh) query.set("refresh", "1");
@@ -134,10 +179,10 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
         if (!project_id && ((await rest("GET", "/projects")) as unknown[]).length === 0) {
           if (typeof input.locationCode === "number") query.set("locationCode", String(input.locationCode));
           if (typeof input.language === "string") query.set("language", input.language);
-          return rest("POST", `/lookups/${lookup.name}?${query}`, input);
+          return forAgent(await rest("POST", `/lookups/${lookup.name}?${query}`, input), include_trend === true);
         }
         const id = await resolveProject(project_id as string | undefined);
-        return rest("POST", `/projects/${id}/lookups/${lookup.name}?${query}`, input);
+        return forAgent(await rest("POST", `/projects/${id}/lookups/${lookup.name}?${query}`, input), include_trend === true);
       },
     );
   }
@@ -364,14 +409,14 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   // ── Local SEO ───────────────────────────────────────────────────────────
   tool(
     "run_geo_grid",
-    "Map where a business ranks in Google Maps results for a keyword across a grid of points around it. Costs $0.07 per point: 3x3 $0.63, 5x5 $1.75, 7x7 $3.43, 9x9 $5.67. Find the place first with maps_search. Background job; poll get_geo_grid.",
+    "Map where a business ranks in Google Maps results for a keyword across a grid of points around it. Costs $0.07 per point: 3x3 $0.63, 5x5 $1.75, 7x7 $3.43, 9x9 $5.67. The price depends only on size: a dry run needs no business. To run it, find the place first with maps_search. Background job; poll get_geo_grid.",
     {
       project_id: projectId,
-      keyword: z.string().min(1),
-      place_id: z.string().describe("Place ID from maps_search"),
-      place_name: z.string(),
-      center_latitude: z.number(),
-      center_longitude: z.number(),
+      keyword: z.string().min(1).optional().describe("Required unless dry_run"),
+      place_id: z.string().optional().describe("Place ID from maps_search. Required unless dry_run"),
+      place_name: z.string().optional().describe("Required unless dry_run"),
+      center_latitude: z.number().optional().describe("Required unless dry_run"),
+      center_longitude: z.number().optional().describe("Required unless dry_run"),
       size: z.union([z.literal(3), z.literal(5), z.literal(7), z.literal(9)]).optional(),
       spacing_m: z.number().int().min(100).max(20000).optional().describe("Distance between grid points in metres. Default 1000."),
       max_cost_usd: maxCost.optional().describe("Required unless dry_run"),
@@ -380,8 +425,10 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
     async (a) => {
       const size = a.size ?? 5;
       const cost = estimateGrid(size).max;
-      if (a.dry_run) return { dryRun: true, estimate: estimateGrid(size), keyword: a.keyword, placeName: a.place_name, size, spacingM: a.spacing_m ?? 1000 };
+      if (a.dry_run) return { dryRun: true, estimate: estimateGrid(size), keyword: a.keyword ?? null, placeName: a.place_name ?? null, size, spacingM: a.spacing_m ?? 1000 };
       if (a.max_cost_usd == null) throw new Error("Pass max_cost_usd, or dry_run: true to see the price first.");
+      if (!a.keyword || !a.place_id || !a.place_name || a.center_latitude == null || a.center_longitude == null)
+        throw new Error("To run a grid, pass keyword, place_id, place_name, center_latitude and center_longitude (from maps_search).");
       if (cost > a.max_cost_usd) throw new Error(`A ${size}x${size} grid costs $${cost.toFixed(2)}, above max_cost_usd ($${a.max_cost_usd.toFixed(2)}).`);
       return rest("POST", `/projects/${await resolveProject(a.project_id)}/geo-grids`, {
         keyword: a.keyword,
