@@ -34,7 +34,7 @@
 
 <br>
 
-**OpenSEO** ([openseo.gg](https://openseo.gg)) is an open-source alternative to Ahrefs and Semrush. It covers keyword research, rank tracking, backlinks, site audits, AI visibility and local rank tracking, and reads your own Google Search Console and Analytics data. Run it on your own machine or server, read every line of it, and hand it to your AI agent.
+**OpenSEO** ([openseo.gg](https://openseo.gg)) is an open-source alternative to Ahrefs and Semrush. It covers full SEO audits of any domain, keyword research, rank tracking, backlinks, technical site audits, AI visibility and local rank tracking, and reads your own Google Search Console and Analytics data. Run it on your own machine or server, read every line of it, and hand it to your AI agent.
 
 No monthly plan: the software is free, and search data is paid per lookup, under a monthly limit you set. A rank check is from $0.02, a keyword search of 150 ideas about $0.08.
 
@@ -57,7 +57,7 @@ Every tool is one search: type a keyword, domain or URL, pick a country (and a c
 <table>
   <tr>
     <td width="50%"><img src="apps/web/public/screens/serp-checker-table.webp" alt="SERP checker with each result's authority, links and traffic"><br><sub><b>SERP checker</b>: the live top 10 with SERP features in place and each page's DR, links and traffic</sub></td>
-    <td width="50%"><img src="apps/web/public/screens/domain-overview.webp" alt="Domain overview of zapier.com"><br><sub><b>Domain overview</b>: traffic, keywords, links, rankings, top keywords and pages</sub></td>
+    <td width="50%"><img src="apps/web/public/screens/seo-audit.webp" alt="SEO audit of zapier.com: findings in order of importance above its traffic and authority"><br><sub><b><a href="https://openseo.gg/tools/seo-audit">SEO audit</a></b>: any domain on one page, with what to do first</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="apps/web/public/screens/backlinks-history.webp" alt="Backlink history charts"><br><sub><b>Backlinks</b>: totals, monthly history, strongest links, anchors and link intersect</sub></td>
@@ -91,18 +91,19 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 
 | Area | What you get |
 |---|---|
+| 🩺 [SEO audit](https://openseo.gg/tools/seo-audit) | A full audit of any domain on one page: findings in order of importance, traffic and authority, keywords close to the top 3, a keyword gap and a backlink gap with its closest competitors, backlink profile. Search data only, no crawl |
 | 🔎 [Keyword overview](https://openseo.gg/tools/keyword-analysis-tool) | Difficulty, volume, traffic potential, volume by country, ideas and the live top 10 for one keyword, down to a city |
 | 💡 [Keyword ideas](https://openseo.gg/tools/keyword-generator) | Matching terms, related searches, questions and suggestions with volume, CPC, difficulty, intent and trend; saved lists with tags |
 | 📋 [SERP checker](https://openseo.gg/tools/serp-checker) | The live top 10 on desktop or mobile, with each result's DR, UR, links and traffic |
-| 📍 Rank tracking | Google positions on desktop and mobile, by country, city or exact coordinates, on a schedule. Each check reads the top 20, 50 or 100 ($0.02 to $0.10), in the background on a schedule or on demand. History survives removing a keyword |
-| 📊 Search performance | Search Console and GA4: totals against the previous period, striking-distance queries, organic landing pages, opportunity scores |
+| 📍 [Rank tracking](https://openseo.gg/features/keyword-rank-tracker) | Google positions on desktop and mobile, by country, city or exact coordinates, on a schedule. Each check reads the top 20, 50 or 100 ($0.02 to $0.10), in the background on a schedule or on demand. History survives removing a keyword |
+| 📊 [Search performance](https://openseo.gg/features/search-console-dashboard) | Search Console and GA4: totals against the previous period, striking-distance queries, organic landing pages, opportunity scores |
 | 🌐 [Domain overview](https://openseo.gg/tools/website-seo-analysis) | Estimated traffic, ranking distribution, top keywords, top pages, competitors |
 | 📄 [Page analyser](https://openseo.gg/tools/on-page-seo-audit) | One page's authority, links, traffic, on-page checks, keywords and backlinks |
 | 🔗 [Backlink checker](https://openseo.gg/tools/backlink-checker) | Summary, monthly history, backlinks, referring domains, anchors, top pages, link intersect |
 | 🥊 [Competitors](https://openseo.gg/tools/seo-competitor-analysis) | Organic and SERP competitors, keyword gap |
-| 🩺 Site audit | Our own crawler with 59 checks and a health score; Lighthouse with failed audits rated by severity |
-| 🧠 AI visibility | Tracked prompts across many chat models with web search: mentions, citations, position, share of voice. Prompts that name your brand are left out of the rates |
-| 🗺️ Local rank tracker | Business lookup, profile, reviews, geo-grid rank maps |
+| 🕷️ [Site audit](https://openseo.gg/features/site-audit) | Our own crawler for technical issues on your pages: 59 checks and a health score; Lighthouse with failed audits rated by severity |
+| 🧠 [AI visibility](https://openseo.gg/features/ai-visibility-tracker) | Tracked prompts across many chat models with web search: mentions, citations, position, share of voice. A mention counts only when the answer points to your domain, so a namesake isn't counted as you, and prompts that name your brand are left out of the rates |
+| 🗺️ [Local rank tracker](https://openseo.gg/features/local-rank-tracker) | Business lookup, profile, reviews, geo-grid rank maps |
 
 <table>
   <tr>
@@ -159,6 +160,8 @@ The [self-hosting guide](https://openseo.gg/docs/self-hosting) covers servers, u
 
 ## 🤖 Connect your AI agent
 
+The [SEO MCP server](https://openseo.gg/features/seo-mcp-server) gives agents the whole workspace as 67 tools, listed with their prices in [MCP tools](https://openseo.gg/docs/mcp-tools).
+
 **ChatGPT and Claude (web and desktop):** add a custom connector with the URL `{API_URL}/mcp` and OAuth sign-in. You sign in with your OpenSEO account and approve; no key needed. Connected apps can be revoked in Settings.
 
 For other agents, create an API key under Settings and store it in an environment variable named `OPENSEO_API_KEY`.
@@ -197,7 +200,7 @@ Ready-made SEO workflows in [`plugins/openseo/skills`](plugins/openseo/skills), 
 | [`search-console-review`](plugins/openseo/skills/search-console-review/SKILL.md) | Quick wins from your own Google data, free |
 | [`local-seo`](plugins/openseo/skills/local-seo/SKILL.md) | Your Maps profile, reviews and rankings street by street |
 
-Every skill prices paid steps with `dry_run` first and passes the limit you agree as `max_cost_usd`. Or just ask, for example "which of my pages are stuck on page two?". The same features are available over the [REST API](https://openseo.gg/docs/rest-api).
+Every skill prices paid steps with `dry_run` first and passes the limit you agree as `max_cost_usd`. In Claude Code, `/seo-audit example.com` audits any domain in one call (the `seo_audit` tool, about $0.50 to $0.65) and turns it into a short plan. Or just ask, for example "which of my pages are stuck on page two?". The same features are available over the [REST API](https://openseo.gg/docs/rest-api).
 
 ## 🔎 Search data
 
