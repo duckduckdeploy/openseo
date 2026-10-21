@@ -24,7 +24,7 @@ export const terms: GlossaryTerm[] = [
       heading: 'How to start with SEO',
       steps: [
         'Make sure Google can see your site. Verify it in [Google Search Console](/glossary/google-search-console), submit an [XML sitemap](/glossary/xml-sitemap), and check the Page indexing report for pages that are excluded.',
-        'Fix the technical basics. Run an [SEO audit](/glossary/seo-audit) to find broken links, redirect chains, missing titles, slow pages and pages blocked by robots.txt or noindex.',
+        'Fix the technical basics. Run a [site audit](/docs/tutorials/site-audit) to find broken links, redirect chains, missing titles, slow pages and pages blocked by robots.txt or noindex.',
         'Do [keyword research](/glossary/keyword-research). Find the words your audience actually types, how many people search them, how hard they are to rank for, and what intent sits behind each one.',
         'Map one main keyword to each page. Give every important topic its own page, so two of your pages don’t compete for the same search.',
         'Write and optimise the page. Answer the query better than what already ranks, then write a clear title tag, a meta description, a single H1, descriptive headings and alt text for images.',
@@ -617,7 +617,7 @@ export const terms: GlossaryTerm[] = [
     ],
     why: [
       'Crawlers are how your pages get into search engines and, increasingly, AI answers. Knowing which bots visit, and controlling them with robots.txt, lets you allow the useful ones and limit those that only cost you bandwidth.',
-      'Running a crawler over your own site is also the fastest way to find broken links, redirects and missing tags, because it sees the site the way a search engine does. An [SEO audit](/glossary/seo-audit) usually starts with exactly that crawl.',
+      'Running a crawler over your own site is also the fastest way to find broken links, redirects and missing tags, because it sees the site the way a search engine does. A [site audit](/docs/tutorials/site-audit) is exactly that crawl, and the technical half of an [SEO audit](/glossary/seo-audit).',
       'Crawlers have limits. Many don’t run JavaScript, most only follow links in plain <a href> elements, and all of them give up on pages that time out or return errors. If your content only appears after a click or a script, some crawlers will never see it.',
     ],
     how: {
@@ -1216,43 +1216,51 @@ export const terms: GlossaryTerm[] = [
   {
     slug: 'seo-audit',
     term: 'SEO audit',
-    aka: ['site audit', 'website SEO audit', 'SEO health check'],
+    aka: ['website SEO audit', 'domain SEO audit', 'SEO health check'],
     category: 'basics',
-    short: 'An SEO audit is a review of a website’s technical health, content and links to find what holds it back in search and what to fix first.',
+    short: 'An SEO audit is a review of a whole website’s search performance: its traffic, rankings, keywords, backlinks and competitors, and the opportunities worth acting on first.',
     definition: [
-      'An SEO audit is a structured review of a website to find issues and opportunities affecting its search performance. A full audit covers technical SEO (crawling, indexing, speed, redirects), on-page SEO (titles, content, headings), content quality and gaps, and the backlink profile. The output is a prioritised list of fixes.',
-      'Most audits start with a crawl of the whole site and data from [Google Search Console](/glossary/google-search-console). The crawl finds issues like broken links, missing titles, duplicate content and redirect chains; Search Console shows what Google actually indexes and which queries bring clicks. A [content audit](/glossary/content-audit) and backlink review add the content and authority side.',
+      'An SEO audit is a structured review of how a website performs in search and why. It looks at the domain from the outside, the way search data sees it: how much organic traffic it gets, which keywords and pages bring it, how its rankings are spread and moving, how strong its [link profile](/glossary/link-profile) is, and who it competes with. The output is a short list of opportunities in order of importance.',
+      'The most useful findings are usually opportunities, not errors: [striking-distance keywords](/glossary/striking-distance-keywords) that rank just below the top 3, a [keyword gap](/glossary/keyword-gap) with the closest competitors, and sites that link to those competitors but not to you. Because it reads search data rather than the site itself, an SEO audit works for any domain: yours, a client’s or a competitor’s.',
+      'A [site audit](/docs/tutorials/site-audit) is the technical half. It crawls your own pages for problems such as broken links, redirect chains, missing titles and slow templates. A complete review runs both: the SEO audit says where traffic can come from, the site audit says what on the site is in the way.',
     ],
     why: [
-      'An audit shows where effort will pay off. Many sites have a few issues, an indexing block or a slow template, that matter far more than everything else.',
-      'Regular audits catch problems introduced by redesigns, plugins or deploys before they cost traffic.',
+      'An audit shows where effort will pay off. Most sites have a handful of keywords, pages or links that matter far more than everything else, and an audit finds them.',
+      'Running one on a competitor shows what works for them, where they are slipping and who links to them. Running it regularly on your own domain catches lost rankings before they cost much traffic.',
     ],
     how: {
       heading: 'How to do an SEO audit',
       steps: [
-        'Crawl the site and list errors: 4xx and 5xx pages, redirects, missing or duplicate titles, noindex pages and orphan pages.',
-        'Compare the crawl with Search Console’s Page indexing report.',
-        'Check Core Web Vitals and mobile usability for key templates.',
-        'Review on-page elements on your most important pages.',
-        'Find pages that lost traffic and content gaps against competitors.',
-        'Review backlinks and lost links.',
-        'Rank fixes by impact and effort, and start with what affects the most valuable pages.',
+        'Pick the market: rankings are per country, so audit the one that matters.',
+        'Check the totals: organic traffic, keywords, Domain Rating and referring domains, against your closest competitors.',
+        'Look at how rankings are spread and moving: how many keywords are in the top 10, on page 2, new and lost.',
+        'List keywords at positions 4 to 20 and the pages that rank for them. Improving those pages is usually the fastest win.',
+        'Find the keyword gap: what your closest competitors rank for and you don’t, on your topic and within reach.',
+        'Find the backlink gap: sites linking to your competitors but not to you.',
+        'Run a site audit for technical issues, then rank everything by impact and effort.',
       ],
     },
     openseo: {
-      body: 'OpenSEO’s site audit crawls your site with 59 technical checks, gives a health score and runs Lighthouse on mobile and desktop. The tutorial walks you through acting on the results.',
-      href: '/docs/tutorials/site-audit',
-      label: 'Read the site audit tutorial',
+      body: 'OpenSEO’s SEO audit puts all of this on one page for any domain: findings in order of importance, traffic and authority, keywords close to the top 3, a keyword gap and a backlink gap with the closest competitors, and the backlink profile. Its site audit crawls your own pages with 59 technical checks.',
+      href: '/tools/seo-audit',
+      label: 'Run an SEO audit',
     },
-    related: ['technical-seo', 'site-health-score', 'content-audit', 'on-page-checklist', 'core-web-vitals', 'link-profile'],
+    related: ['striking-distance-keywords', 'keyword-gap', 'link-profile', 'technical-seo', 'site-health-score', 'content-audit'],
     faqs: [
       {
+        question: 'What is the difference between an SEO audit and a site audit?',
+        answer: [
+          'An SEO audit reviews a domain’s search performance from search data: traffic, rankings, keywords, backlinks and competitors. It works for any website.',
+          'A site audit crawls your own pages for technical problems such as broken links, redirects, missing tags and slow pages. The two answer different questions, so a full review runs both.',
+        ],
+      },
+      {
         question: 'How often should I do an SEO audit?',
-        answer: ['A full audit a few times a year and after any major site change is a good rhythm. Automated crawls can run weekly between audits.'],
+        answer: ['Monthly or quarterly for your own site, and after any big change such as a redesign or a migration. For competitors, whenever you plan content or links against them.'],
       },
       {
         question: 'How long does an SEO audit take?',
-        answer: ['An automated crawl of a small site takes minutes. A thorough manual audit of a large site, with prioritised recommendations, can take days or weeks.'],
+        answer: ['A tool-based audit of one domain takes under a minute. Turning it into a plan, deciding which pages to improve, which keywords to target and which sites to contact, takes an hour or two.'],
       },
     ],
   },
@@ -2213,7 +2221,7 @@ export const terms: GlossaryTerm[] = [
     definition: [
       'An on-page SEO checklist is a repeatable list of checks to run on a page before or after publishing, to make sure its content and HTML give it the best chance to rank and earn clicks. It covers search intent, content quality, title tag, meta description, headings, URL, images, internal links, structured data and indexability.',
       'A checklist doesn’t make a page rank by itself; it catches avoidable mistakes. The most important item, whether the page truly answers the search better than what already ranks, needs judgement rather than a tick box. The rest are quick to verify.',
-      'Use it alongside, not instead of, a site-wide [SEO audit](/glossary/seo-audit): the checklist covers one page in depth, the audit covers technical issues across every URL. Each item below links back to the fuller explanation, starting with [search intent](/glossary/search-intent) and the [title tag](/glossary/title-tag).',
+      'Use it alongside, not instead of, a [site audit](/docs/tutorials/site-audit): the checklist covers one page in depth, the site audit covers technical issues across every URL. Each item below links back to the fuller explanation, starting with [search intent](/glossary/search-intent) and the [title tag](/glossary/title-tag).',
     ],
     why: [
       'Small omissions are common: a missing title, a page left on noindex, images without alt text, no internal links pointing in. A checklist catches them before they cost traffic.',

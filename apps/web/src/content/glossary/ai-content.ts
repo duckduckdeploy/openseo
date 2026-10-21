@@ -1534,7 +1534,7 @@ Disallow: /`,
     short: 'A content audit is a review of every page on a site, with data, to decide which to keep, update, merge, redirect or remove.',
     definition: [
       'A content audit is a systematic review of all the content on a website, using performance data, to decide what to do with each page: keep it, update it, merge it with another page, redirect it or remove it. It starts with an inventory of every indexable URL and adds data such as traffic, rankings, backlinks, conversions and age.',
-      'A content audit differs from a technical [SEO audit](/glossary/seo-audit), which looks at crawling, indexing and site health. The two are often run together, because technical problems such as duplicate content or orphan pages show up in both.',
+      'A content audit differs from a technical [site audit](/docs/tutorials/site-audit), which looks at crawling, indexing and site health. The two are often run together, because technical problems such as duplicate content or orphan pages show up in both.',
     ],
     why: [
       'Most sites accumulate pages that no longer earn their place: outdated posts, thin pages, near-duplicates and articles competing for the same keyword. These dilute the site’s quality and waste crawling. An audit finds them, and also finds the pages that are close to ranking well and only need an update.',
