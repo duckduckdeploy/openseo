@@ -70,6 +70,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
               description: tool.description,
               applicationCategory: 'BusinessApplication',
               operatingSystem: 'Web',
+              offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
             },
             faqPage(tool.faqs),
             breadcrumbList([

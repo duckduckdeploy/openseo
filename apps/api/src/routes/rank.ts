@@ -5,7 +5,7 @@ import { z } from "zod";
 import { dataDb, schema } from "../db";
 import { requireProject, requireUser } from "../lib/context";
 import { toDomain } from "../lib/domain";
-import { badRequest, notFound, parse, uuidParam } from "../lib/errors";
+import { AppError, badRequest, notFound, parse, uuidParam } from "../lib/errors";
 import { firstRunAt } from "../lib/pool";
 import { dispatch } from "../jobs/dispatch";
 import { activeKeywordCount, estimateRun, failRankRun, requireTracker, startRankRun, trackerCompetitors, trackerResults } from "../services/rank";
@@ -24,7 +24,8 @@ const trackerInput = z.object({
   longitude: z.number().min(-180).max(180).nullable().optional(),
   language: z.string().min(2).max(10).default("en"),
   devices: z.array(device).min(1).max(2).default(["desktop"]),
-  schedule: schedule.default("weekly"),
+  // Manual unless asked: a schedule spends on every run with no further confirmation.
+  schedule: schedule.default("manual"),
   depth: depth.default(RANK_DEPTH),
   keywords: keywordList.optional(),
 });
@@ -135,9 +136,14 @@ export async function rankRoutes(app: FastifyInstance) {
     const user = await requireUser(request);
     const { tracker } = await requireTracker(user.id, request.params.trackerId);
     const { keywords } = parse(z.object({ keywords: keywordList }), request.body);
-    const count = await activeKeywordCount(tracker.id);
     const unique = [...new Set(keywords)];
-    if (count + unique.length > MAX_KEYWORDS) throw badRequest(`A tracker holds up to ${MAX_KEYWORDS} keywords`);
+    // Only keywords not already tracked count toward the cap; re-sending active ones is a no-op.
+    const active = await dataDb
+      .select({ keyword: schema.rankKeywords.keyword })
+      .from(schema.rankKeywords)
+      .where(and(eq(schema.rankKeywords.trackerId, tracker.id), isNull(schema.rankKeywords.removedAt)));
+    const tracked = new Set(active.map((k) => k.keyword));
+    if (active.length + unique.filter((k) => !tracked.has(k)).length > MAX_KEYWORDS) throw badRequest(`A tracker holds up to ${MAX_KEYWORDS} keywords`);
     // A keyword removed earlier comes back with its history.
     const added = await dataDb
       .insert(schema.rankKeywords)
@@ -184,9 +190,17 @@ export async function rankRoutes(app: FastifyInstance) {
   });
 
   // Starts a check of every keyword. Billed to the user's YepAPI key as each result arrives.
+  // Optional { maxCostUsd }: refused if the run's price, counted just before it starts, is higher.
   app.post<{ Params: { trackerId: string } }>("/trackers/:trackerId/runs", async (request, reply) => {
     const user = await requireUser(request);
     const { tracker } = await requireTracker(user.id, request.params.trackerId);
+    const { maxCostUsd } = parse(z.object({ maxCostUsd: z.number().positive().max(100000).optional() }), request.body ?? {});
+    if (maxCostUsd != null) {
+      const estimate = estimateRun(tracker, await activeKeywordCount(tracker.id));
+      if (estimate.max > maxCostUsd) {
+        throw new AppError(400, "cost_ceiling_exceeded", `This check costs $${estimate.max.toFixed(2)}, above the $${maxCostUsd.toFixed(2)} ceiling.`, { estimate });
+      }
+    }
     const run = await startRankRun(tracker.id, user.via === "session" ? "manual" : "api");
     await dispatch("rank.run", { runId: run.id }, (message) => failRankRun(run.id, message));
     return reply.status(202).send({ ok: true, data: run });

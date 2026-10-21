@@ -27,7 +27,7 @@ The goal is not a list of everything wrong. It's the one or two changes most lik
 4. **Weigh by traffic.**
    - If Search Console is connected (`get_google_connections`), call `get_search_opportunities` and `get_search_performance`.
    - A critical issue on a page with impressions matters more than one on a page nobody sees.
-5. **Check speed only where it counts.** For the one or two most important pages, offer a `lighthouse` run at $0.05 each. Its failed audits come rated critical, warning or notice.
+5. **Check speed only where it counts.** For the one or two most important pages, offer a `lighthouse` run at $0.05 each. Its failed audits come rated critical, warning or info.
 6. **Report.**
    - The health score in one line.
    - The **top one or two fixes**: what, which pages, why it matters, how to fix it.

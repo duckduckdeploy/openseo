@@ -4,7 +4,7 @@ import { ArrowRight, Globe } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
 import { ExportButton, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { DifficultyPill, IntentBadge, UrlCell } from "@/components/research/pills";
@@ -80,11 +80,7 @@ export function Competitors({ project }: { project: Project }) {
         pending={organic.loading}
         button="Find competitors"
       >
-        {(draft) => (
-          <>
-            <span className="text-xs text-muted">Competitor data is for the whole country.</span>
-          </>
-        )}
+        <span className="text-xs text-muted">Competitor data is for the whole country.</span>
       </SearchBar>
 
       <ViewErrors lookups={lookups} />
@@ -112,7 +108,7 @@ export function Competitors({ project }: { project: Project }) {
             onChange={(next) => nav({ tab: next }, { replace: true })}
             items={[
               { key: "organic", label: "Organic competitors", content: <OrganicTable domain={domain} market={market} lookup={organic} ok={ok} /> },
-              { key: "gap", label: vs ? `Keyword gap · ${vs}` : "Keyword gap", content: <GapView project={project} domain={domain} vs={vs} market={market} gap={gap} shared={shared} competitors={organic} /> },
+              { key: "gap", label: vs ? `Keyword gap · ${vs}` : "Keyword gap", content: <GapView key={`${domain} ${vs} ${market.locationCode} ${market.language}`} project={project} domain={domain} vs={vs} market={market} gap={gap} shared={shared} competitors={organic} /> },
               { key: "serp", label: "SERP competitors", content: <SerpView project={project} domain={domain} keywords={keywords} lookup={serp} /> },
             ]}
           />
@@ -164,6 +160,9 @@ function OrganicTable({ domain, market, lookup, ok }: { domain: string; market: 
   );
 }
 
+const keywordKey = (row: GapKeyword) => row.keyword;
+
+/** Keyed by the pair and market, so the mode and selection start over for a new comparison. */
 function GapView({
   project,
   domain,
@@ -187,13 +186,13 @@ function GapView({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const suggestions = (competitors.data?.competitors ?? []).filter((row) => cleanDomain(row.domain) !== domain).slice(0, 5);
   const lookup = mode === "gap" ? gap : shared;
-  const rows = lookup.data?.keywords ?? [];
+  const rows = useMemo(() => lookup.data?.keywords ?? [], [lookup.data]);
   // In shared mode domain1 is you; in gap mode domain1 is the competitor.
   const theirs = (row: GapKeyword) => (mode === "gap" ? row.domain1 : row.domain2);
   const yours = (row: GapKeyword) => (mode === "shared" ? row.domain1 : null);
   const hasPositions = rows.some((row) => position(theirs(row)?.position) != null || position(yours(row)?.position) != null);
 
-  const columns: Column<GapKeyword>[] = [
+  const columns = useMemo<Column<GapKeyword>[]>(() => [
     { key: "keyword", header: "Keyword", rowHeader: true, sortValue: (row) => row.keyword, render: (row) => <KeywordLink keyword={row.keyword} market={market} /> },
     { key: "volume", header: "Volume", align: "right", sortValue: (row) => row.volume, render: (row) => num(row.volume) },
     { key: "difficulty", header: "KD", title: "Keyword difficulty, 0 (easy) to 100 (hard)", align: "right", sortValue: (row) => row.difficulty, render: (row) => <DifficultyPill value={row.difficulty} /> },
@@ -204,10 +203,10 @@ function GapView({
       ? ([
           ...(mode === "shared" ? [{ key: "yours", header: "You", align: "right", firstOrder: "asc", sortValue: (row) => position(yours(row)?.position), render: (row) => num(position(yours(row)?.position)) } satisfies Column<GapKeyword>] : []),
           { key: "theirs", header: "Them", align: "right", firstOrder: "asc", sortValue: (row) => position(theirs(row)?.position), render: (row) => num(position(theirs(row)?.position)) },
-          { key: "url", header: "Their page", sortValue: (row) => theirs(row)?.url, render: (row) => <UrlCell url={theirs(row)?.url || null} /> },
+          { key: "url", header: "Their page", sortValue: (row) => theirs(row)?.url, render: (row) => <UrlCell url={theirs(row)?.url || null} market={market} /> },
         ] satisfies Column<GapKeyword>[])
       : []),
-  ];
+  ], [market, mode, hasPositions]); // theirs and yours follow mode
 
   return (
     <div className="space-y-4">
@@ -282,7 +281,7 @@ function GapView({
             <DataTable
               rows={rows}
               columns={columns}
-              rowKey={(row) => row.keyword}
+              rowKey={keywordKey}
               caption={mode === "gap" ? `Keywords ${vs} ranks for and ${domain} does not` : `Keywords both ${domain} and ${vs} rank for`}
               initialSort={{ key: "volume", order: "desc" }}
               selection={{ selected, onChange: setSelected, label: (row) => row.keyword }}

@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check as CheckIcon, MapPin, Star, Trash2, X } from "lucide-react";
 import { useParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { ConfirmDialog, ExtLink, Facts, Group, isActive, Note, ProgressBar, type RunStatus, SectionTitle, StatusBadge, TabPanel, Tabs, useQueryState } from "@/components/tracking/kit";
 import { Badge, Button, Card, CardHeader, CostNote, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Stat, Table } from "@/components/ui";
 import { api, dateTime, num, usd } from "@/lib/api";
@@ -493,8 +493,14 @@ function GridView({ gridId, projectId, onDeleted }: { gridId: string; projectId:
     refetchInterval: (query) => (isActive(query.state.data?.status) ? 1500 : false),
   });
   const status = grid.data?.status;
+  // Refresh the grid list once, when this grid finishes, not on every visit to a finished grid.
+  const wasActive = useRef(false);
   useEffect(() => {
-    if (status && !isActive(status)) void queryClient.invalidateQueries({ queryKey: ["geo-grids", projectId] });
+    if (isActive(status)) wasActive.current = true;
+    else if (status && wasActive.current) {
+      wasActive.current = false;
+      void queryClient.invalidateQueries({ queryKey: ["geo-grids", projectId] });
+    }
   }, [status, projectId, queryClient]);
   const cancel = useMutation({
     mutationFn: () => api(`/geo-grids/${gridId}/cancel`, { method: "POST" }),

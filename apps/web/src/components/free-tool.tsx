@@ -63,6 +63,13 @@ function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
           </tr>
         </thead>
         <tbody>
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={head.length} className="py-4 text-muted">
+                No results for this check. Try another keyword, website or country.
+              </td>
+            </tr>
+          )}
           {rows.map((cells, index) => (
             <tr key={index} className="border-b border-line last:border-0">
               {cells.map((cell, column) => (
@@ -163,12 +170,13 @@ const SPECS: Record<FreeToolKind, Spec> = {
       <Table
         head={['Keyword', 'AI Overview', domain ? 'Cites you' : 'Sources cited', 'Top sources']}
         rows={list(data.keywords).map((row) => {
-          const overview = row.aiOverview as { cited: boolean | null; sources: Row[] } | null;
+          const overview = row.aiOverview as { cited: boolean | null; sources?: Row[] } | null;
+          const sources = overview?.sources ?? [];
           return [
             String(row.keyword),
             row.error ? 'Failed' : overview ? 'Yes' : 'No',
-            !overview ? '—' : domain ? (overview.cited ? 'Yes' : 'No') : overview.sources.length,
-            overview ? [...new Set(overview.sources.map((s) => hostOf(s.url)))].slice(0, 3).join(', ') || '—' : '—',
+            !overview ? '—' : domain ? (overview.cited ? 'Yes' : 'No') : sources.length,
+            overview ? [...new Set(sources.map((s) => hostOf(s.url)))].slice(0, 3).join(', ') || '—' : '—',
           ];
         })}
       />
@@ -192,17 +200,22 @@ export function FreeTool({ kind, apiUrl, appHref, signUpHref }: { kind: FreeTool
     event.preventDefault();
     if (!items.length || state.status === 'loading') return;
     setState({ status: 'loading' });
+    const fallback = 'Something went wrong. Try again in a moment.';
     try {
       const response = await fetch(`${apiUrl}/public/tools/${kind}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(spec.body(items.slice(0, spec.max), country, domain)),
+      }).catch(() => {
+        // fetch only rejects on network or CORS failures; its own message ("Failed to fetch") means nothing to a reader.
+        throw new Error('Could not reach the OpenSEO server. Check your connection and try again.');
       });
       const json = (await response.json().catch(() => null)) as { ok?: boolean; data?: Row; remaining?: number; error?: { message?: string } } | null;
-      if (!response.ok || !json?.ok) throw new Error(json?.error?.message ?? 'Something went wrong. Try again in a moment.');
+      if (!response.ok || !json?.ok) throw new Error(json?.error?.message ?? fallback);
+      if (!json.data) throw new Error(fallback);
       setState({ status: 'done', data: json.data, remaining: json.remaining, domain: domain.trim() });
     } catch (error) {
-      setState({ status: 'error', message: error instanceof Error ? error.message : String(error) });
+      setState({ status: 'error', message: error instanceof Error && error.message ? error.message : fallback });
     }
   }
 

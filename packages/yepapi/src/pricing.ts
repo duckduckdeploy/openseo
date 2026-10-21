@@ -86,6 +86,8 @@ export const pricing: Readonly<Record<YepEndpoint, PriceRule>> = {
   '/v1/maps/search': flat(0.07),
   '/v1/maps/place': flat(0.05),
   // Docs: "$0.015 per 100 reviews, minimum $0.01 per call" (10 = $0.01, 100 = $0.02, 150 = $0.03).
+  // Unresolved: a price table elsewhere reads "$0.01 + $0.015/100 reviews" (a base fee, so
+  // 10 = $0.02, 100 = $0.03). Neither reading is live-verified; check the dashboard's API Logs.
   '/v1/maps/reviews': volume(0, 0.015, 'reviews', { minUsd: 0.01 }),
 
   '/v1/scrape': flat(0.01),
@@ -291,15 +293,19 @@ export function computeCost<E extends YepEndpoint>(
       return { costUsd: rule.usd, costEstimated: true };
     case 'tokens': {
       const reported = finite(d.costUsd);
-      return reported === undefined
-        ? { costUsd: rule.minUsd, costEstimated: true }
-        : { costUsd: reported, costEstimated: false };
+      // YepAPI bills at least `minUsd` per request; a lower reported figure (the docs example
+      // shows $0.000162) is the raw token cost, so the minimum is what is charged.
+      if (reported === undefined || reported < rule.minUsd) {
+        return { costUsd: rule.minUsd, costEstimated: true };
+      }
+      return { costUsd: reported, costEstimated: false };
     }
     case 'perPage': {
       const pageCents = Math.round(rule.usdPerPage * 100);
       const requested = pageCount(rule, p.depth);
       const fetched = finite(d.pagesFetched);
-      const pages = fetched === undefined ? requested : Math.min(Math.max(fetched, 0), requested);
+      // At least one page is billed even when the response reports none fetched.
+      const pages = fetched === undefined ? requested : Math.min(Math.max(fetched, 1), requested);
       return { costUsd: fromCents(pages * pageCents), costEstimated: true };
     }
     case 'volume': {

@@ -22,7 +22,7 @@ function applyTheme(theme: Theme) {
     // Storage blocked: the cookie below still remembers it.
   }
   // On openseo.gg and its subdomains the cookie is shared with the website.
-  const domain = /(^|.)openseo.gg$/.test(location.hostname) ? "; domain=openseo.gg" : "";
+  const domain = /(^|\.)openseo\.gg$/.test(location.hostname) ? "; domain=openseo.gg" : "";
   // Clear any older cookie set on this host only, so it cannot shadow the shared one.
   if (domain) document.cookie = `${KEY}=; path=/; max-age=0; samesite=lax`;
   document.cookie = theme === "system" ? `${KEY}=; path=/; max-age=0; samesite=lax${domain}` : `${KEY}=${theme}; path=/; max-age=31536000; samesite=lax${domain}`;

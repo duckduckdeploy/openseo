@@ -6,7 +6,7 @@ import { ListOrdered, Monitor, Smartphone } from "lucide-react";
 import { RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { DifficultyPill, IntentBadge } from "@/components/research/pills";
 import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
-import { authorityInputs, type Device, featureLabel, SERP_RESULTS, SerpOverview, serpInput, Skeleton } from "@/components/research/serp-overview";
+import { authorityInputs, type Device, featureLabel, SERP_RESULTS, SerpOverview, serpInput, Skeleton, topOrganic } from "@/components/research/serp-overview";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { KeywordMetrics, SerpData, SerpInput, UrlMetricsData, UrlMetricsInput } from "@/components/research/types";
 import { finite } from "@/components/research/util";
@@ -78,7 +78,11 @@ export function SerpChecker({ project }: { project: Project }) {
     error: used.find((lookup) => lookup.error)?.error ?? null,
   };
   const lookups = [serp, metrics, fallback, ...used] as LookupQuery<unknown>[];
+  // Refresh skips the URL metrics: the fresh SERP re-derives their inputs.
+  const refreshable = [serp, metrics, fallback] as LookupQuery<unknown>[];
 
+  // Google can return fewer organic results than asked for: say how many are shown.
+  const shown = serp.data ? topOrganic(serp.data, results).length : results;
   const features = [...new Set((serp.data?.itemTypes ?? []).filter((t) => t !== "organic").map(featureLabel))];
   const volumeLoading = metrics.loading || fallback.loading;
 
@@ -124,7 +128,7 @@ export function SerpChecker({ project }: { project: Project }) {
                 <KeywordLink keyword={keyword} market={market} />
               </h2>
               <p className="text-[13px] text-muted">
-                {marketName(market)} · <span className="uppercase">{market.language}</span> · {device} · top {results}
+                {marketName(market)} · <span className="uppercase">{market.language}</span> · {device} · {shown < results ? `${shown} results` : `top ${results}`}
               </p>
             </div>
             <dl className="flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
@@ -153,8 +157,8 @@ export function SerpChecker({ project }: { project: Project }) {
               ))}
             </div>
           )}
-          <ViewMeta lookups={lookups} />
-          <SerpOverview market={market} keyword={keyword} volume={volume} serp={serp} metrics={urlMetrics} authority limit={results} />
+          <ViewMeta lookups={lookups} refresh={refreshable} />
+          <SerpOverview market={market} keyword={keyword} volume={volume} serp={serp} metrics={urlMetrics} limit={results} />
         </section>
       ) : (
         <Card>

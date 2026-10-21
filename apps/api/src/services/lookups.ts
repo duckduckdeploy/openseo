@@ -3,6 +3,7 @@ import { estimateCost, type KeywordFilter, type YepApi } from "@openseo/yepapi";
 import { z } from "zod";
 import { cleanSources } from "../lib/brand-analysis";
 import { hostMatches, hostOf, toDomain } from "../lib/domain";
+import { badRequest } from "../lib/errors";
 import { buildGrid } from "../lib/geo";
 import { locationInfo } from "../lib/locations";
 import { mapLimit } from "../lib/pool";
@@ -728,7 +729,7 @@ export const lookups: Lookup[] = [
         const found = await yep.maps.search({ query: i.near as string, limit: 1, language, region: p.country });
         costUsd += found.costUsd;
         const place = found.data.results[0];
-        if (!place) throw new Error(`Could not find "${i.near}" on Google Maps. Try a city with its state or country.`);
+        if (!place) throw badRequest(`Could not find "${i.near}" on Google Maps. Try a city with its state or country.`);
         center = { lat: place.latitude, lng: place.longitude, name: place.name, address: place.address };
       }
       // Each point biases the search to a circle half the spacing wide, like a searcher standing there.
@@ -818,7 +819,7 @@ export const lookups: Lookup[] = [
       let spent = 0;
       const answers = await mapLimit(i.models, maxCostUsd == null ? 6 : 1, async (model) => {
         if (maxCostUsd != null && spent + 0.03 > maxCostUsd) {
-          return { model, answer: "", sources: [] as { url: string; title?: string }[], costUsd: 0, error: `Skipped: the $${maxCostUsd.toFixed(2)} cost ceiling was reached` as string | null };
+          return { model, answer: "", sources: [] as { url: string; title?: string }[], costUsd: 0, error: `Skipped: the $${maxCostUsd.toFixed(2)} cost ceiling was reached` as string | null, reason: undefined as unknown };
         }
         try {
           const res = await yep.ai.chat({ model, messages: [{ role: "user", content: i.prompt }], webSearch: true, maxTokens: 1200 });
@@ -826,13 +827,17 @@ export const lookups: Lookup[] = [
           const content = res.data.message.content;
           const resolved = await Promise.all((res.data.sources ?? []).map(resolveCitation));
           const sources = cleanSources(resolved.filter((source): source is { url: string; title?: string } => source !== null));
-          return { model, answer: typeof content === "string" ? content : "", sources, costUsd: res.costUsd, error: null as string | null };
+          return { model, answer: typeof content === "string" ? content : "", sources, costUsd: res.costUsd, error: null as string | null, reason: undefined as unknown };
         } catch (error) {
-          return { model, answer: "", sources: [] as { url: string; title?: string }[], costUsd: 0, error: errorText(error) as string | null };
+          return { model, answer: "", sources: [] as { url: string; title?: string }[], costUsd: 0, error: errorText(error) as string | null, reason: error as unknown };
         }
       });
-      if (answers.every((answer) => answer.error)) throw new Error(answers[0]?.error ?? "Every model failed");
-      return { data: { prompt: i.prompt, answers }, costUsd: sum(...answers.map((a) => a.costUsd)), partial: answers.some((a) => a.error) };
+      // Every model failed: the first provider error, so the user sees what to fix (key, credits).
+      if (answers.every((answer) => answer.error)) {
+        const first = answers.find((answer) => answer.reason !== undefined);
+        throw first ? first.reason : new Error(answers[0]?.error ?? "Every model failed");
+      }
+      return { data: { prompt: i.prompt, answers: answers.map(({ reason: _reason, ...answer }) => answer) }, costUsd: sum(...answers.map((a) => a.costUsd)), partial: answers.some((a) => a.error) };
     },
   }),
   define({

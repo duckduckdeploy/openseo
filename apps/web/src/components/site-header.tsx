@@ -17,15 +17,13 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {GITHUB_URL ? (
-            <a
-              href={GITHUB_URL}
-              className="hidden h-10 items-center rounded-md px-3 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink lg:inline-flex lg:gap-2"
-            >
-              <BrandIcon brand="github" />
-              GitHub
-            </a>
-          ) : null}
+          <a
+            href={GITHUB_URL}
+            className="hidden h-10 items-center rounded-md px-3 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink lg:inline-flex lg:gap-2"
+          >
+            <BrandIcon brand="github" />
+            GitHub
+          </a>
           <a
             href={SIGN_IN_URL}
             className="hidden h-10 items-center rounded-md px-3 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink md:inline-flex"

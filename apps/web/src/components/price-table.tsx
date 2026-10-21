@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { UNLISTED_PRICE_LABEL, type FeatureCost } from '@/content/features';
-import type { PriceRow } from '@/content/pricing';
+import { UNLISTED_PRICE_LABEL } from '@/content/features';
 
 interface Row {
   action: string;
@@ -14,14 +13,6 @@ interface PriceTableProps {
   rows: Row[];
   /** Render the caption visibly above the table instead of for screen readers only. */
   showCaption?: boolean;
-}
-
-export function rowsFromPricing(rows: PriceRow[]): Row[] {
-  return rows.map((row) => ({ ...row }));
-}
-
-export function rowsFromFeatureCosts(costs: FeatureCost[]): Row[] {
-  return costs.map((cost) => ({ ...cost }));
 }
 
 const th = 'border-b border-line bg-sunken px-5 py-3 text-left text-xs font-semibold tracking-wide text-faint uppercase';

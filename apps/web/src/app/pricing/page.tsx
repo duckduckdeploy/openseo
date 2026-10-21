@@ -4,7 +4,7 @@ import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
 import { FaqList } from '@/components/faq';
 import { JsonLd } from '@/components/json-ld';
-import { PriceTable, rowsFromPricing } from '@/components/price-table';
+import { PriceTable } from '@/components/price-table';
 import { SectionHeader } from '@/components/section';
 import { YepapiOffer } from '@/components/yepapi-offer';
 import { priceRows, pricingFaqs } from '@/content/pricing';
@@ -119,11 +119,9 @@ export default function PricingPage() {
               <ButtonLink href="/docs/self-hosting" size="lg" variant="secondary" className="w-full">
                 Self-hosting guide
               </ButtonLink>
-              {GITHUB_URL ? (
-                <ButtonLink href={GITHUB_URL} size="lg" variant="secondary" className="w-full">
-                  Source on GitHub
-                </ButtonLink>
-              ) : null}
+              <ButtonLink href={GITHUB_URL} size="lg" variant="secondary" className="w-full">
+                Source on GitHub
+              </ButtonLink>
             </div>
           </article>
         </div>
@@ -144,7 +142,7 @@ export default function PricingPage() {
           lede="Examples for common actions at the time of writing. Settings and usage lists every call you make with its cost."
         />
         <div className="mx-auto mt-14 max-w-4xl md:mt-16">
-          <PriceTable caption="Example prices for common lookups" rows={rowsFromPricing(priceRows)} />
+          <PriceTable caption="Example prices for common lookups" rows={priceRows} />
           <ul className="mt-6 space-y-3 text-[0.9375rem] text-muted">
             <li>Prices at the time of writing, set by the data provider, which may change them.</li>
             <li>A rank check costs $0.01 per 10 results it reads: $0.02 for the top 20, up to $0.10 for the top 100, per keyword and device.</li>

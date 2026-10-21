@@ -38,6 +38,9 @@ export interface CrawlOptions {
   startUrl: string;
   /** Maximum number of URLs fetched (robots-blocked URLs do not count). Default 100. */
   maxPages?: number;
+  /** Wall-clock budget. When it runs out no new URLs are started, pages in flight finish, and the crawl
+   *  ends with `stoppedReason: 'time_limit'`. Default 1800000 (30 minutes). */
+  maxDurationMs?: number;
   /** Maximum click depth for link-discovered URLs. Sitemap-only URLs are not depth-limited. */
   maxDepth?: number;
   /** Parallel workers. Default 2. */
@@ -287,7 +290,7 @@ export interface ExternalLinkCheck {
   sources: string[];
 }
 
-export type StopReason = 'completed' | 'max_pages' | 'rate_limited' | 'aborted';
+export type StopReason = 'completed' | 'max_pages' | 'time_limit' | 'rate_limited' | 'aborted';
 
 export interface CrawlSummary {
   startUrl: string;

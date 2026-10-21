@@ -111,7 +111,7 @@ export function PageAnalyser({ project }: { project: Project }) {
       render: (row) => (
         <span className="block max-w-72">
           <span className="block truncate font-medium">{row.fromDomain || hostOf(row.from) || "—"}</span>
-          <UrlCell url={row.from} />
+          <UrlCell url={row.from} market={market} />
         </span>
       ),
     },
@@ -133,11 +133,7 @@ export function PageAnalyser({ project }: { project: Project }) {
         pending={metrics.loading}
         button="Analyse page"
       >
-        {(draft) => (
-          <>
-            <span className="text-xs text-muted">Keywords and traffic are for the country. Links are worldwide.</span>
-          </>
-        )}
+        <span className="text-xs text-muted">Keywords and traffic are for the country. Links are worldwide.</span>
       </SearchBar>
 
       <ViewErrors lookups={lookups} />

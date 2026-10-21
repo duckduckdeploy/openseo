@@ -81,7 +81,8 @@ export async function processAiRun(runId: string) {
   const [run] = await dataDb.select().from(schema.aiRuns).where(eq(schema.aiRuns.id, runId)).limit(1);
   if (!run || run.status !== "queued") return;
   const [project] = await dataDb.select().from(schema.projects).where(eq(schema.projects.id, run.projectId)).limit(1);
-  if (!project) return;
+  // The project was deleted after the run was queued (its runs normally go with it).
+  if (!project) return failAiRun(runId, "The project no longer exists");
   const settings = await getAiSettings(project);
   const prompts = await dataDb
     .select()
@@ -140,11 +141,16 @@ export async function processAiRun(runId: string) {
     }
     if (index % 8 === 0) {
       const [current] = await dataDb.select({ status: schema.aiRuns.status }).from(schema.aiRuns).where(eq(schema.aiRuns.id, runId));
-      if (current?.status === "cancelled") {
+      // Cancelled, or failed by cleanup: either way nothing more is spent on it.
+      if (current?.status !== "running") {
         cancelled = true;
         return;
       }
     }
+    // Re-checked after the awaits above, so a worker does not start a paid call once the run stopped.
+    if (fatal || cancelled) return;
+    // Set once the answer is paid for, so its cost is recorded even if storing it fails.
+    let paid = 0;
     const base = {
       runId,
       projectId: project.id,
@@ -161,6 +167,8 @@ export async function processAiRun(runId: string) {
         webSearch: settings.webSearch || undefined,
         maxTokens: 1500,
       });
+      paid = res.costUsd;
+      spent += res.costUsd;
       const content = res.data.message.content;
       const answer = typeof content === "string" ? content : "";
       const sources = cleanSources((res.data.sources ?? []).map((s) => ({ url: s.url, title: s.title })));
@@ -176,7 +184,6 @@ export async function processAiRun(runId: string) {
         brands: hits,
         costUsd: res.costUsd,
       });
-      spent += res.costUsd;
       await dataDb
         .update(schema.aiRuns)
         .set({ done: sql`${schema.aiRuns.done} + 1`, heartbeatAt: new Date(), costUsd: sql`round((${schema.aiRuns.costUsd} + ${res.costUsd})::numeric, 4)::float8` })
@@ -186,13 +193,20 @@ export async function processAiRun(runId: string) {
       await dataDb.insert(schema.aiAnswers).values({ ...base, error: errorMessage(error) });
       await dataDb
         .update(schema.aiRuns)
-        .set({ done: sql`${schema.aiRuns.done} + 1`, failed: sql`${schema.aiRuns.failed} + 1`, heartbeatAt: new Date() })
+        .set({
+          done: sql`${schema.aiRuns.done} + 1`,
+          failed: sql`${schema.aiRuns.failed} + 1`,
+          heartbeatAt: new Date(),
+          costUsd: sql`round((${schema.aiRuns.costUsd} + ${paid})::numeric, 4)::float8`,
+        })
         .where(eq(schema.aiRuns.id, runId));
     }
   });
   } catch (error) {
-    // A storage error mid-run: record it instead of leaving the run "running" and the project blocked.
-    return finish("failed", `Stopped by an internal error: ${errorMessage(error)}`);
+    // A storage error mid-run: stop the other workers, then record it instead of leaving the run
+    // "running" and the project blocked.
+    fatal = `Stopped by an internal error: ${errorMessage(error)}`;
+    return finish("failed", fatal);
   }
 
   if (cancelled) return finish("cancelled");

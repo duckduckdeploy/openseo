@@ -6,6 +6,8 @@ const TRACKING_PARAM =
 export interface NormalizeOptions {
   stripTrackingParams?: boolean;
   trailingSlash?: 'preserve' | 'strip';
+  /** Sort query parameters by name. Default true; the crawler sorts only for its dedupe key and fetches the original order. */
+  sortQuery?: boolean;
 }
 
 function paramKey(pair: string): string {
@@ -20,7 +22,7 @@ function paramKey(pair: string): string {
 /**
  * Canonical string form of an http(s) URL, or null for anything else.
  * Lower-cases scheme and host, drops default ports, fragments and empty queries, resolves dot segments,
- * sorts query parameters by name, optionally strips tracking parameters and trailing slashes.
+ * sorts query parameters by name (unless `sortQuery: false`), optionally strips tracking parameters and trailing slashes.
  */
 export function normalizeUrl(input: string, base?: string, opts: NormalizeOptions = {}): string | null {
   let u: URL;
@@ -37,7 +39,7 @@ export function normalizeUrl(input: string, base?: string, opts: NormalizeOption
   let pairs = u.search.length > 1 ? u.search.slice(1).split('&').filter((p) => p !== '') : [];
   if (opts.stripTrackingParams) pairs = pairs.filter((p) => !TRACKING_PARAM.test(paramKey(p)));
   const keyed = pairs.map((pair, index) => ({ pair, key: paramKey(pair), index }));
-  keyed.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : a.index - b.index));
+  if (opts.sortQuery !== false) keyed.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : a.index - b.index));
   u.search = keyed.length > 0 ? `?${keyed.map((k) => k.pair).join('&')}` : '';
 
   if (opts.trailingSlash === 'strip' && u.pathname.length > 1 && u.pathname.endsWith('/')) {

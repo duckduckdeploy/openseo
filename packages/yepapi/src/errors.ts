@@ -57,8 +57,9 @@ export class YepApiError extends Error {
   readonly upstream?: { status?: number; message?: string };
   readonly retryAfterMs?: number;
   /**
-   * False when the connection failed before the request could reach YepAPI (refused, DNS,
-   * unreachable), so nothing can have been billed. Undefined when that cannot be known.
+   * False when the request never reached YepAPI (connection refused, DNS, unreachable, or the
+   * caller aborted between attempts), so nothing can have been billed. Undefined when that
+   * cannot be known.
    */
   readonly requestSent?: boolean;
   /** Number of HTTP attempts made, retries included. */
@@ -84,9 +85,12 @@ export class YepApiError extends Error {
     );
   }
 
-  /** 403: account frozen pending a billing review. */
+  /**
+   * 403 `ACCOUNT_FROZEN`: account frozen pending a billing review. A bare 403 without a YepAPI
+   * error envelope (for example a Cloudflare/WAF HTML page, code `HTTP_403`) does not count.
+   */
   get isAccountFrozen(): boolean {
-    return this.status === 403 || this.code === 'ACCOUNT_FROZEN';
+    return this.code === 'ACCOUNT_FROZEN' || (this.status === 403 && this.code !== 'HTTP_403');
   }
 
   /** 401 or 403: the key cannot be used as it stands. */

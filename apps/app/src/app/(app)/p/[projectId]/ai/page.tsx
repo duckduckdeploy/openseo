@@ -48,7 +48,7 @@ function RunControl({ projectId, state }: { projectId: string; state: AiState })
   const { estimate, settings } = state;
   const runId = state.activeRun?.id ?? startedRunId;
   const refresh = () => void queryClient.invalidateQueries({ queryKey: ["ai", projectId] });
-  const run = useRunPoll<AiRun>(["ai-run", runId], runId ? `/projects/${projectId}/ai/runs/${runId}` : null, refresh);
+  const run = useRunPoll<AiRun>(["ai-run", runId], runId ? `/projects/${projectId}/ai/runs/${runId}` : null, refresh, Boolean(state.activeRun));
   const start = useMutation({
     mutationFn: () => api<AiRun>(`/projects/${projectId}/ai/runs`, { method: "POST" }),
     onSuccess: (created) => {

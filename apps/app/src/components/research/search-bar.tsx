@@ -185,8 +185,8 @@ export function SearchBar({
   extra?: ReactNode;
   button?: string;
   pending?: boolean;
-  /** A second line under the row: settings and the price. */
-  children?: ReactNode | ((text: string) => ReactNode);
+  /** A second line under the row: settings and notes. */
+  children?: ReactNode;
   inputProps?: Partial<React.InputHTMLAttributes<HTMLInputElement>>;
 }) {
   const [text, setText] = useUrlText(value);
@@ -222,7 +222,7 @@ export function SearchBar({
           {button}
         </Button>
       </div>
-      {children && <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-1">{typeof children === "function" ? children(trimmed) : children}</div>}
+      {children && <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-1">{children}</div>}
     </form>
   );
 }

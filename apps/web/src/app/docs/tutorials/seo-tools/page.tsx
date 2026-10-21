@@ -22,13 +22,14 @@ export default function SeoToolsGuide() {
       <h2 id="searching">How a search works</h2>
       <Screenshot
         name="search-bar"
-        alt="The search row: keyword, country, city or state, language and the Analyse button, with the price"
-        caption="What to look up, then the market, then the button. The price of the whole search shows underneath."
+        alt="The search row: keyword, country, city or state, language and the Analyse button"
+        caption="What to look up, then the market, then the button."
       />
       <p>
         Every tool starts from one row: what to look up (a keyword, a domain or a URL), the <strong>country</strong>, a{' '}
         <strong>city or state</strong> where the tool can use one, and the <strong>language</strong>. Press Enter and
-        every lookup the view needs runs at once. The price of the whole search shows under the row before you run it.
+        every lookup the view needs runs at once. Each call and its cost is listed afterwards in <Ui>Settings and usage</Ui>,
+        and your monthly limit caps what the tools can spend.
       </p>
       <p>
         The search and the market are part of the page address, for example{' '}
@@ -62,7 +63,7 @@ export default function SeoToolsGuide() {
       <ul>
         <li>
           <strong>Keyword difficulty</strong>, 0 to 100, with roughly how many linking sites the pages in the top 10 have.
-          With authority metrics on, the average Domain Rating of the top 10 is added.
+          The average Domain Rating of the top 10 is shown next to it.
         </li>
         <li>
           <strong>Search volume</strong> per month, the last 12 months as bars, the cost per click in Google Ads and how
@@ -100,7 +101,7 @@ export default function SeoToolsGuide() {
       <Screenshot
         name="keyword-overview-serp"
         alt="The top Google results with SERP features in place and authority metrics for every page"
-        caption="With authority metrics on: words, Domain Rating, URL Rating, backlinks, linking domains, traffic, its value and keywords of each page."
+        caption="Words, Domain Rating, URL Rating, backlinks, linking domains, traffic, its value and keywords of each page."
       />
       <p>
         The results page as Google lays it out. Blocks such as an AI overview, People also ask, a local pack or product
@@ -109,8 +110,8 @@ export default function SeoToolsGuide() {
         analyser and its backlinks.
       </p>
       <p>
-        Turn on <strong>Authority metrics</strong> to add each page&apos;s Domain Rating, URL Rating, links and traffic. It
-        is a setting, remembered in your browser, and costs $0.02 per result, which the price includes.
+        Authority metrics are always included: every page shows its Domain Rating, URL Rating, backlinks, linking
+        domains, traffic, the value of that traffic and how many keywords it ranks for.
       </p>
 
       <h2 id="local">City and state level</h2>
@@ -148,7 +149,7 @@ export default function SeoToolsGuide() {
       <p>
         Paste up to 1,000 keywords, one per line or separated by commas, and pick the country. Each gets a{' '}
         <strong>difficulty</strong> from 0 (easy) to 100 (hard), and the list is split into <strong>easy</strong> (under
-        30), <strong>medium</strong> (30 to 59) and <strong>hard</strong> (60 and up), with the average for the whole set.
+        30), <strong>medium</strong> (30 to 49) and <strong>hard</strong> (50 and up), with the average for the whole set.
         Click a band to show only those keywords, tick rows and <Ui>Save selected</Ui>, or <Ui>Export CSV</Ui>. Keywords
         with too few searches have no score. In a project, <Ui>Use my saved keywords</Ui> fills the list for you.
       </p>
@@ -160,8 +161,9 @@ export default function SeoToolsGuide() {
         caption="The keyword's volume, difficulty and intent sit above the results."
       />
       <p>
-        The same results table as in the keyword overview, on its own, with a <strong>device</strong> choice: desktop or
-        mobile. Use it to check a results page in a city, or on phones, without the rest of the overview.
+        The same results table as in the keyword overview, on its own, with authority metrics for every page and a{' '}
+        <strong>device</strong> choice: desktop or mobile. It starts with the top 10 and goes as deep as the top 100
+        (pages 1 to 10). Use it to check a results page in a city, or on phones, without the rest of the overview.
       </p>
 
       <h2 id="domain-overview">Domain overview</h2>

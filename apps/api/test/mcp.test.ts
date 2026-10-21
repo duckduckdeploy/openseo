@@ -97,6 +97,35 @@ describe("MCP server", () => {
     expect(tooLow.isError).toBe(true);
   });
 
+  it("creates rank trackers as manual unless a schedule is asked for", async () => {
+    const { call } = await agent();
+    const created = await call("create_rank_tracker", { domain: "acme.com", location_code: 2840, location_name: "United States", keywords: ["plumber"] });
+    expect(created.json).toMatchObject({ schedule: "manual", nextRunAt: null });
+    const { body } = await rpc({ apiKey: (await agent()).key }, "tools/list");
+    const tool = (body.result.tools as { name: string; description: string }[]).find((t) => t.name === "create_rank_tracker")!;
+    expect(tool.description).toMatch(/paid run every period/);
+  });
+
+  it("prices geo-grids, rank checks and audits with dry_run without starting them", async () => {
+    const { call } = await agent();
+    const before = harness.fake.requests.length;
+    const grid = await call("run_geo_grid", { keyword: "plumber", place_id: "place_1", place_name: "Globex Pipes", center_latitude: 30.27, center_longitude: -97.74, size: 3, dry_run: true });
+    expect(grid.json).toMatchObject({ dryRun: true, estimate: { max: 0.63 }, size: 3 });
+    expect((await call("run_geo_grid", { keyword: "plumber", place_id: "place_1", place_name: "Globex Pipes", center_latitude: 30.27, center_longitude: -97.74 })).isError).toBe(true);
+    const audit = await call("start_site_audit", { start_url: "https://example.com", max_pages: 35, render_js: true, dry_run: true });
+    expect(audit.json).toMatchObject({ dryRun: true, estimate: { max: 0.7 } });
+    expect((await call("list_site_audits")).json).toEqual([]);
+
+    const tracker = (await call("create_rank_tracker", { domain: "acme.com", location_code: 2840, location_name: "United States", keywords: ["a", "b"] })).json;
+    const priced = await call("run_rank_check", { tracker_id: tracker.id, dry_run: true });
+    expect(priced.json).toMatchObject({ dryRun: true, keywordCount: 2, estimate: { max: 0.2 } });
+    expect((await call("run_rank_check", { tracker_id: tracker.id })).isError).toBe(true);
+    const tooLow = await call("run_rank_check", { tracker_id: tracker.id, max_cost_usd: 0.19 });
+    expect(tooLow.text).toMatch(/above the \$0\.19 ceiling/);
+    expect((await call("list_rank_trackers")).json[0].activeRunId).toBeNull();
+    expect(harness.fake.requests.length).toBe(before);
+  });
+
   it("creates a project in another market with the right country", async () => {
     const { call } = await agent();
     const created = await call("create_project", { name: "DE", location_code: 2276 });

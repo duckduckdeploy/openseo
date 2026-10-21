@@ -225,12 +225,10 @@ export default function HomePage() {
                 Self-hosting guide
                 <ArrowRight className="size-4" aria-hidden="true" />
               </ButtonLink>
-              {GITHUB_URL ? (
-                <ButtonLink href={GITHUB_URL} variant="secondary">
-                  <BrandIcon brand="github" />
-                  Source on GitHub
-                </ButtonLink>
-              ) : null}
+              <ButtonLink href={GITHUB_URL} variant="secondary">
+                <BrandIcon brand="github" />
+                Source on GitHub
+              </ButtonLink>
             </div>
             <p className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-muted">
               <span className="inline-flex items-center gap-2"><BrandIcon brand="docker" className="size-5" />Docker</span>

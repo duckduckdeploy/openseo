@@ -36,6 +36,7 @@ export function GET() {
     '',
     link('Pricing', '/pricing', 'What each action costs, paid per lookup with a monthly limit.'),
     ...comparisons.map((c) => link(`${c.name} alternative`, `/compare/${c.slug}`, c.summary)),
+    link('Open-source SEO tools', '/open-source-seo-tools', 'The open-source SEO tools worth running: rank trackers, crawlers, site audits and full suites, compared.'),
     link('SEO glossary', '/glossary', 'SEO terms explained in plain English.'),
     '',
   ].join('\n');

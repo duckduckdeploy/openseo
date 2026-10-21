@@ -1,15 +1,18 @@
 import { and, eq, isNotNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import { dataDb, db, schema } from "../db";
 import { nextRunAfter } from "../lib/pool";
-import { isRunInProgress } from "../lib/errors";
+import { AppError, isRunInProgress } from "../lib/errors";
 import { failAiRun, startAiRun } from "../services/ai";
 import { cleanupOAuth } from "../services/oauth";
 import { failRankRun, startRankRun } from "../services/rank";
 import { dispatch } from "./dispatch";
 import { defineJob } from "./queue";
 
-// How soon a schedule is retried when its tracker or project already has a run going.
+// How soon a schedule is retried when its tracker or project already has a run going, or the
+// queue could not take the run.
 const RETRY_MS = 15 * 60_000;
+
+const retrySoon = (error: unknown) => isRunInProgress(error) || (error instanceof AppError && error.code === "queue_unavailable");
 
 // Runs every five minutes. Claims due schedules by moving next_run_at forward in the same
 // statement that selects them, so two workers never start the same run. next_run_at advances
@@ -26,7 +29,8 @@ defineJob("scheduler.tick", 1, async (_data, log) => {
   for (const tracker of dueTrackers) {
     const claimed = await dataDb
       .update(schema.rankTrackers)
-      .set({ nextRunAt: nextRunAfter(tracker.schedule, tracker.nextRunAt ?? now, now) })
+      // A monthly schedule's day is the day it was set up: its first run is one month after that.
+      .set({ nextRunAt: nextRunAfter(tracker.schedule, tracker.nextRunAt ?? now, now, tracker.createdAt.getUTCDate()) })
       .where(and(eq(schema.rankTrackers.id, tracker.id), lte(schema.rankTrackers.nextRunAt, now)))
       .returning({ id: schema.rankTrackers.id });
     if (!claimed.length) continue;
@@ -34,9 +38,9 @@ defineJob("scheduler.tick", 1, async (_data, log) => {
       const run = await startRankRun(tracker.id, "schedule");
       await dispatch("rank.run", { runId: run.id }, (message) => failRankRun(run.id, message));
     } catch (error) {
-      // A run already in progress (often a manual one): try again shortly rather than skipping a
-      // whole period. No keywords: wait for the next period.
-      if (isRunInProgress(error)) {
+      // A run already in progress (often a manual one) or a queue outage: try again shortly
+      // rather than skipping a whole period. No keywords: wait for the next period.
+      if (retrySoon(error)) {
         await dataDb.update(schema.rankTrackers).set({ nextRunAt: new Date(now.getTime() + RETRY_MS) }).where(eq(schema.rankTrackers.id, tracker.id));
       }
       log.info({ trackerId: tracker.id, reason: (error as Error).message }, "scheduled rank run not started");
@@ -52,7 +56,7 @@ defineJob("scheduler.tick", 1, async (_data, log) => {
   for (const { settings, project } of dueAi) {
     const claimed = await dataDb
       .update(schema.aiSettings)
-      .set({ nextRunAt: nextRunAfter(settings.schedule, settings.nextRunAt ?? now, now) })
+      .set({ nextRunAt: nextRunAfter(settings.schedule, settings.nextRunAt ?? now, now, project.createdAt.getUTCDate()) })
       .where(and(eq(schema.aiSettings.projectId, project.id), lte(schema.aiSettings.nextRunAt, now)))
       .returning({ id: schema.aiSettings.projectId });
     if (!claimed.length) continue;
@@ -60,7 +64,7 @@ defineJob("scheduler.tick", 1, async (_data, log) => {
       const run = await startAiRun(project, "schedule");
       await dispatch("ai.run", { runId: run.id }, (message) => failAiRun(run.id, message));
     } catch (error) {
-      if (isRunInProgress(error)) {
+      if (retrySoon(error)) {
         await dataDb.update(schema.aiSettings).set({ nextRunAt: new Date(now.getTime() + RETRY_MS) }).where(eq(schema.aiSettings.projectId, project.id));
       }
       log.info({ projectId: project.id, reason: (error as Error).message }, "scheduled AI run not started");

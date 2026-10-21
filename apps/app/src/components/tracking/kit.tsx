@@ -97,7 +97,7 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-md border border-line bg-surface p-0.5">
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-md border border-line bg-sunken p-0.5">
       {options.map((option) => (
         <button
           key={option.id}
@@ -386,9 +386,11 @@ export function RunProgress({
 
 /**
  * Polls one run while it is queued or running and calls `onSettled` once when it ends,
- * so the caller can refresh whatever the run produced.
+ * so the caller can refresh whatever the run produced. Pass `listedActive` when the caller's
+ * own data says the run is active: if the first poll already finds it finished, the caller's
+ * data is stale and `onSettled` still fires.
  */
-export function useRunPoll<T extends { status: RunStatus }>(key: readonly unknown[], path: string | null, onSettled: (run: T) => void) {
+export function useRunPoll<T extends { status: RunStatus }>(key: readonly unknown[], path: string | null, onSettled: (run: T) => void, listedActive = false) {
   const query = useQuery({
     queryKey: key,
     queryFn: () => api<T>(path as string),
@@ -406,11 +408,11 @@ export function useRunPoll<T extends { status: RunStatus }>(key: readonly unknow
       seenActive.current = path;
       return;
     }
-    if (seenActive.current === path && settled.current !== path) {
+    if ((seenActive.current === path || listedActive) && settled.current !== path) {
       settled.current = path;
       callback.current(data);
     }
-  }, [path, data]);
+  }, [path, data, listedActive]);
   return query;
 }
 

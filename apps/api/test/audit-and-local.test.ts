@@ -45,7 +45,7 @@ describe("site audit", () => {
   it("serves the issue catalog and 404s unknown pages", async () => {
     const { api, project } = await readyUser();
     const catalog = await api.ok("GET", "/audit/issue-catalog");
-    expect(Object.keys(catalog)).toHaveLength(59);
+    expect(Object.keys(catalog)).toHaveLength(61);
     const audit = await api.ok("POST", `/projects/${project.id}/audits`, { startUrl: "https://example.com", maxPages: 5 });
     expect((await api.get(`/audits/${audit.id}/pages/not-a-uuid`)).status).toBe(404);
     expect((await api.get(`/audits/${audit.id}/pages/00000000-0000-0000-0000-000000000000`)).status).toBe(404);

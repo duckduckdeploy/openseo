@@ -1,0 +1,1 @@
+CREATE INDEX "ai_answers_project_model_idx" ON "ai_answers" USING btree ("project_id","model");

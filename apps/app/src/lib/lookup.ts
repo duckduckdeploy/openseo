@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { lookupTarget } from "./scope";
@@ -98,47 +98,6 @@ export function useEstimate<I extends object>(projectId: string, name: string, i
   });
   const stale = serialised !== null && (settled !== serialised || query.isPlaceholderData || query.isFetching);
   return { ...query, stale };
-}
-
-/**
- * The price of a whole view (several lookups) for what is typed, before it runs: the sum of each
- * lookup's estimate, plus `extra` for parts priced on the client. Same contract as useEstimate.
- */
-export function useViewPrice(scopeId: string, parts: [name: string, input: object | null][], extra: Estimate[] = []) {
-  const active = parts.filter((part): part is [string, object] => part[1] !== null);
-  const serialised = active.length ? JSON.stringify(active) : null;
-  const [settled, setSettled] = useState(serialised);
-  useEffect(() => {
-    const id = setTimeout(() => setSettled(serialised), 300);
-    return () => clearTimeout(id);
-  }, [serialised]);
-  const settledParts: [string, object][] = settled ? JSON.parse(settled) : [];
-  const results = useQueries({
-    queries: settledParts.map(([name, input]) => ({
-      queryKey: ["estimate", scopeId, name, JSON.stringify(input)],
-      queryFn: () => {
-        const { path, query } = lookupTarget(scopeId, name);
-        return api<{ estimate: Estimate }>(path, { method: "POST", body: input, query: { ...query, dryRun: 1 } }).then((r) => r.estimate);
-      },
-      staleTime: Infinity,
-      retry: false,
-    })),
-  });
-  const all = [...results.map((r) => r.data), ...extra];
-  const ready = settledParts.length > 0 && all.every(Boolean);
-  const round = (value: number) => Math.round(value * 1e4) / 1e4;
-  const data: Estimate | undefined = ready
-    ? {
-        min: round((all as Estimate[]).reduce((t, e) => t + e.min, 0)),
-        max: (all as Estimate[]).some((e) => e.max == null) ? null : round((all as Estimate[]).reduce((t, e) => t + (e.max as number), 0)),
-      }
-    : undefined;
-  return {
-    data,
-    error: results.find((r) => r.error)?.error ?? null,
-    isPending: !ready,
-    stale: serialised !== null && (settled !== serialised || results.some((r) => r.isFetching)),
-  };
 }
 
 export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {

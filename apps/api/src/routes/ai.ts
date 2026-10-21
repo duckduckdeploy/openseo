@@ -77,7 +77,13 @@ export async function aiRoutes(app: FastifyInstance) {
     );
     const existing = await dataDb.select({ prompt: schema.aiPrompts.prompt }).from(schema.aiPrompts).where(eq(schema.aiPrompts.projectId, project.id));
     const have = new Set(existing.map((e) => e.prompt.toLowerCase()));
-    const fresh = [...new Set(prompts)].filter((p) => !have.has(p.toLowerCase()));
+    // De-duplicated case-insensitively, within the request as against the saved prompts.
+    const fresh = prompts.filter((p) => {
+      const key = p.toLowerCase();
+      if (have.has(key)) return false;
+      have.add(key);
+      return true;
+    });
     if (existing.length + fresh.length > MAX_PROMPTS) throw badRequest(`A project holds up to ${MAX_PROMPTS} prompts`);
     if (fresh.length) await dataDb.insert(schema.aiPrompts).values(fresh.map((prompt) => ({ projectId: project.id, prompt, topic })));
     return { ok: true, data: { added: fresh.length, skipped: prompts.length - fresh.length } };

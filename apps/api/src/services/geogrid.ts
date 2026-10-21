@@ -41,7 +41,8 @@ export async function processGrid(gridId: string) {
   const [grid] = await dataDb.select().from(schema.geoGrids).where(eq(schema.geoGrids.id, gridId)).limit(1);
   if (!grid || grid.status !== "queued") return;
   const [project] = await dataDb.select().from(schema.projects).where(eq(schema.projects.id, grid.projectId)).limit(1);
-  if (!project) return;
+  // The project was deleted after the grid was queued (its grids normally go with it).
+  if (!project) return failGrid(gridId, "The project no longer exists");
   // Claimed only while still queued, so a cancel that lands first is not overwritten.
   const [claimed] = await dataDb
     .update(schema.geoGrids)

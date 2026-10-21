@@ -70,7 +70,7 @@ export function createPinnedTransport(opts: { allowPrivateNetwork: boolean }): T
       const bad = opts.allowPrivateNetwork ? undefined : list.find((a) => isPrivateAddress(a.address));
       if (bad) {
         return callback(
-          new SsrfError('private-address', hostname, `${hostname} resolves to non-public address ${bad.address}`),
+          new SsrfError('private-address', hostname, `${hostname} resolves to a non-public address`),
           [],
         );
       }
@@ -244,6 +244,25 @@ export function decodeBody(bytes: Uint8Array, contentType: string | null): strin
   }
 }
 
+/** Settles like `promise`, or rejects as soon as `signal` aborts. */
+function untilAborted<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(new Error('Aborted'));
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = (): void => reject(new Error('Aborted'));
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (err: unknown) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
 /**
  * Fetches one URL, following redirects by hand. Every hop passes the SSRF guard and the host throttle.
  * Never throws; failures are reported in `error`.
@@ -275,14 +294,20 @@ export async function fetchUrl(ctx: FetchContext, url: string, request: FetchReq
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       if (ctx.signal?.aborted) throw new Error('Crawl aborted');
-      await ctx.guard.assert(current);
+      const startTimer = (): void => {
+        timer = setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+        }, ctx.timeoutMs);
+      };
+      // The guard's DNS lookup gets its own timeout window; the throttle wait does not count against it.
+      startTimer();
+      await untilAborted(ctx.guard.assert(current), controller.signal);
+      clearTimeout(timer);
       await ctx.throttle.wait(new URL(current).host, ctx.signal);
       if (ctx.signal?.aborted) throw new Error('Crawl aborted');
 
-      timer = setTimeout(() => {
-        timedOut = true;
-        controller.abort();
-      }, ctx.timeoutMs);
+      startTimer();
       const started = performance.now();
       const res = await ctx.fetch(current, {
         method: request.method ?? 'GET',
@@ -296,6 +321,15 @@ export async function fetchUrl(ctx: FetchContext, url: string, request: FetchReq
       const responseTimeMs = Math.round(performance.now() - started);
       const location = res.headers.get('location');
 
+      if (res.status >= 300 && res.status < 400 && res.status !== 304 && !location) {
+        await res.body?.cancel().catch(() => {});
+        return outcome({
+          status: res.status,
+          headers: res.headers,
+          responseTimeMs,
+          error: { kind: 'unknown', message: `HTTP ${res.status} without a Location header` },
+        });
+      }
       if (res.status >= 300 && res.status < 400 && res.status !== 304 && location) {
         await res.body?.cancel().catch(() => {});
         let next: string;

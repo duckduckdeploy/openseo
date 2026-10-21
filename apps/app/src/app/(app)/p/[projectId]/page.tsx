@@ -188,13 +188,15 @@ function Overview({ project }: { project: Project }) {
   const balance = useBalance();
   const usage = useQuery({ queryKey: ["usage", "total"], queryFn: () => api<{ total?: { costUsd?: number; calls?: number } }>("/usage") });
   const saved = useQuery({ queryKey: ["saved-keywords", project.id, "overview"], queryFn: () => api<SavedKeywordsList>(`${path}/saved-keywords`, { query: { limit: 5 } }) });
-  const trackers = useQuery({ queryKey: ["overview", project.id, "trackers"], queryFn: () => api<Tracker[]>(`${path}/trackers`) });
-  const audits = useQuery({ queryKey: ["overview", project.id, "audits"], queryFn: () => api<Audit[]>(`${path}/audits`) });
-  const ai = useQuery({ queryKey: ["overview", project.id, "ai"], queryFn: () => api<AiResults>(`${path}/ai/results`) });
-  const grids = useQuery({ queryKey: ["overview", project.id, "geo-grids"], queryFn: () => api<GeoGrid[]>(`${path}/geo-grids`) });
+  // The same query keys as the tool pages, so their mutations and finished runs refresh this page too.
+  const trackers = useQuery({ queryKey: ["trackers", project.id], queryFn: () => api<Tracker[]>(`${path}/trackers`) });
+  const audits = useQuery({ queryKey: ["audits", project.id], queryFn: () => api<Audit[]>(`${path}/audits`) });
+  const ai = useQuery({ queryKey: ["ai", project.id, "results"], queryFn: () => api<AiResults>(`${path}/ai/results`) });
+  const grids = useQuery({ queryKey: ["geo-grids", project.id], queryFn: () => api<GeoGrid[]>(`${path}/geo-grids`) });
 
   const trackedKeywords = trackers.data?.reduce((total, tracker) => total + (tracker.keywordCount ?? 0), 0);
-  const showBalance = !balance.error && (balance.isPending || finite(balance.data?.balanceUsd));
+  // isLoading, not isPending: the balance query is disabled without a YepAPI key and would stay pending.
+  const showBalance = !balance.error && (balance.isLoading || finite(balance.data?.balanceUsd));
 
   return (
     <>
@@ -210,7 +212,7 @@ function Overview({ project }: { project: Project }) {
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {showBalance && <Stat label="YepAPI balance" value={balance.isPending ? "…" : usd(balance.data?.balanceUsd)} sub={balance.data?.autoTopup ? "prepaid credit left · auto top-up on" : "prepaid credit left"} />}
+        {showBalance && <Stat label="YepAPI balance" value={balance.isLoading ? "…" : usd(balance.data?.balanceUsd)} sub={balance.data?.autoTopup ? "prepaid credit left · auto top-up on" : "prepaid credit left"} />}
         <Stat
           label="Spent this month"
           value={usage.isPending ? "…" : usage.error ? "—" : usd(usage.data?.total?.costUsd)}

@@ -1,6 +1,6 @@
 import { defaultFetch, transport, type FetchLike, type TransportConfig } from './core';
 import { YepApiError } from './errors';
-import { computeCost, pricing } from './pricing';
+import { computeCost, estimateCost, pricing } from './pricing';
 import type { EndpointData, EndpointParams, YepEndpoint } from './types/index';
 
 export const DEFAULT_BASE_URL = 'https://api.yepapi.com';
@@ -10,7 +10,10 @@ export interface YepCallInfo {
   ok: boolean;
   /** HTTP status; 0 when no response was received. */
   status: number;
-  /** 0 for failed calls, which YepAPI never bills. */
+  /**
+   * 0 for failed calls YepAPI never bills. When the outcome is unknown (client timeout, abort
+   * mid-request, 2xx with an unusable body) it is the documented maximum, with `costEstimated`.
+   */
   costUsd: number;
   costEstimated: boolean;
   /** Wall time of the whole call, retries and backoff included. */
@@ -39,7 +42,7 @@ export interface YepApiOptions {
   onCall?: (info: YepCallInfo) => void | Promise<void>;
   /** First backoff step. Default 500. */
   retryBaseDelayMs?: number;
-  /** Cap for backoff and for `Retry-After`. Default 30000. */
+  /** Cap for backoff. A longer `Retry-After` stops retrying and throws the 429. Default 30000. */
   retryMaxDelayMs?: number;
 }
 
@@ -212,12 +215,20 @@ export function createYepApi(options: YepApiOptions): YepApi {
       };
     } catch (error) {
       const known = error instanceof YepApiError ? error : undefined;
+      // The request may have completed (and been billed) upstream: count the documented
+      // maximum so usage logs and budgets do not undercount. Other failures are never billed.
+      const maybeBilled =
+        pricing[endpoint].kind !== 'free' &&
+        (known?.code === 'TIMEOUT' ||
+          known?.code === 'INVALID_RESPONSE' ||
+          (known?.code === 'ABORTED' && known.requestSent !== false));
+      const estimate = maybeBilled ? estimateCost(endpoint, params) : undefined;
       report({
         endpoint,
         ok: false,
         status: known?.status ?? 0,
-        costUsd: 0,
-        costEstimated: false,
+        costUsd: estimate === undefined ? 0 : (estimate.max ?? estimate.min),
+        costEstimated: estimate !== undefined,
         ms: Date.now() - started,
         attempts: known?.attempts ?? 1,
         requestId: known?.requestId,

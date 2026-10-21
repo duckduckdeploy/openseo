@@ -88,7 +88,7 @@ export default function LocalSeoTutorial() {
         </Step>
         <Step title="Read the map">
           <p>
-            Each cell shows your position at that point: green for 1–3, yellow for 4–10, amber for 11–20, grey when you
+            Each cell shows your position at that point: green for 1–3, amber for 4–10, red for 11–20, grey when you
             are not in the top 20. The pin marks your business. Hover or tap a cell to see the top places there, with
             yours highlighted. The grid also gives your average position where you were found, and in how many points.
           </p>

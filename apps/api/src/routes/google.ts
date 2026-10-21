@@ -122,7 +122,7 @@ export async function googleRoutes(app: FastifyInstance) {
   });
 
   app.put<P>("/projects/:projectId/google/gsc", async (request) => {
-    const user = await requireUser(request);
+    const user = await requireSessionUser(request);
     const project = await requireProject(user.id, request.params.projectId);
     const input = parse(z.object({ accountId: z.string().uuid(), siteUrl: z.string().min(3).max(500) }), request.body);
     return { ok: true, data: await connectGsc(project, user.id, input.accountId, input.siteUrl) };
@@ -136,14 +136,14 @@ export async function googleRoutes(app: FastifyInstance) {
   });
 
   app.put<P>("/projects/:projectId/google/ga4", async (request) => {
-    const user = await requireUser(request);
+    const user = await requireSessionUser(request);
     const project = await requireProject(user.id, request.params.projectId);
     const input = parse(z.object({ accountId: z.string().uuid(), propertyId: z.string().min(3).max(100) }), request.body);
     return { ok: true, data: await connectGa4(project, user.id, input.accountId, input.propertyId) };
   });
 
   app.delete<{ Params: { projectId: string; provider: string } }>("/projects/:projectId/google/:provider", async (request) => {
-    const user = await requireUser(request);
+    const user = await requireSessionUser(request);
     const project = await requireProject(user.id, request.params.projectId);
     await disconnect(project, parse(provider, request.params.provider) as GoogleProvider);
     return { ok: true };

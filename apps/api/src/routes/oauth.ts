@@ -1,6 +1,7 @@
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireSessionUser } from "../lib/context";
+import { visitorOf } from "./public-tools";
 import { AppError, notFound, parse } from "../lib/errors";
 import {
   authorizationServerMetadata,
@@ -16,6 +17,28 @@ import {
   revokeToken,
   type AuthorizeQuery,
 } from "../services/oauth";
+
+/**
+ * A fixed-window count per address, in memory. Registration and authorization write rows without
+ * any sign-in, so this keeps one client from filling the tables.
+ */
+function perAddressLimit(limit: number, windowMs: number) {
+  const hits = new Map<string, { count: number; resetAt: number }>();
+  return (request: FastifyRequest) => {
+    const now = Date.now();
+    if (hits.size > 10_000) for (const [key, hit] of hits) if (hit.resetAt <= now) hits.delete(key);
+    const key = visitorOf(request);
+    const hit = hits.get(key);
+    if (!hit || hit.resetAt <= now) {
+      hits.set(key, { count: 1, resetAt: now + windowMs });
+      return true;
+    }
+    hit.count += 1;
+    return hit.count <= limit;
+  };
+}
+const LIMIT = 20;
+const WINDOW_MS = 10 * 60_000;
 
 function oauthError(reply: FastifyReply, error: unknown) {
   if (error instanceof OAuthError) {
@@ -42,7 +65,11 @@ export async function oauthPublicRoutes(app: FastifyInstance) {
     app.get(path, async () => authorizationServerMetadata());
   }
 
+  const registerAllowed = perAddressLimit(LIMIT, WINDOW_MS);
   app.post("/oauth/register", { bodyLimit: 16 * 1024 }, async (request, reply) => {
+    if (!registerAllowed(request)) {
+      return reply.status(429).header("cache-control", "no-store").send({ error: "rate_limited", error_description: "Too many registrations from this address. Try again later." });
+    }
     try {
       return reply.status(201).header("cache-control", "no-store").send(await registerClient(request.body));
     } catch (error) {
@@ -69,7 +96,9 @@ export async function oauthPublicRoutes(app: FastifyInstance) {
 export async function oauthSessionRoutes(app: FastifyInstance) {
   // Clients send the browser here (through the dashboard's address). Signing in, if needed,
   // happens on the consent page.
+  const authorizeAllowed = perAddressLimit(LIMIT, WINDOW_MS);
   app.get<{ Querystring: AuthorizeQuery }>("/oauth/authorize", async (request, reply) => {
+    if (!authorizeAllowed(request)) throw new AppError(429, "rate_limited", "Too many connection requests from this address. Try again later.");
     return reply.redirect(await beginAuthorization(request.query));
   });
 

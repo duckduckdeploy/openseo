@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ChevronLeft, Download, Minus, Pin, Play, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useDeferredValue, useMemo, useState } from "react";
 import { DistributionChart, HistoryStrip, PositionTrend } from "@/components/tracking/charts";
 import {
   Check,
@@ -54,6 +54,9 @@ import { compareValues as compare } from "@/lib/url";
 import { keywordToolLabel, OpenInTool } from "@/components/research/tool-link";
 import { useProject } from "@/lib/hooks";
 import { toolLinks } from "@/lib/scope";
+
+/** Rows drawn at a time; "Show more" adds the next page. */
+const PAGE_SIZE = 100;
 
 const TABS = ["keywords", "features", "competitors", "runs", "settings"] as const;
 type TabId = (typeof TABS)[number];
@@ -226,20 +229,28 @@ function KeywordPanel({ trackerId, device, row, onClose }: { trackerId: string; 
   );
 }
 
-function AddKeywords({ tracker, onDone }: { tracker: TrackerDetail; onDone: () => void }) {
+function AddKeywords({ tracker, existing, onDone }: { tracker: TrackerDetail; existing: KeywordRow[]; onDone: () => void }) {
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const keywords = lines(text, true);
-  const extra = runPrice(keywords.length, tracker.devices.length, tracker.depth);
+  // Keywords already tracked are skipped here, so they neither count against the room left
+  // nor trip the server's 1,000 limit (it counts every keyword sent).
+  const tracked = useMemo(() => new Set(existing.map((row) => row.keyword.toLowerCase())), [existing]);
+  const fresh = keywords.filter((keyword) => !tracked.has(keyword));
+  const extra = runPrice(fresh.length, tracker.devices.length, tracker.depth);
   const room = 1000 - tracker.keywordCount;
   const add = useMutation({
-    mutationFn: () => api<{ added: number; skipped: number }>(`/trackers/${tracker.id}/keywords`, { method: "POST", body: { keywords } }),
+    mutationFn: async () => {
+      const skipped = keywords.length - fresh.length;
+      if (!fresh.length) return { added: 0, skipped };
+      const result = await api<{ added: number; skipped: number }>(`/trackers/${tracker.id}/keywords`, { method: "POST", body: { keywords: fresh } });
+      return { added: result.added, skipped: result.skipped + skipped };
+    },
     onSuccess: () => {
       setText("");
       // The tracker list and the project overview show keyword counts and run prices too.
       void queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id] });
       void queryClient.invalidateQueries({ queryKey: ["trackers", tracker.projectId] });
-      void queryClient.invalidateQueries({ queryKey: ["overview", tracker.projectId, "trackers"] });
     },
   });
   return (
@@ -254,15 +265,16 @@ function AddKeywords({ tracker, onDone }: { tracker: TrackerDetail; onDone: () =
         <Textarea value={text} onChange={(event) => setText(event.target.value)} rows={4} className="font-mono text-[13px]" autoFocus />
       </Field>
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" variant="primary" size="sm" loading={add.isPending} disabled={!keywords.length || keywords.length > room}>
-          Add {keywords.length ? num(keywords.length) : ""} {keywords.length === 1 ? "keyword" : "keywords"}
+        <Button type="submit" variant="primary" size="sm" loading={add.isPending} disabled={!keywords.length || fresh.length > room}>
+          Add {fresh.length ? num(fresh.length) : ""} {fresh.length === 1 ? "keyword" : "keywords"}
         </Button>
         <Button variant="ghost" size="sm" onClick={onDone}>
           Close
         </Button>
-        {keywords.length > 0 && <CostNote min={extra.min} max={extra.max} note="more per run" />}
+        {fresh.length > 0 && <CostNote min={extra.min} max={extra.max} note="more per run" />}
+        {keywords.length > fresh.length && <span className="text-xs text-muted">{num(keywords.length - fresh.length)} already tracked</span>}
       </div>
-      {keywords.length > room && <p className="text-xs text-neg">A tracker holds up to 1,000 keywords.</p>}
+      {fresh.length > room && <p className="text-xs text-neg">A tracker holds up to 1,000 keywords.</p>}
       {add.data && (
         <p role="status" className="text-[13px] text-muted">
           Added {add.data.added}
@@ -283,6 +295,9 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
   const [sort, setSort] = useState<Sort<SortKey> | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
+  // Filtering 1,000 rows on every keystroke lags typing; the table catches up a beat later.
+  const deferredSearch = useDeferredValue(search);
+  const [limit, setLimit] = useState(PAGE_SIZE);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -296,26 +311,33 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
     onSettled: () => void queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id, "results"] }),
   });
   const remove = useMutation({
-    mutationFn: () => api(`/trackers/${tracker.id}/keywords/delete`, { method: "POST", body: { ids: [...selected] } }),
+    mutationFn: (ids: string[]) => api(`/trackers/${tracker.id}/keywords/delete`, { method: "POST", body: { ids } }),
     onSuccess: () => {
       setSelected(new Set());
       setConfirmDelete(false);
       void queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id] });
       void queryClient.invalidateQueries({ queryKey: ["trackers", tracker.projectId] });
-      void queryClient.invalidateQueries({ queryKey: ["overview", tracker.projectId, "trackers"] });
     },
   });
 
   const all = results.data?.keywords;
   const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = deferredSearch.trim().toLowerCase();
     const filtered = (all ?? []).filter((row) => matches(row, filter) && (!term || row.keyword.includes(term)));
     return filtered.sort((a, b) => {
       // Without an explicit sort, pinned keywords lead and the rest follow by position.
       if (!sort) return Number(b.pinned) - Number(a.pinned) || compare(a.position, b.position, "asc") || a.keyword.localeCompare(b.keyword);
       return compare(a[sort.key], b[sort.key], sort.dir) || a.keyword.localeCompare(b.keyword);
     });
-  }, [all, filter, search, sort]);
+  }, [all, filter, deferredSearch, sort]);
+  const shown = rows.slice(0, limit);
+  // Only rows on screen can be removed, so a selection never reaches keywords hidden by the filter.
+  const selectedIds = shown.filter((row) => selected.has(row.id)).map((row) => row.id);
+  // A new filter, search or sort shows different rows: start again from the first page, unselected.
+  const reset = () => {
+    setSelected(new Set());
+    setLimit(PAGE_SIZE);
+  };
 
   const buckets = useMemo(() => {
     const positions = (all ?? []).map((row) => (row.status === "pending" || row.status === "error" ? undefined : row.position));
@@ -335,8 +357,12 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
   const { summary, runs, keywords } = results.data;
   const checked = runs.length > 0;
   const activeSort: Sort<SortKey> = sort ?? { key: "position", dir: "asc" };
-  const visibleSelected = rows.filter((row) => selected.has(row.id)).length;
+  const visibleSelected = selectedIds.length;
   const openRow = keywords.find((row) => row.id === openId) ?? null;
+  const sortBy = (next: Sort<SortKey>) => {
+    setSort(next);
+    reset();
+  };
   const toggle = (id: string, on: boolean) => {
     const next = new Set(selected);
     if (on) next.add(id);
@@ -386,9 +412,27 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
       <Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
           <div className="w-full sm:w-52">
-            <Input type="search" aria-label="Filter keywords" placeholder="Filter keywords" value={search} onChange={(event) => setSearch(event.target.value)} className="h-8!" />
+            <Input
+              type="search"
+              aria-label="Filter keywords"
+              placeholder="Filter keywords"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                reset();
+              }}
+              className="h-8!"
+            />
           </div>
-          <Select aria-label="Show" value={filter} onChange={(event) => setFilter(event.target.value as Filter)} className="h-8! w-auto!">
+          <Select
+            aria-label="Show"
+            value={filter}
+            onChange={(event) => {
+              setFilter(event.target.value as Filter);
+              reset();
+            }}
+            className="h-8! w-auto!"
+          >
             {FILTERS.map(([id, label]) => (
               <option key={id} value={id}>
                 {label}
@@ -396,9 +440,9 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
             ))}
           </Select>
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            {selected.size > 0 && (
+            {selectedIds.length > 0 && (
               <Button size="sm" variant="danger" onClick={() => setConfirmDelete(true)}>
-                <Trash2 className="size-3.5" aria-hidden /> Remove {selected.size}
+                <Trash2 className="size-3.5" aria-hidden /> Remove {selectedIds.length}
               </Button>
             )}
             <Button size="sm" onClick={() => setAdding(!adding)} aria-expanded={adding}>
@@ -431,7 +475,7 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
             </Button>
           </div>
         </div>
-        {adding && <AddKeywords tracker={tracker} onDone={() => setAdding(false)} />}
+        {adding && <AddKeywords tracker={tracker} existing={keywords} onDone={() => setAdding(false)} />}
         {pin.error && (
           <div className="border-b border-line p-3">
             <ErrorNote error={pin.error} />
@@ -454,27 +498,27 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
                     type="checkbox"
                     className="size-4 accent-accent"
                     aria-label="Select all shown keywords"
-                    checked={visibleSelected === rows.length}
+                    checked={visibleSelected === shown.length}
                     ref={(element) => {
-                      if (element) element.indeterminate = visibleSelected > 0 && visibleSelected < rows.length;
+                      if (element) element.indeterminate = visibleSelected > 0 && visibleSelected < shown.length;
                     }}
-                    onChange={(event) => setSelected(event.target.checked ? new Set(rows.map((row) => row.id)) : new Set())}
+                    onChange={(event) => setSelected(event.target.checked ? new Set(shown.map((row) => row.id)) : new Set())}
                   />
                 </th>
                 <th scope="col" className="w-8">
                   <span className="sr-only">Pin</span>
                 </th>
-                <SortTh label="Keyword" column="keyword" sort={activeSort} onSort={setSort} />
-                <SortTh label="Position" column="position" sort={activeSort} onSort={setSort} />
-                <SortTh label="Change" column="change" sort={activeSort} onSort={setSort} firstDir="desc" />
-                <SortTh label="Best" column="best" sort={activeSort} onSort={setSort} />
+                <SortTh label="Keyword" column="keyword" sort={activeSort} onSort={sortBy} />
+                <SortTh label="Position" column="position" sort={activeSort} onSort={sortBy} />
+                <SortTh label="Change" column="change" sort={activeSort} onSort={sortBy} firstDir="desc" />
+                <SortTh label="Best" column="best" sort={activeSort} onSort={sortBy} />
                 <th scope="col">Ranking URL</th>
                 <th scope="col">SERP features</th>
                 <th scope="col">History</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
+              {shown.map((row) => (
                 <tr key={row.id}>
                   <td>
                     <input type="checkbox" className="size-4 accent-accent" aria-label={`Select ${row.keyword}`} checked={selected.has(row.id)} onChange={(event) => toggle(row.id, event.target.checked)} />
@@ -525,6 +569,14 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
             </tbody>
           </Table>
         )}
+        {shown.length < rows.length && (
+          <div className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2">
+            <Button size="sm" onClick={() => setLimit(limit + PAGE_SIZE)}>
+              Show {num(Math.min(PAGE_SIZE, rows.length - shown.length))} more
+            </Button>
+            <span className="font-mono text-[11px] text-muted">Showing {num(shown.length)} of {num(rows.length)}</span>
+          </div>
+        )}
         {keywords.length > 0 && (
           <p className="border-t border-line px-4 py-2 font-mono text-[11px] text-muted">
             {rows.length} of {keywords.length} keywords{checked ? ` · last checked ${dateTime(runs[runs.length - 1]?.finishedAt)}` : " · not checked yet"}
@@ -536,8 +588,8 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
       <ConfirmDialog
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
-        onConfirm={() => remove.mutate()}
-        title={`Remove ${selected.size} ${selected.size === 1 ? "keyword" : "keywords"}?`}
+        onConfirm={() => remove.mutate(selectedIds)}
+        title={`Remove ${selectedIds.length} ${selectedIds.length === 1 ? "keyword" : "keywords"}?`}
         confirmLabel="Remove"
         danger
         pending={remove.isPending}
@@ -730,18 +782,31 @@ function RunsTab({ runs }: { runs: RankRun[] }) {
 function SettingsTab({ tracker, projectId }: { tracker: TrackerDetail; projectId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [devices, setDevices] = useState<Device[]>(tracker.devices);
-  const [schedule, setSchedule] = useState<Schedule>(tracker.schedule);
-  const [depth, setDepth] = useState<number>(tracker.depth);
+  // Only fields edited here are held locally; the rest follow the tracker, so a schedule changed
+  // in the page header shows here and is not sent back stale on save.
+  const [draft, setDraft] = useState<{ devices?: Device[]; schedule?: Schedule; depth?: number }>({});
+  const devices = draft.devices ?? tracker.devices;
+  const schedule = draft.schedule ?? tracker.schedule;
+  const depth = draft.depth ?? tracker.depth;
+  const setDevices = (next: Device[]) => setDraft({ ...draft, devices: next });
+  const setSchedule = (next: Schedule) => setDraft({ ...draft, schedule: next });
+  const setDepth = (next: number) => setDraft({ ...draft, depth: next });
   const [confirming, setConfirming] = useState(false);
   const price = runPrice(tracker.keywordCount, devices.length, depth);
-  const dirty = schedule !== tracker.schedule || depth !== tracker.depth || devices.join() !== tracker.devices.join();
+  const changes = {
+    ...(devices.join() !== tracker.devices.join() ? { devices } : {}),
+    ...(schedule !== tracker.schedule ? { schedule } : {}),
+    ...(depth !== tracker.depth ? { depth } : {}),
+  };
+  const dirty = Object.keys(changes).length > 0;
 
   const save = useMutation({
-    mutationFn: () => api(`/trackers/${tracker.id}`, { method: "PATCH", body: { devices, schedule, depth } }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id] });
+    mutationFn: () => api(`/trackers/${tracker.id}`, { method: "PATCH", body: changes }),
+    onSuccess: async () => {
       void queryClient.invalidateQueries({ queryKey: ["trackers", projectId] });
+      // Wait for the saved values before dropping the draft, so the form does not flash the old ones.
+      await queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id] });
+      setDraft({});
     },
   });
   const remove = useMutation({
@@ -855,7 +920,7 @@ function TrackerView() {
   const run = useRunPoll<RankRun>(["rank-run", runId], runId ? `/rank-runs/${runId}` : null, () => {
     void queryClient.invalidateQueries({ queryKey: ["tracker", trackerId] });
     void queryClient.invalidateQueries({ queryKey: ["trackers", projectId] });
-  });
+  }, activeFromList !== null);
   const start = useMutation({
     mutationFn: () => api<RankRun>(`/trackers/${trackerId}/runs`, { method: "POST" }),
     onSuccess: (created) => {
@@ -992,11 +1057,15 @@ const SCHEDULE_LABELS: Record<Schedule, string> = { daily: "Every day", weekly: 
  * How often the tracker checks on its own, changed in place. Checks run in the background on the
  * server and are saved, whether or not anyone has the page open.
  */
-function ScheduleControl({ tracker }: { tracker: { id: string; schedule: Schedule; nextRunAt: string | null; estimate: { min: number; max: number } } }) {
+function ScheduleControl({ tracker }: { tracker: { id: string; projectId: string; schedule: Schedule; nextRunAt: string | null; estimate: { min: number; max: number } } }) {
   const queryClient = useQueryClient();
   const save = useMutation({
     mutationFn: (schedule: Schedule) => api(`/trackers/${tracker.id}`, { method: "PATCH", body: { schedule } }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id] });
+      // The tracker list and the project overview show the schedule too.
+      void queryClient.invalidateQueries({ queryKey: ["trackers", tracker.projectId] });
+    },
   });
   return (
     <div className="flex flex-col items-start gap-1.5">

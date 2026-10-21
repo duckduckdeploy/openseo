@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { dataDb, schema } from "../db";
 import { requireProject, requireUser } from "../lib/context";
-import { parse } from "../lib/errors";
+import { AppError, parse } from "../lib/errors";
 import { dispatch } from "../jobs/dispatch";
 import { estimateGrid, failGrid, requireGrid } from "../services/geogrid";
 
@@ -34,8 +34,11 @@ export async function localRoutes(app: FastifyInstance) {
       const { size } = parse(gridInput.pick({ size: true }), request.body ?? {});
       return { ok: true, data: { estimate: estimateGrid(size), dryRun: true } };
     }
-    const input = parse(gridInput, request.body);
+    const { maxCostUsd, ...input } = parse(gridInput.extend({ maxCostUsd: z.number().positive().max(100000).optional() }), request.body);
     const estimate = estimateGrid(input.size);
+    if (maxCostUsd != null && estimate.max > maxCostUsd) {
+      throw new AppError(400, "cost_ceiling_exceeded", `A ${input.size}x${input.size} grid costs $${estimate.max.toFixed(2)}, above the $${maxCostUsd.toFixed(2)} ceiling.`, { estimate });
+    }
     const [grid] = await dataDb.insert(schema.geoGrids).values({ projectId: project.id, ...input }).returning();
     if (!grid) throw new Error("Insert failed");
     await dispatch("geogrid.run", { gridId: grid.id }, (message) => failGrid(grid.id, message));

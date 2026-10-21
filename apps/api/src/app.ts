@@ -29,11 +29,15 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Browsers reach the API through the app's /api proxy; CORS is for direct API and MCP clients.
   // The public OAuth endpoints carry no cookies, so browser-based MCP clients may call them from
-  // any origin; everything else only from the dashboard, with credentials.
+  // any origin; everything else only from the dashboard, with credentials. /mcp too is open to
+  // any origin without credentials: it authenticates by bearer token only, never the cookie.
   const isPublicOAuth = (url: string) => url.startsWith("/.well-known/") || url.startsWith("/oauth/");
+  const isMcp = (url: string) => url === "/mcp" || url.startsWith("/mcp?") || url.startsWith("/mcp/");
   await app.register(cors, {
     delegator: (request, callback) => {
       if (isPublicOAuth(request.url ?? "")) callback(null, { origin: true, credentials: false });
+      // Browser clients read www-authenticate on a 401 to find the OAuth metadata.
+      else if (isMcp(request.url ?? "")) callback(null, { origin: true, credentials: false, exposedHeaders: ["www-authenticate"] });
       // The website's free tools: from the website only, never with cookies.
       else if ((request.url ?? "").startsWith("/public/")) callback(null, { origin: [env.WEB_URL], credentials: false });
       else callback(null, { origin: [env.APP_URL], credentials: true });
@@ -54,7 +58,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     }
     const status = (error as { statusCode?: number }).statusCode;
     if (status && status < 500) {
-      return reply.status(status).send({ ok: false, error: { code: "bad_request", message: (error as Error).message } });
+      const code = ({ 404: "not_found", 413: "payload_too_large", 415: "unsupported_media_type", 429: "rate_limited" } as Record<number, string>)[status] ?? "bad_request";
+      return reply.status(status).send({ ok: false, error: { code, message: (error as Error).message } });
     }
     request.log.error(error);
     return reply.status(500).send({ ok: false, error: { code: "internal_error", message: "Something went wrong" } });

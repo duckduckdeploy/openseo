@@ -29,3 +29,4 @@ description: Find keywords worth targeting from a seed topic, group them into to
 5. **Choose.** Rank the clusters by fit with the business goal, then by volume against difficulty. Recommend three to five to start with, and say why.
 6. **Save.** With the user's go-ahead, save the chosen keywords with `save_keywords`. Pass the metrics you already have, and tags by cluster, for example `topic:drain-cleaning`.
 7. **Next.** Offer to track them: `create_rank_tracker` plus `add_rank_keywords` are free to set up, and a check costs $0.02 (top 20), $0.05 (top 50) or $0.10 (top 100, the default) per keyword and device; suggest top 20 for daily tracking on a budget.
+   - A tracker is `manual` by default and only spends when you call `run_rank_check`. Pass a `schedule` (daily, weekly or monthly) only when the user agrees to that recurring paid run, and say what each run costs.

@@ -17,7 +17,10 @@ const darkMedia = (theme: Theme) => (theme === 'dark' ? 'all' : theme === 'light
  * Runs in <head> before the first paint, so a page never flashes the wrong theme: sets
  * <html data-theme> from the cookie, then localStorage. No choice means the system setting.
  * With a choice, it also points every dark screenshot <source data-theme-dark> at that theme as
- * the parser (or React) adds it, before the image is picked, so only one version downloads.
+ * the parser (or React) adds it. Mutation observers run as microtasks, so for images in the
+ * server HTML the browser may already have picked a source by then: a reader whose choice differs
+ * from the system setting can download both versions of the first few images. Later ones, and
+ * everything React adds, download only the one on screen.
  */
 export const themeScript = `(function(){try{var d=document.documentElement,m=document.cookie.match(/(?:^|; )${THEME_KEY}=(light|dark)/),t=m&&m[1];if(!t){try{t=localStorage.getItem("${THEME_KEY}")}catch(e){}}if(t==="light"||t==="dark")d.setAttribute("data-theme",t);function fix(n,q){if(n.nodeType!==1)return;if(n.matches("source[data-theme-dark]"))n.media=q;else{var s=n.querySelectorAll("source[data-theme-dark]");for(var i=0;i<s.length;i++)s[i].media=q}}new MutationObserver(function(r){var a=d.getAttribute("data-theme");if(a!=="light"&&a!=="dark")return;var q=a==="dark"?"all":"not all";for(var i=0;i<r.length;i++)for(var j=0;j<r[i].addedNodes.length;j++)fix(r[i].addedNodes[j],q)}).observe(d,{childList:true,subtree:true})}catch(e){}})()`;
 

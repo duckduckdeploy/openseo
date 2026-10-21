@@ -33,10 +33,30 @@ export function makeIssue(type: IssueType, url: string, detail?: string, related
   return issue;
 }
 
-const NOINDEX = /\b(noindex|none)\b/i;
+// Directives whose value follows a colon, so "max-image-preview: none" is not a user-agent prefix.
+const VALUED_DIRECTIVES = new Set(['unavailable_after', 'max-snippet', 'max-image-preview', 'max-video-preview']);
 
-/** Sets `indexable` and `indexabilityReason` from the page's own signals. */
-export function computeIndexability(page: PageResult): { indexable: boolean; reason: IndexabilityReason } {
+/**
+ * True when a robots meta / X-Robots-Tag value carries a whole `noindex` or `none` directive that applies to us.
+ * `bingbot: noindex` style entries count only for googlebot, `*` or one of `agents`; unprefixed ones always count.
+ */
+export function hasNoindex(value: string, agents: string[] = []): boolean {
+  const ours = new Set(['googlebot', '*', ...agents.map((a) => a.toLowerCase())]);
+  let applies = true;
+  for (const part of value.split(',')) {
+    let directive = part.trim().toLowerCase();
+    const prefixed = /^([^\s:]+)\s*:\s*(.*)$/.exec(directive);
+    if (prefixed && !VALUED_DIRECTIVES.has(prefixed[1] ?? '')) {
+      applies = ours.has(prefixed[1] ?? '');
+      directive = (prefixed[2] ?? '').trim();
+    }
+    if (applies && (directive === 'noindex' || directive === 'none')) return true;
+  }
+  return false;
+}
+
+/** Sets `indexable` and `indexabilityReason` from the page's own signals. `agent` is our robots user-agent token. */
+export function computeIndexability(page: PageResult, agent?: string): { indexable: boolean; reason: IndexabilityReason } {
   const no = (reason: IndexabilityReason): { indexable: boolean; reason: IndexabilityReason } => ({ indexable: false, reason });
   switch (page.fetchClass) {
     case 'robots_blocked':
@@ -55,8 +75,9 @@ export function computeIndexability(page: PageResult): { indexable: boolean; rea
     case 'ok':
       break;
   }
-  if (page.xRobotsTag && NOINDEX.test(page.xRobotsTag)) return no('noindex-header');
-  if (page.metaRobots && NOINDEX.test(page.metaRobots)) return no('noindex-meta');
+  const agents = agent ? [agent] : [];
+  if (page.xRobotsTag && hasNoindex(page.xRobotsTag, agents)) return no('noindex-header');
+  if (page.metaRobots && hasNoindex(page.metaRobots, agents)) return no('noindex-meta');
   const canonical = page.canonical ?? page.headerCanonical;
   if (canonical && canonical !== page.url) return no('canonicalised');
   return { indexable: true, reason: 'ok' };
@@ -134,7 +155,8 @@ export function pageIssues(page: PageResult, thresholds: Thresholds = DEFAULT_TH
   else if (description.length > thresholds.descriptionMaxLength) add('meta-description-too-long', `${description.length} characters`);
   else if (description.length < thresholds.descriptionMinLength) add('meta-description-too-short', `${description.length} characters`);
 
-  if (page.h1s.length === 0) add('missing-h1');
+  // A truncated body lacks its tail, so absence-based checks (H1, links, word count) are skipped.
+  if (page.h1s.length === 0 && !page.truncated) add('missing-h1');
   else if (page.h1s.length > 1) add('multiple-h1', `${page.h1s.length} H1s`);
 
   let previous = 0;
@@ -146,7 +168,7 @@ export function pageIssues(page: PageResult, thresholds: Thresholds = DEFAULT_TH
     previous = heading.level;
   }
 
-  if (page.indexable && page.wordCount < thresholds.thinContentWords) add('thin-content', `${page.wordCount} words`);
+  if (page.indexable && !page.truncated && page.wordCount < thresholds.thinContentWords) add('thin-content', `${page.wordCount} words`);
   if (page.imagesMissingAlt > 0) {
     add(
       'images-missing-alt',
@@ -154,7 +176,7 @@ export function pageIssues(page: PageResult, thresholds: Thresholds = DEFAULT_TH
       page.images.filter((i) => i.alt === null && /^https?:\/\//i.test(i.src)).map((i) => i.src),
     );
   }
-  if (page.indexable && page.internalLinks.length + page.externalLinks.length === 0) add('no-outgoing-links');
+  if (page.indexable && !page.truncated && page.internalLinks.length + page.externalLinks.length === 0) add('no-outgoing-links');
   if (!page.viewport) add('missing-viewport');
   if (!page.lang) add('missing-lang');
   if (!page.openGraph['og:title'] || !page.openGraph['og:image']) {
@@ -189,6 +211,12 @@ export interface CrawlFacts {
   /** Sitemap discovery ran (it can be switched off). */
   sitemapChecked: boolean;
   sitemapFound: boolean;
+  /** Sitemap discovery hit its document/URL limits, so the sitemap URL set is partial. */
+  sitemapCapped?: boolean;
+  /** Sitemaps skipped because they exceeded the size limit. */
+  sitemapsTooLarge?: string[];
+  /** Origins whose robots.txt answered 5xx/429, so crawling was treated as disallowed. */
+  robotsUnavailable?: string[];
   rateLimitStopped: boolean;
   externalLinks: ExternalLinkCheck[];
   thresholds: Thresholds;
@@ -287,7 +315,7 @@ export function crossPageIssues(pages: PageResult[], facts: CrawlFacts): Issue[]
   };
   reportDuplicates('duplicate-title', 'Title', (p) => p.title);
   reportDuplicates('duplicate-meta-description', 'Meta description', (p) => p.metaDescription);
-  reportDuplicates('duplicate-content', 'Content', (p) => (p.wordCount > 0 ? p.contentHash : null));
+  reportDuplicates('duplicate-content', 'Content', (p) => (p.wordCount > 0 && !p.truncated ? p.contentHash : null));
 
   for (const page of pages) {
     if (!isOkHtml(page)) continue;
@@ -328,14 +356,16 @@ export function crossPageIssues(pages: PageResult[], facts: CrawlFacts): Issue[]
     }
   }
 
-  // Sitemap consistency.
+  // Sitemap consistency. "Missing from sitemap" needs the full sitemap URL set.
+  const tooLarge = facts.sitemapsTooLarge ?? [];
+  const sitemapComplete = facts.sitemapFound && !facts.sitemapCapped && tooLarge.length === 0;
   for (const page of pages) {
     const definitive = ['ok', 'redirect', 'client_error', 'server_error', 'robots_blocked'].includes(page.fetchClass);
     if (page.inSitemap && !page.indexable && definitive) {
       issues.push(makeIssue('non-indexable-in-sitemap', page.url, `Reason: ${page.indexabilityReason}`));
     }
     if (!isOkHtml(page)) continue;
-    if (facts.sitemapFound && page.indexable && !page.inSitemap) issues.push(makeIssue('page-not-in-sitemap', page.url));
+    if (sitemapComplete && page.indexable && !page.inSitemap) issues.push(makeIssue('page-not-in-sitemap', page.url));
     if (
       facts.complete &&
       page.inSitemap &&
@@ -346,8 +376,14 @@ export function crossPageIssues(pages: PageResult[], facts: CrawlFacts): Issue[]
       issues.push(makeIssue('orphan-page', page.url, 'In the sitemap but not linked from any crawled page'));
     }
   }
-  if (facts.sitemapChecked && !facts.sitemapFound && pages.some(isOkHtml)) {
+  for (const sitemap of tooLarge) {
+    issues.push(makeIssue('sitemap-too-large', facts.startUrl, `${sitemap} exceeds the size limit`, [sitemap]));
+  }
+  if (facts.sitemapChecked && !facts.sitemapFound && tooLarge.length === 0 && pages.some(isOkHtml)) {
     issues.push(makeIssue('sitemap-missing', facts.startUrl));
+  }
+  for (const origin of facts.robotsUnavailable ?? []) {
+    issues.push(makeIssue('robots-txt-unavailable', facts.startUrl, `${origin}/robots.txt returned a server error`, [`${origin}/robots.txt`]));
   }
   if (facts.rateLimitStopped) {
     issues.push(makeIssue('crawl-rate-limited', facts.startUrl, 'Crawl stopped after repeated 429 responses'));

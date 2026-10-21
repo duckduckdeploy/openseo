@@ -21,10 +21,11 @@ function toHeaders(request: FastifyRequest): Headers {
 export async function resolveUser(request: FastifyRequest): Promise<AuthedUser | null> {
   const authorization = request.headers.authorization;
   // An OAuth access token, issued to an MCP client such as ChatGPT. Checked before API keys,
-  // which share the oseo_ prefix.
+  // which share the oseo_ prefix; an API key whose random part happens to start with at_ falls
+  // through to the key lookup below.
   if (authorization?.startsWith("Bearer oseo_at_")) {
     const user = await userForAccessToken(authorization.slice("Bearer ".length).trim());
-    return user ? { ...user, via: "oauth" } : null;
+    if (user) return { ...user, via: "oauth" };
   }
   if (authorization?.startsWith("Bearer oseo_")) {
     const hash = sha256(authorization.slice("Bearer ".length).trim());

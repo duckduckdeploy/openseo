@@ -72,8 +72,8 @@ export function YepapiOffer({ examples = false, tone = 'white' }: YepapiOfferPro
           </ButtonLink>
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-faint">
-          The free credit is YepAPI’s limited-time offer and may end. After it, you pay YepAPI per lookup, at the price OpenSEO
-          shows before each one runs.{' '}
+          The free credit is YepAPI’s limited-time offer and may end. After it, you pay YepAPI per lookup at its price. OpenSEO
+          lists every call with its cost and a monthly limit caps what you spend.{' '}
           {examples ? null : (
             <Link href="/pricing" className="underline underline-offset-4 hover:text-ink">
               See pricing

@@ -3,7 +3,7 @@ import { Callout, DocTable, Step, Steps } from '@/components/doc-blocks';
 import { CodeBlock } from '@/components/code-block';
 import { DocArticle } from '@/components/doc-page';
 import { getDoc } from '@/content/docs';
-import { hasRepositoryUrl, selfHostClone } from '@/content/snippets';
+import { selfHostClone } from '@/content/snippets';
 import { pageMeta } from '@/lib/metadata';
 
 const slug = 'self-hosting';
@@ -87,12 +87,6 @@ export default function SelfHostingPage() {
         </Step>
         <Step title="Get the code">
           <CodeBlock label="Terminal" code={selfHostClone} />
-          {hasRepositoryUrl ? null : (
-            <p>
-              The public repository link is not published yet. Replace <code>&lt;repository-url&gt;</code> with it once
-              it is.
-            </p>
-          )}
         </Step>
         <Step title="Set two secrets">
           <CodeBlock label="Terminal" code={secrets} />

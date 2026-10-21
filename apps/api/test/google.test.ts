@@ -129,6 +129,18 @@ describe("Search Console", () => {
     expect(state.accounts).toHaveLength(1);
   });
 
+  it("only lets a signed-in session link or unlink a property, not an API key", async () => {
+    const user = await connected("gsc");
+    const { key } = await user.api.ok<{ key: string }>("POST", "/api-keys", { name: "agent" });
+    const agent = (await import("./client")).client({ apiKey: key });
+    const base = `/api/projects/${user.project.id}/google`;
+    expect((await agent.request("PUT", `${base}/gsc`, { accountId: user.account.id, siteUrl: "sc-domain:acme.com" })).status).toBe(403);
+    expect((await agent.request("PUT", `${base}/ga4`, { accountId: user.account.id, propertyId: "properties/1" })).status).toBe(403);
+    await user.api.ok("PUT", `/projects/${user.project.id}/google/gsc`, { accountId: user.account.id, siteUrl: "sc-domain:acme.com" });
+    expect((await agent.request("DELETE", `${base}/gsc`)).status).toBe(403);
+    expect((await user.api.ok("GET", `/projects/${user.project.id}/google`)).gsc).toMatchObject({ siteUrl: "sc-domain:acme.com" });
+  });
+
   it("reports totals against the previous period, striking-distance queries and countries, for free", async () => {
     const user = await withSearchConsole();
     const yepBefore = harness.fake.requests.length;

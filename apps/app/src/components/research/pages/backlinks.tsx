@@ -250,7 +250,7 @@ const pageColumns = (market: Market | undefined): Column<LinkedPage>[] => [
       <span className="flex max-w-96 items-center gap-1">
         <span className="min-w-0">
           {row.title && <span className="block truncate font-medium">{row.title}</span>}
-          <UrlCell url={row.url} className="max-w-80" />
+          <UrlCell url={row.url} market={market} className="max-w-80" />
         </span>
         {row.url && <OpenInTool href={toolLinks.page(row.url, market)} label={`Analyse page ${row.url}`} />}
       </span>
@@ -446,11 +446,7 @@ export function Backlinks({ project }: { project: Project }) {
         pending={summary.loading}
         button="Check backlinks"
       >
-        {(draft) => (
-          <>
-            <span className="text-xs text-muted">Backlinks are worldwide, so there is no country to pick.</span>
-          </>
-        )}
+        <span className="text-xs text-muted">Backlinks are worldwide, so there is no country to pick.</span>
       </SearchBar>
 
       <ViewErrors lookups={lookups} />

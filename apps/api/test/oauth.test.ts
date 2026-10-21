@@ -94,6 +94,24 @@ describe("OAuth discovery", () => {
 });
 
 describe("OAuth registration", () => {
+  it("limits registrations per address", async () => {
+    const app = await getApp();
+    const register = () =>
+      app.inject({ method: "POST", url: "/oauth/register", remoteAddress: "203.0.113.9", payload: { redirect_uris: [REDIRECT] } });
+    for (let i = 0; i < 20; i++) expect((await register()).statusCode).toBe(201);
+    const limited = await register();
+    expect(limited.statusCode).toBe(429);
+    expect(limited.json().error).toBe("rate_limited");
+  });
+
+  it("lets browser MCP clients call /mcp from any origin, without credentials", async () => {
+    const res = await raw("POST", "/mcp", { headers: { origin: "https://inspector.example" }, json: {} });
+    expect(res.status).toBe(401);
+    expect(res.headers["access-control-allow-origin"]).toBe("https://inspector.example");
+    expect(res.headers["access-control-allow-credentials"]).toBeUndefined();
+    expect(res.headers["access-control-expose-headers"]).toBe("www-authenticate");
+  });
+
   it("registers public clients with https or loopback redirect URIs only", async () => {
     const res = await raw("POST", "/oauth/register", { json: { client_name: "ChatGPT", redirect_uris: [REDIRECT] } });
     expect(res.status).toBe(201);

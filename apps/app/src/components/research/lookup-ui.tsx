@@ -7,27 +7,17 @@ import { type ReactNode, useState } from "react";
 import { Button, CostNote, ErrorNote, Select } from "@/components/ui";
 import { ApiError, api, dateTime, num } from "@/lib/api";
 import { useProjects } from "@/lib/hooks";
-import { downloadCsv, type Estimate, type LookupQuery, type LookupResult, useLookup } from "@/lib/lookup";
+import { downloadCsv, type Estimate, type LookupQuery } from "@/lib/lookup";
 import { isToolsScope } from "@/lib/scope";
 import type { KeywordToSave } from "./types";
-
-/**
- * useLookup that keeps showing the last successful result while the next run (another page,
- * a refresh, changed filters) is in flight, together with the input that produced it.
- */
-export function useStickyLookup<T, I extends object>(projectId: string, name: string) {
-  const lookup = useLookup<T, I>(projectId, name);
-  const [last, setLast] = useState<{ result: LookupResult<T>; input: I } | null>(null);
-  if (lookup.result && lookup.input && last?.result !== lookup.result) setLast({ result: lookup.result, input: lookup.input });
-  return { ...lookup, last };
-}
 
 export type EstimateQuery = { data?: Estimate; error: unknown; isPending: boolean; stale?: boolean };
 
 /**
- * Price of a lookup before it runs. Hidden while the form is incomplete. While the input has
- * changed since the price was computed it says "Checking price…" rather than show an old figure;
- * the SEO tools still run on Enter at once; pages with larger spends keep Run disabled meanwhile.
+ * Price of a lookup before it runs, for the project pages that run one on demand (the research
+ * tools show none). Hidden while the form is incomplete. While the input has changed since the
+ * price was computed it says "Checking price…" rather than show an old figure; keep Run disabled
+ * meanwhile.
  */
 export function Price({ estimate, active = true, note }: { estimate: EstimateQuery; active?: boolean; note?: string }) {
   if (!active) return null;
@@ -44,66 +34,24 @@ export function Price({ estimate, active = true, note }: { estimate: EstimateQue
   return <span className="font-mono text-xs text-faint">Checking price…</span>;
 }
 
-export function sumEstimates(...parts: (Estimate | undefined)[]): Estimate | undefined {
-  if (parts.some((part) => !part)) return undefined;
-  const all = parts as Estimate[];
-  const round = (value: number) => Math.round(value * 1e4) / 1e4;
-  return {
-    min: round(all.reduce((total, part) => total + part.min, 0)),
-    max: all.some((part) => part.max == null) ? null : round(all.reduce((total, part) => total + (part.max as number), 0)),
-  };
-}
-
-/** When a finished lookup was fetched, and its refresh. */
-export function ResultMeta({
-  result,
-  label,
-  onRefresh,
-  pending,
-  children,
-}: {
-  result: Pick<LookupResult<unknown>, "fetchedAt">;
-  label?: ReactNode;
-  onRefresh?: () => void;
-  pending?: boolean;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      <p className="min-w-0 font-mono text-xs text-muted">
-        {label && <span className="text-ink">{label} · </span>}
-        fetched {dateTime(result.fetchedAt)}
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        {children}
-        {onRefresh && (
-          <span className="inline-flex flex-wrap items-center gap-2">
-            <Button size="sm" variant="ghost" onClick={onRefresh} loading={pending}>
-              {!pending && <RefreshCw className="size-3.5" aria-hidden />} Refresh
-            </Button>
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /**
  * When a whole view was fetched, with one refresh for all its lookups. A view is
- * one search: its lookups run together and are refreshed together.
+ * one search: its lookups run together and are refreshed together. `refresh` narrows what
+ * Refresh pays for, when some lookups follow from others: metrics keyed by a SERP's URLs are
+ * left out, as the fresh SERP gives them their new input and they load from there.
  */
-export function ViewMeta({ lookups, label }: { lookups: LookupQuery<unknown>[]; label?: ReactNode }) {
+export function ViewMeta({ lookups, refresh = lookups, label }: { lookups: LookupQuery<unknown>[]; refresh?: LookupQuery<unknown>[]; label?: ReactNode }) {
   const done = lookups.filter((lookup) => lookup.result);
   if (!done.length) return null;
   const fetched = done.map((lookup) => lookup.result?.fetchedAt ?? "").sort().at(-1);
-  const refreshing = lookups.some((lookup) => lookup.refreshing);
+  const refreshing = refresh.some((lookup) => lookup.refreshing);
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <p className="min-w-0 text-[13px] text-muted">
         {label && <>{label} · </>}
         fetched {dateTime(fetched)}
       </p>
-      <Button size="sm" variant="ghost" loading={refreshing} onClick={() => void Promise.all(lookups.map((lookup) => lookup.refresh()))}>
+      <Button size="sm" variant="ghost" loading={refreshing} onClick={() => void Promise.all(refresh.map((lookup) => lookup.refresh()))}>
         {!refreshing && <RefreshCw className="size-3.5" aria-hidden />} Refresh
       </Button>
     </div>

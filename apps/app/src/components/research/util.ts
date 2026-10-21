@@ -99,13 +99,44 @@ export function splitLines(value: string, { commas = false }: { commas?: boolean
 }
 
 /**
- * Share of searches that click an organic result at positions 1 to 10: a typical desktop curve
- * from public click-through studies. Used only to estimate visits, and labelled as an estimate.
+ * Share of searches that click an organic result at positions 1 to 100. Positions 1 to 10 follow
+ * a typical desktop curve from public click-through studies. Past page one the studies thin out,
+ * so the tail decays geometrically from 1% at position 11 to 0.1% at position 100. Used only to
+ * estimate visits, and labelled as an estimate.
  */
-const CTR = [0.28, 0.15, 0.11, 0.08, 0.07, 0.05, 0.04, 0.03, 0.03, 0.025];
+const CTR = [
+  0.28, 0.15, 0.11, 0.08, 0.07, 0.05, 0.04, 0.03, 0.03, 0.025,
+  ...Array.from({ length: 90 }, (_, index) => 0.01 * 0.1 ** (index / 89)),
+];
 
-export const estimatedVisits = (volume: N, position: N) =>
-  finite(volume) && finite(position) && position >= 1 && position <= CTR.length ? Math.round(volume * (CTR[position - 1] as number)) : null;
+export const estimatedVisits = (volume: N, position: N) => {
+  if (!finite(volume) || !finite(position)) return null;
+  const rank = Math.round(position);
+  return rank >= 1 && rank <= CTR.length ? Math.round(volume * (CTR[rank - 1] as number)) : null;
+};
+
+export type DifficultyBand = "easy" | "medium" | "hard";
+
+/**
+ * Keyword difficulty 0-100 in words (the gauge) and in three bands (pill colours, the checker's
+ * groups). The bands group the words: easy is Easy and Fairly easy (under 30), medium is Medium
+ * (30-49), hard is Hard and Very hard (50 and up). The score is rounded first, so the number shown
+ * and its band always agree. Null when there is no score.
+ */
+export function difficultyLevel(value: N): { score: number; word: string; band: DifficultyBand } | null {
+  if (!finite(value)) return null;
+  const score = Math.min(100, Math.max(0, Math.round(value)));
+  const word = score < 15 ? "Easy" : score < 30 ? "Fairly easy" : score < 50 ? "Medium" : score < 70 ? "Hard" : "Very hard";
+  const band: DifficultyBand = score < 30 ? "easy" : score < 50 ? "medium" : "hard";
+  return { score, word, band };
+}
+
+/** The three difficulty bands with their score ranges, as difficultyLevel draws them. */
+export const DIFFICULTY_BANDS = [
+  { key: "easy", label: "Easy", note: "0–29" },
+  { key: "medium", label: "Medium", note: "30–49" },
+  { key: "hard", label: "Hard", note: "50–100" },
+] as const satisfies readonly { key: DifficultyBand; label: string; note: string }[];
 
 const QUESTION = /^(how|what|why|when|where|which|who|whose|can|could|does|do|did|is|are|was|should|will|would)\b/i;
 export const isQuestion = (keyword: string) => QUESTION.test(keyword.trim()) || keyword.trim().endsWith("?");

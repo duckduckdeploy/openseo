@@ -25,6 +25,7 @@ const text = (value: unknown): ToolResult => {
   if (body.length > MAX_RESULT_CHARS) body = `${body.slice(0, MAX_RESULT_CHARS)}\n… truncated. Ask for fewer rows (lower limit) or a narrower filter.`;
   return { content: [{ type: "text", text: body }] };
 };
+const dryRun = z.boolean().optional().describe("Return the price estimate only. Spends nothing.");
 const fail = (message: string): ToolResult => ({ content: [{ type: "text", text: message }], isError: true });
 
 /**
@@ -120,7 +121,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
         ...(lookup.input.shape as Shape),
         project_id: projectId,
         max_cost_usd: maxCost.optional(),
-        dry_run: z.boolean().optional().describe("Return the price estimate only. Spends nothing."),
+        dry_run: dryRun,
         refresh: z.boolean().optional().describe("Ignore the cache and pay for fresh data."),
       },
       async (a) => {
@@ -187,7 +188,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   );
   tool(
     "create_rank_tracker",
-    "Create a Google rank tracker for a domain in one location. Creating it spends nothing. depth is how many results each check reads: 20 ($0.02 per keyword and device), 50 ($0.05) or 100 ($0.10, the default). SERP features count toward the depth.",
+    "Create a Google rank tracker for a domain in one location. Creating it spends nothing, and it only runs when you call run_rank_check unless you set a schedule: daily, weekly or monthly makes a paid run every period with no further confirmation, each costing keywords x devices x $0.02, $0.05 or $0.10 by depth. Leave schedule as manual (the default) unless the user agreed to that recurring spend. depth is how many results each check reads: 20 ($0.02 per keyword and device), 50 ($0.05) or 100 ($0.10, the default). SERP features count toward the depth.",
     {
       project_id: projectId,
       domain: z.string().min(3),
@@ -197,7 +198,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
       longitude: z.number().optional(),
       language: z.string().optional(),
       devices: z.array(z.enum(["desktop", "mobile"])).min(1).max(2).optional(),
-      schedule: z.enum(["manual", "daily", "weekly", "monthly"]).optional(),
+      schedule: z.enum(["manual", "daily", "weekly", "monthly"]).optional().describe("Default manual. Any other value spends on every scheduled run."),
       depth: z.union([z.literal(20), z.literal(50), z.literal(100)]).optional().describe("Results per check: 20, 50 or 100 (default)"),
       keywords: z.array(z.string()).max(1000).optional(),
     },
@@ -210,7 +211,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
         longitude: a.longitude,
         language: a.language,
         devices: a.devices,
-        schedule: a.schedule,
+        schedule: a.schedule ?? "manual",
         depth: a.depth,
         keywords: a.keywords,
       }),
@@ -224,13 +225,15 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   tool(
     "run_rank_check",
     "Check every keyword in a tracker now. Runs in the background; poll get_rank_results. Each keyword and device costs $0.02, $0.05 or $0.10 by the tracker's depth (20, 50 or 100 results); the total is in list_rank_trackers (estimate).",
-    { tracker_id: z.string().uuid(), max_cost_usd: maxCost },
+    { tracker_id: z.string().uuid(), max_cost_usd: maxCost.optional().describe("Required unless dry_run"), dry_run: dryRun },
     async (a) => {
-      const tracker = (await rest("GET", `/trackers/${a.tracker_id}`)) as { estimate: { max: number } };
-      if (tracker.estimate.max > a.max_cost_usd) {
-        throw new Error(`This check can cost up to $${tracker.estimate.max.toFixed(2)}, above max_cost_usd ($${a.max_cost_usd.toFixed(2)}).`);
+      if (a.dry_run) {
+        const tracker = (await rest("GET", `/trackers/${a.tracker_id}`)) as { keywordCount: number; devices: string[]; depth: number; estimate: unknown };
+        return { dryRun: true, estimate: tracker.estimate, keywordCount: tracker.keywordCount, devices: tracker.devices, depth: tracker.depth };
       }
-      return rest("POST", `/trackers/${a.tracker_id}/runs`, {});
+      if (a.max_cost_usd == null) throw new Error("Pass max_cost_usd, or dry_run: true to see the price first.");
+      // The API prices the run again just before it starts, so keywords added meanwhile count.
+      return rest("POST", `/trackers/${a.tracker_id}/runs`, { maxCostUsd: a.max_cost_usd });
     },
   );
   tool(
@@ -317,9 +320,11 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
       max_pages: z.number().int().min(1).max(5000).optional(),
       render_js: z.boolean().optional(),
       max_cost_usd: maxCost.optional().describe("Required when render_js is true"),
+      dry_run: dryRun,
     },
     async (a) => {
       const pages = a.max_pages ?? 100;
+      if (a.dry_run) return rest("POST", `/projects/${await resolveProject(a.project_id)}/audits?dryRun=1`, { maxPages: pages, renderJs: a.render_js ?? false });
       // The same rounded figure the API quotes, so a ceiling equal to the quoted price passes.
       const worst = estimateAudit(pages, true).max;
       if (a.render_js && (a.max_cost_usd == null || worst > a.max_cost_usd)) {
@@ -369,11 +374,14 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
       center_longitude: z.number(),
       size: z.union([z.literal(3), z.literal(5), z.literal(7), z.literal(9)]).optional(),
       spacing_m: z.number().int().min(100).max(20000).optional().describe("Distance between grid points in metres. Default 1000."),
-      max_cost_usd: maxCost,
+      max_cost_usd: maxCost.optional().describe("Required unless dry_run"),
+      dry_run: dryRun,
     },
     async (a) => {
       const size = a.size ?? 5;
       const cost = estimateGrid(size).max;
+      if (a.dry_run) return { dryRun: true, estimate: estimateGrid(size), keyword: a.keyword, placeName: a.place_name, size, spacingM: a.spacing_m ?? 1000 };
+      if (a.max_cost_usd == null) throw new Error("Pass max_cost_usd, or dry_run: true to see the price first.");
       if (cost > a.max_cost_usd) throw new Error(`A ${size}x${size} grid costs $${cost.toFixed(2)}, above max_cost_usd ($${a.max_cost_usd.toFixed(2)}).`);
       return rest("POST", `/projects/${await resolveProject(a.project_id)}/geo-grids`, {
         keyword: a.keyword,
@@ -383,6 +391,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
         centerLng: a.center_longitude,
         size,
         spacingM: a.spacing_m ?? 1000,
+        maxCostUsd: a.max_cost_usd,
       });
     },
   );

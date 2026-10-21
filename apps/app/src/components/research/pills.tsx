@@ -3,18 +3,18 @@ import type { ReactNode } from "react";
 import { cx } from "@/components/ui";
 import type { N, S } from "./types";
 import { safeHref } from "@/lib/url";
-import { finite, urlPath } from "./util";
-import { toolLinks } from "@/lib/scope";
+import { difficultyLevel, finite, urlPath } from "./util";
+import { type Market, toolLinks } from "@/lib/scope";
 import { OpenInTool } from "./tool-link";
 
 /** Keyword difficulty 0-100. The number is always shown; colour only reinforces it. */
 export function DifficultyPill({ value }: { value: N }) {
-  if (!finite(value)) return <span className="text-faint">—</span>;
-  const rounded = Math.round(value);
-  const level = rounded < 30 ? "easy" : rounded < 60 ? "medium" : "hard";
+  const difficulty = difficultyLevel(value);
+  if (!difficulty) return <span className="text-faint">—</span>;
+  const { score: rounded, band: level, word } = difficulty;
   return (
     <span
-      title={`Difficulty ${rounded} of 100 (${level})`}
+      title={`Difficulty ${rounded} of 100 (${word.toLowerCase()})`}
       className={cx(
         "inline-flex min-w-8 justify-center rounded-sm border px-1.5 py-0.5 font-mono text-xs leading-none tabular",
         level === "easy" && "border-pos/40 bg-pos/10 text-pos",
@@ -23,7 +23,7 @@ export function DifficultyPill({ value }: { value: N }) {
       )}
     >
       {rounded}
-      <span className="sr-only"> ({level})</span>
+      <span className="sr-only"> ({word.toLowerCase()})</span>
     </span>
   );
 }
@@ -59,7 +59,7 @@ export function Competition({ value, level }: { value: N; level?: S }) {
 }
 
 /** A URL shown compactly (path only by default) that opens in a new tab when it is http(s). */
-export function UrlCell({ url, full, className }: { url: S; full?: boolean; className?: string }) {
+export function UrlCell({ url, full, className, market }: { url: S; full?: boolean; className?: string; market?: Market }) {
   if (!url) return <span className="text-faint">—</span>;
   const label = full ? url.replace(/^https?:\/\//, "") : urlPath(url);
   const href = safeHref(url);
@@ -72,7 +72,7 @@ export function UrlCell({ url, full, className }: { url: S; full?: boolean; clas
         <ExternalLink className="ml-1 inline size-3 align-[-1px] opacity-60" aria-hidden />
         <span className="sr-only"> (opens in a new tab)</span>
       </a>
-      <OpenInTool href={toolLinks.page(url)} label={`Analyse page ${url}`} />
+      <OpenInTool href={toolLinks.page(url, market)} label={`Analyse page ${url}`} />
     </span>
   );
 }

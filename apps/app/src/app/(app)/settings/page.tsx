@@ -3,8 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, RefreshCw, Trash2 } from "lucide-react";
 import { agentSetupPrompt } from "@openseo/shared";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useBalance } from "@/components/balance";
+import { ConfirmDialog } from "@/components/tracking/kit";
 import { Badge, Button, Card, CardHeader, ErrorNote, Field, Input, PageHeader, Spinner, Stat, Table } from "@/components/ui";
 import { api, dateTime, num, usd } from "@/lib/api";
 import type { Me } from "@/lib/auth";
@@ -18,6 +19,27 @@ type Usage = {
   recent: { id: string; endpoint: string; feature: string | null; ok: boolean; status: number | null; costUsd: number; createdAt: string }[];
 };
 type ApiKeyRow = { id: string; name: string; prefix: string; lastUsedAt: string | null; createdAt: string };
+
+/**
+ * Copies text, falling back to selecting `fallbackId`'s text and the old copy command.
+ * navigator.clipboard only exists on HTTPS and localhost, so plain-http self-hosted installs need this.
+ */
+async function copyText(text: string, fallbackId?: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const field = fallbackId ? document.getElementById(fallbackId) : null;
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return false;
+    field.focus();
+    field.select();
+    try {
+      return document.execCommand("copy");
+    } catch {
+      return false;
+    }
+  }
+}
 
 function YepKeyCard({ settings }: { settings: Me["settings"] }) {
   const queryClient = useQueryClient();
@@ -33,7 +55,14 @@ function YepKeyCard({ settings }: { settings: Me["settings"] }) {
     mutationFn: () => api("/settings/yepapi-key", { method: "PUT", body: { apiKey: value.trim() } }),
     onSuccess: done,
   });
-  const remove = useMutation({ mutationFn: () => api("/settings/yepapi-key", { method: "DELETE" }), onSuccess: done });
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const remove = useMutation({
+    mutationFn: () => api("/settings/yepapi-key", { method: "DELETE" }),
+    onSuccess: () => {
+      setConfirmRemove(false);
+      done();
+    },
+  });
 
   return (
     <Card>
@@ -64,12 +93,12 @@ function YepKeyCard({ settings }: { settings: Me["settings"] }) {
             Save key
           </Button>
           {settings.hasYepapiKey && (
-            <Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate()}>
+            <Button variant="danger" onClick={() => setConfirmRemove(true)}>
               Remove
             </Button>
           )}
         </form>
-        <ErrorNote error={save.error ?? remove.error} />
+        <ErrorNote error={save.error} />
         <div className="rounded-md border border-line bg-sunken px-3 py-2.5 text-xs leading-relaxed text-muted">
           <p className="font-semibold text-ink">No key yet? Start with $5 of free credit.</p>
           <p className="mt-1">
@@ -81,6 +110,18 @@ function YepKeyCard({ settings }: { settings: Me["settings"] }) {
         </div>
         <p className="text-xs text-muted">The key is encrypted at rest and never shown again.</p>
       </div>
+      <ConfirmDialog
+        open={confirmRemove}
+        onClose={() => setConfirmRemove(false)}
+        onConfirm={() => remove.mutate()}
+        title="Remove your YepAPI key?"
+        confirmLabel="Remove key"
+        danger
+        pending={remove.isPending}
+        error={remove.error}
+      >
+        <p>Lookups, rank checks, audits and scheduled runs stop until you add a key again. Your saved data stays.</p>
+      </ConfirmDialog>
     </Card>
   );
 }
@@ -123,7 +164,9 @@ function ApiKeysCard() {
   const queryClient = useQueryClient();
   const keys = useQuery({ queryKey: ["api-keys"], queryFn: () => api<ApiKeyRow[]>("/api-keys") });
   const [name, setName] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<boolean | null>(null);
+  const [revoking, setRevoking] = useState<ApiKeyRow | null>(null);
+  const keyFieldId = useId();
   const create = useMutation({
     mutationFn: () => api<{ key: string }>("/api-keys", { method: "POST", body: { name: name.trim() } }),
     onSuccess: () => {
@@ -133,7 +176,10 @@ function ApiKeysCard() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => api(`/api-keys/${id}`, { method: "DELETE" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["api-keys"] }),
+    onSuccess: () => {
+      setRevoking(null);
+      void queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
   });
 
   return (
@@ -156,24 +202,32 @@ function ApiKeysCard() {
             Create key
           </Button>
         </form>
-        <ErrorNote error={create.error ?? remove.error} />
+        <ErrorNote error={create.error} />
         {create.data && (
           <div className="rounded-md border border-edge bg-sunken p-3">
             <p className="text-[13px] font-medium">Copy this key now. It won't be shown again.</p>
             <div className="mt-2 flex items-center gap-2">
-              <code className="min-w-0 flex-1 truncate font-mono text-xs">{create.data.key}</code>
+              <Input
+                id={keyFieldId}
+                readOnly
+                value={create.data.key}
+                aria-label="New API key"
+                onFocus={(event) => event.currentTarget.select()}
+                className="min-w-0 flex-1 font-mono text-xs"
+              />
               <Button
                 size="sm"
                 onClick={async () => {
-                  await navigator.clipboard.writeText(create.data.key);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
+                  const ok = await copyText(create.data.key, keyFieldId);
+                  setCopied(ok);
+                  if (ok) setTimeout(() => setCopied(null), 2500);
                 }}
               >
                 {copied ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
                 {copied ? "Copied" : "Copy"}
               </Button>
             </div>
+            {copied === false && <p className="mt-1.5 text-xs text-muted">This browser blocked copying. The key is selected: press Ctrl+C or ⌘C.</p>}
           </div>
         )}
         {keys.isPending ? (
@@ -197,7 +251,7 @@ function ApiKeysCard() {
                   <td>{key.lastUsedAt ? dateTime(key.lastUsedAt) : "Never"}</td>
                   <td>{dateTime(key.createdAt)}</td>
                   <td className="text-right">
-                    <Button size="sm" variant="ghost" aria-label={`Revoke ${key.name}`} onClick={() => remove.mutate(key.id)}>
+                    <Button size="sm" variant="ghost" aria-label={`Revoke ${key.name}`} onClick={() => setRevoking(key)}>
                       <Trash2 className="size-3.5" aria-hidden /> Revoke
                     </Button>
                   </td>
@@ -209,6 +263,18 @@ function ApiKeysCard() {
           <p className="text-[13px] text-muted">No API keys yet.</p>
         )}
       </div>
+      <ConfirmDialog
+        open={revoking !== null}
+        onClose={() => setRevoking(null)}
+        onConfirm={() => revoking && remove.mutate(revoking.id)}
+        title={`Revoke ${revoking?.name ?? "this key"}?`}
+        confirmLabel="Revoke key"
+        danger
+        pending={remove.isPending}
+        error={remove.error}
+      >
+        <p>Anything using this key, such as an agent or a script, stops working at once. This cannot be undone.</p>
+      </ConfirmDialog>
     </Card>
   );
 }
@@ -298,7 +364,8 @@ function UsageCard() {
 }
 
 function AgentCard({ links }: { links: NonNullable<Me["links"]> }) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<boolean | null>(null);
+  const [showPrompt, setShowPrompt] = useState(false);
   const prompt = agentSetupPrompt(links);
   return (
     <Card>
@@ -310,11 +377,12 @@ function AgentCard({ links }: { links: NonNullable<Me["links"]> }) {
         <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="primary"
-            onClick={() => {
-              void navigator.clipboard.writeText(prompt).then(() => {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2500);
-              });
+            onClick={async () => {
+              const ok = await copyText(prompt);
+              // Without clipboard access, open the prompt so it can be copied by hand.
+              if (!ok) setShowPrompt(true);
+              setCopied(ok);
+              if (ok) setTimeout(() => setCopied(null), 2500);
             }}
           >
             {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
@@ -327,7 +395,8 @@ function AgentCard({ links }: { links: NonNullable<Me["links"]> }) {
         <p className="font-mono text-xs text-muted">
           Agent endpoint: <span className="text-ink">{links.mcpUrl}</span>
         </p>
-        <details className="text-[13px]">
+        {copied === false && <p className="text-xs text-muted">This browser blocked copying. Select the prompt below and copy it.</p>}
+        <details className="text-[13px]" open={showPrompt} onToggle={(event) => setShowPrompt(event.currentTarget.open)}>
           <summary className="cursor-pointer text-muted">Show the prompt</summary>
           <pre className="mt-2 max-h-72 overflow-auto rounded-md border border-line bg-sunken p-3 font-mono text-xs whitespace-pre-wrap">{prompt}</pre>
         </details>

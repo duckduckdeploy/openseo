@@ -93,7 +93,7 @@ export const tools: ResearchTool[] = [
     parts: [
       {
         shot: 'search-bar',
-        alt: 'The search row: keyword, country, city or state, language and the Analyse button, with the price of the search',
+        alt: 'The search row: keyword, country, city or state, language and the Analyse button',
         title: 'Keyword metrics in one search',
         body: 'Keyword, country, city or state, and language sit side by side. The market you pick is remembered for every other tool.',
       },

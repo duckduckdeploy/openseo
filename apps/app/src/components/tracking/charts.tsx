@@ -129,7 +129,7 @@ export function RateTrend({ runs }: { runs: { finishedAt: string | null; mention
           <span className="inline-block h-0.5 w-5 bg-series-1" aria-hidden /> Mentioned
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="inline-block h-0 w-5 border-t-2 border-dashed border-accent-text" aria-hidden /> Cited
+          <span className="inline-block h-0 w-5 border-t-2 border-dashed border-series-2" aria-hidden /> Cited
         </li>
       </ul>
     </div>

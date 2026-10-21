@@ -47,6 +47,12 @@ const catalog = define({
     description: 'The request failed before a response arrived (timeout, DNS, connection, TLS, or a refused target).',
     howToFix: 'Check that the URL resolves and responds within the timeout; fix DNS, TLS or server availability.',
   },
+  'robots-txt-unavailable': {
+    severity: 'critical',
+    title: 'robots.txt returns a server error',
+    description: 'robots.txt answered 5xx or 429. Google then treats the whole site as disallowed, so the crawler did too.',
+    howToFix: 'Make /robots.txt return 200 (or 404 if you have none) reliably.',
+  },
   'blocked-by-robots': {
     severity: 'info',
     title: 'Blocked by robots.txt',
@@ -294,6 +300,12 @@ const catalog = define({
     title: 'Indexable page missing from sitemap',
     description: 'The page is indexable but not listed in any discovered sitemap.',
     howToFix: 'Add the URL to the XML sitemap.',
+  },
+  'sitemap-too-large': {
+    severity: 'warning',
+    title: 'Sitemap too large',
+    description: 'A sitemap exceeds 50 MB (uncompressed), the most search engines will read, so it was skipped.',
+    howToFix: 'Split it into several sitemaps of at most 50,000 URLs and 50 MB each, listed in a sitemap index.',
   },
   'sitemap-missing': {
     severity: 'info',

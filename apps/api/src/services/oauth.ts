@@ -290,6 +290,8 @@ export async function revokeToken(value: unknown) {
 }
 
 export async function revokeGrant(userId: string, clientId: string): Promise<number> {
+  // Codes issued but not yet exchanged would otherwise still mint tokens after the revoke.
+  await db.delete(schema.oauthCodes).where(and(eq(schema.oauthCodes.userId, userId), eq(schema.oauthCodes.clientId, clientId)));
   const rows = await db
     .update(schema.oauthTokens)
     .set({ revokedAt: new Date() })

@@ -101,7 +101,8 @@ export async function processRankRun(runId: string) {
     .innerJoin(schema.projects, eq(schema.projects.id, schema.rankTrackers.projectId))
     .where(eq(schema.rankTrackers.id, run.trackerId))
     .limit(1);
-  if (!row) return;
+  // The tracker was deleted after the run was queued (its runs normally go with it).
+  if (!row) return failRankRun(runId, "The tracker no longer exists");
   const { tracker, userId } = row;
   const keywords = await dataDb.select().from(schema.rankKeywords).where(isTracked(tracker.id));
   const checks =keywords.flatMap((keyword) => tracker.devices.map((device) => ({ keyword, device })));
@@ -145,13 +146,18 @@ export async function processRankRun(runId: string) {
   await mapLimit(checks, 4, async ({ keyword, device }, index) => {
     if (fatal || cancelled) return;
     if (index % 10 === 0) {
+      // Cancelled, or failed by cleanup: either way nothing more is spent on it.
       const [current] = await dataDb.select({ status: schema.rankRuns.status }).from(schema.rankRuns).where(eq(schema.rankRuns.id, runId));
-      if (current?.status === "cancelled") {
+      if (current?.status !== "running") {
         cancelled = true;
         return;
       }
     }
+    // Re-checked after the awaits above, so a worker does not start a paid call once the run stopped.
+    if (fatal || cancelled) return;
     const base = { runId, trackerId: tracker.id, keywordId: keyword.id, device: device as Device };
+    // Set once the check is paid for, so its cost is recorded even if storing the result fails.
+    let paid = 0;
     try {
       const res = await yep.serp.google({
         query: keyword.keyword,
@@ -162,6 +168,7 @@ export async function processRankRun(runId: string) {
         language: tracker.language,
         ...where,
       });
+      paid = res.costUsd;
       const parsed = parseSerp(res.data, tracker.domain, tracker.depth);
       await dataDb.insert(schema.rankResults).values({ ...base, ...parsed, costUsd: res.costUsd });
       await dataDb
@@ -173,13 +180,20 @@ export async function processRankRun(runId: string) {
       await dataDb.insert(schema.rankResults).values({ ...base, checkedDepth: 0, error: errorMessage(error) });
       await dataDb
         .update(schema.rankRuns)
-        .set({ done: sql`${schema.rankRuns.done} + 1`, failed: sql`${schema.rankRuns.failed} + 1`, heartbeatAt: new Date() })
+        .set({
+          done: sql`${schema.rankRuns.done} + 1`,
+          failed: sql`${schema.rankRuns.failed} + 1`,
+          heartbeatAt: new Date(),
+          costUsd: sql`round((${schema.rankRuns.costUsd} + ${paid})::numeric, 4)::float8`,
+        })
         .where(eq(schema.rankRuns.id, runId));
     }
   });
   } catch (error) {
-    // A storage error mid-run: record it instead of leaving the run "running" and the tracker blocked.
-    return finish("failed", `Stopped by an internal error: ${errorMessage(error)}`);
+    // A storage error mid-run: stop the other workers, then record it instead of leaving the run
+    // "running" and the tracker blocked.
+    fatal = `Stopped by an internal error: ${errorMessage(error)}`;
+    return finish("failed", fatal);
   }
 
   if (cancelled) return finish("cancelled");
@@ -215,7 +229,13 @@ export async function trackerResults(trackerId: string, device: Device, historyR
   const rows = keywords.map((keyword) => {
     const latest = latestRun ? byKey.get(`${latestRun.id}:${keyword.id}`) : undefined;
     const previous = previousRun ? byKey.get(`${previousRun.id}:${keyword.id}`) : undefined;
-    const history = runs.map((run) => byKey.get(`${run.id}:${keyword.id}`)?.position ?? null).reverse();
+    // Only runs that checked this keyword: runs from before it was added, and failed checks, are
+    // left out, so a null in the history always means "not found within the depth".
+    const history = runs
+      .map((run) => byKey.get(`${run.id}:${keyword.id}`))
+      .filter((r): r is ResultRow => r != null && !r.error)
+      .map((r) => r.position ?? null)
+      .reverse();
     // Positive change = moved up. Entering or leaving the tracked depth is reported separately.
     const change = latest?.position != null && previous?.position != null ? previous.position - latest.position : null;
     const found = history.filter((p): p is number => p != null);

@@ -47,7 +47,7 @@ export const pricingFaqs: Faq[] = [
     question: 'Is OpenSEO free?',
     answer: [
       'Yes. The hosted app at openseo.gg costs nothing and every feature is unlimited today. The self-hosted version is free for good: open source under the MIT licence, with every feature unlocked.',
-      'What costs money is search data, such as keyword volumes, rankings and backlinks. You pay for the lookups you run, at the price the app shows first. A quiet month costs very little.',
+      'What costs money is search data, such as keyword volumes, rankings and backlinks. You pay per lookup at YepAPI’s price, every call is listed with its cost in Settings and usage, and a monthly limit caps what you spend. A quiet month costs very little.',
     ],
   },
   {

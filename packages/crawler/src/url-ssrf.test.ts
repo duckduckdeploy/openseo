@@ -27,6 +27,9 @@ describe('normalizeUrl', () => {
     );
     expect(normalizeUrl('https://example.com/p?utm_source=x', undefined, { stripTrackingParams: true })).toBe('https://example.com/p');
     expect(normalizeUrl('https://example.com/p?utm_source=x')).toBe('https://example.com/p?utm_source=x');
+    expect(normalizeUrl('https://example.com/?b=2&utm_source=x&a=1', undefined, { sortQuery: false, stripTrackingParams: true })).toBe(
+      'https://example.com/?b=2&a=1',
+    );
   });
 
   it('keeps trailing slashes unless asked to strip them', () => {

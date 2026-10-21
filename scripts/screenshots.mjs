@@ -354,6 +354,7 @@ async function main() {
         const busy = await evaluate(`!!document.querySelector('[aria-busy="true"], .animate-pulse, .animate-spin')`);
         quiet = busy ? 0 : quiet + 1;
       }
+      if (quiet < 5) console.warn(`  still loading after 120 s, capturing anyway: ${await evaluate('location.pathname')}`);
       // Charts animate in after their data arrives; map embeds load their tiles.
       await sleep((await evaluate(`!!document.querySelector('iframe[title="Map of the area"]')`)) ? 6000 : 2000);
     };
@@ -416,7 +417,12 @@ async function main() {
   } finally {
     browser.kill();
     await sleep(500);
-    rmSync(profile, { recursive: true, force: true });
+    // Chrome can still hold the profile on Windows (EBUSY); that must not hide the real error.
+    try {
+      rmSync(profile, { recursive: true, force: true });
+    } catch (error) {
+      console.warn(`Could not remove the temporary profile ${profile}: ${error.message}`);
+    }
   }
 }
 

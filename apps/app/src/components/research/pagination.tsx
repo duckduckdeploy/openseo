@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui";
 import { num } from "@/lib/api";
 
-/** Offset pager. `note` carries the price when each page is a paid lookup. */
+/** Offset pager. `note`: anything to show beside the buttons. */
 export function Pagination({
   offset,
   limit,

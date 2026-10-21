@@ -139,6 +139,19 @@ describe("schedules", () => {
     expect(nextRunAfter("monthly", at("2026-01-31T06:00:00Z"), now)?.toISOString()).toBe("2026-02-28T06:00:00.000Z");
     expect(nextRunAfter("monthly", at("2026-03-15T06:00:00Z"), at("2026-03-15T06:00:00Z"))?.toISOString()).toBe("2026-04-15T06:00:00.000Z");
   });
+
+  it("returns to the schedule's own day after a short month instead of drifting to the 28th", () => {
+    // Set up on the 31st: February is clamped, March and April go back to the 31st (or the last day).
+    const feb = nextRunAfter("monthly", at("2026-01-31T06:00:00Z"), at("2026-01-31T06:00:00Z"), 31) as Date;
+    expect(feb.toISOString()).toBe("2026-02-28T06:00:00.000Z");
+    const mar = nextRunAfter("monthly", feb, feb, 31) as Date;
+    expect(mar.toISOString()).toBe("2026-03-31T06:00:00.000Z");
+    expect(nextRunAfter("monthly", mar, mar, 31)?.toISOString()).toBe("2026-04-30T06:00:00.000Z");
+    // An anchor that is not a clamped last day keeps its own day, whatever the hint says.
+    expect(nextRunAfter("monthly", at("2026-03-15T06:00:00Z"), at("2026-03-15T06:00:00Z"), 31)?.toISOString()).toBe("2026-04-15T06:00:00.000Z");
+    // A worker down for months still lands on the schedule's day.
+    expect(nextRunAfter("monthly", feb, at("2026-05-01T00:00:00Z"), 30)?.toISOString()).toBe("2026-05-30T06:00:00.000Z");
+  });
 });
 
 describe("buildGrid", () => {

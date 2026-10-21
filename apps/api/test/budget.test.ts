@@ -14,7 +14,9 @@ async function settled(userId: string, total: number) {
 describe("monthly budget", () => {
   it("refuses paid lookups once the month's spend reaches the limit", async () => {
     const { api, project, userId } = await readyUser();
-    await api.ok("PUT", "/settings/budget", { monthlyBudgetUsd: 0.1 });
+    // Its three parts ($0.08, $0.04, $0.02) run together and each reserves its price, so the last
+    // one starts at $0.12: under this limit, then the month is over it.
+    await api.ok("PUT", "/settings/budget", { monthlyBudgetUsd: 0.13 });
     await api.ok("POST", `/projects/${project.id}/lookups/domain_overview`, { domain: "a.com" }); // $0.14
     await settled(userId, 0.14);
 
@@ -47,6 +49,35 @@ describe("monthly budget", () => {
     await expect(first.domain.whois({ domain: "a.com" })).rejects.toMatchObject({ code: "budget_reached" });
     // Free calls stay available.
     await expect(second.account.balance()).resolves.toMatchObject({ costUsd: 0 });
+  });
+
+  it("counts calls in flight, so calls made together cannot all pass the limit", async () => {
+    const { userId, api } = await readyUser();
+    await api.ok("PUT", "/settings/budget", { monthlyBudgetUsd: 0.1 });
+    const yep = await getYep({ userId, feature: "test" });
+    const before = harness.fake.requests.length;
+    // $0.08 each. The first reserves its price before any of them has a usage row, so the second
+    // still fits ($0.08 < $0.10) and the third sees $0.16 and is refused.
+    const results = await Promise.allSettled([1, 2, 3].map(() => yep.domain.overview({ domain: "a.com" })));
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(2);
+    expect(results.filter((r) => r.status === "rejected").map((r) => (r as PromiseRejectedResult).reason)).toMatchObject([{ code: "budget_reached" }]);
+    expect(harness.fake.requests.length - before).toBe(2);
+  });
+
+  it("pays once when the same lookup is made twice at the same time", async () => {
+    const { api, project } = await readyUser();
+    const before = harness.fake.requests.length;
+    const [first, second] = await Promise.all([
+      api.ok("POST", `/projects/${project.id}/lookups/domain_overview`, { domain: "same.com" }),
+      api.ok("POST", `/projects/${project.id}/lookups/domain_overview`, { domain: "same.com" }),
+    ]);
+    const paid = harness.fake.requests.length - before;
+    expect(paid).toBeGreaterThan(0);
+    // Only one of them called YepAPI and was charged; the other shared its result.
+    expect([first.cached, second.cached].sort()).toEqual([false, true]);
+    expect(first.data).toEqual(second.data);
+    await api.ok("POST", `/projects/${project.id}/lookups/domain_overview`, { domain: "other.com" });
+    expect(harness.fake.requests.length - before).toBe(2 * paid);
   });
 
   it("stops a background rank run at the limit instead of finishing it", async () => {

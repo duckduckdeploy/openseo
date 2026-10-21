@@ -47,8 +47,8 @@ export function ListForm({
   pending?: boolean;
   /** Buttons next to the submit, e.g. "Use my saved keywords". They receive the setter. */
   actions?: (setText: (text: string) => void) => ReactNode;
-  /** The line under the form: notes and the price of the draft list. */
-  children?: (entries: string[]) => ReactNode;
+  /** Notes on the line under the form. */
+  children?: ReactNode;
 }) {
   const [text, setText] = useUrlText(value);
   const entries = [...new Set(splitLines(text, { commas: true }).map(clean).filter(Boolean))];
@@ -73,7 +73,7 @@ export function ListForm({
         <span className={over ? "text-xs text-neg" : "text-xs text-muted"}>
           One per line or comma separated, up to {num(max)}. {num(entries.length)} entered{over ? `; the first ${num(max)} will be checked` : ""}.
         </span>
-        {children && <span className="sm:ml-auto">{children(entries.slice(0, max))}</span>}
+        {children && <span className="sm:ml-auto">{children}</span>}
       </div>
     </form>
   );

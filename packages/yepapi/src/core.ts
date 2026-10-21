@@ -265,6 +265,7 @@ export async function transport(
         code: 'ABORTED',
         endpoint: req.endpoint,
         attempts: attempt,
+        requestSent: false,
         cause: req.signal.reason,
       });
     }
@@ -276,10 +277,10 @@ export async function transport(
       error.attempts = attempt + 1;
       const retryable = req.billed ? error.isRetryableWhenBilled : error.isRetryable;
       if (!retryable || attempt >= maxRetries) throw error;
-      const delay =
-        error.retryAfterMs === undefined
-          ? backoffDelay(attempt, cfg.retryBaseDelayMs, cfg.retryMaxDelayMs)
-          : Math.min(error.retryAfterMs, cfg.retryMaxDelayMs);
+      // Retrying before a longer Retry-After would only burn retries on more 429s, so hand the
+      // error (with its retryAfterMs) to the caller instead.
+      if (error.retryAfterMs !== undefined && error.retryAfterMs > cfg.retryMaxDelayMs) throw error;
+      const delay = error.retryAfterMs ?? backoffDelay(attempt, cfg.retryBaseDelayMs, cfg.retryMaxDelayMs);
       try {
         await sleep(delay, req.signal);
       } catch (cause) {
@@ -288,6 +289,8 @@ export async function transport(
           code: 'ABORTED',
           endpoint: req.endpoint,
           attempts: attempt + 1,
+          // Aborted while backing off: the previous attempt was not billed, or it would not be retried.
+          requestSent: false,
           cause,
         });
       }

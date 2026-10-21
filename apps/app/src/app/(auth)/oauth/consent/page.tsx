@@ -69,12 +69,12 @@ function Consent() {
         <p className="font-medium">It will be able to</p>
         <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
           <li>read your projects, saved keywords, rankings, audits and Search Console data</li>
-          <li>run lookups, which are billed to your data key, under your monthly limit</li>
+          <li>run lookups, which are billed to your YepAPI balance, under your monthly limit</li>
           <li>create and change projects, trackers, prompts and audits</li>
         </ul>
         <p className="mt-3 font-medium">It cannot</p>
         <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
-          <li>see your data key, API keys or password</li>
+          <li>see your YepAPI key, API keys or password</li>
           <li>connect Google accounts or create API keys</li>
         </ul>
       </div>

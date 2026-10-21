@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { createYepApi, isYepApiError, pricing, type YepApi, type YepEndpoint } from "@openseo/yepapi";
+import { createYepApi, estimateCost, isYepApiError, pricing, type YepApi, type YepEndpoint } from "@openseo/yepapi";
 import { and, eq, gt, gte, sql } from "drizzle-orm";
 import { dataDb, db, schema } from "../db";
 import { env } from "../env";
@@ -21,6 +21,108 @@ export async function monthSpend(userId: string): Promise<number> {
   return row?.total ?? 0;
 }
 
+/**
+ * This process's view of a user's month spend, so a paid call does not run a SUM over usage_log
+ * each time. The API runs as one process, so its own calls are all seen here:
+ * - logged: the last SUM, re-read every few seconds, plus rows written since
+ * - unwritten: calls that returned but whose usage_log row is not written yet
+ * - reserved: the documented worst-case price of paid calls in flight, so calls made together
+ *   see each other before any of them has a price
+ */
+type Spend = {
+  month: number;
+  logged: number;
+  readAt: number;
+  reading: Promise<void> | null;
+  writtenWhileReading: number;
+  unwritten: number;
+  reserved: number;
+};
+
+const SPEND_TTL_MS = 5_000;
+const spendByUser = new Map<string, Spend>();
+
+function spendOf(userId: string): Spend {
+  const month = monthStart().getTime();
+  let spend = spendByUser.get(userId);
+  if (!spend || spend.month !== month) {
+    // A new month starts from a fresh SUM; calls still in flight stay counted.
+    spend = { month, logged: 0, readAt: 0, reading: null, writtenWhileReading: 0, unwritten: spend?.unwritten ?? 0, reserved: spend?.reserved ?? 0 };
+    spendByUser.set(userId, spend);
+  }
+  return spend;
+}
+
+async function freshSpend(userId: string): Promise<Spend> {
+  const spend = spendOf(userId);
+  if (Date.now() - spend.readAt > SPEND_TTL_MS) {
+    spend.reading ??= (async () => {
+      spend.writtenWhileReading = 0;
+      try {
+        // A row written while the SUM ran may or may not be in it; it is counted either way, so
+        // spend is never under-read (at worst over-read until the next refresh).
+        spend.logged = (await monthSpend(userId)) + spend.writtenWhileReading;
+        spend.readAt = Date.now();
+      } finally {
+        spend.reading = null;
+      }
+    })();
+    await spend.reading;
+  }
+  return spend;
+}
+
+const spendTotal = (spend: Spend) => spend.logged + spend.unwritten + spend.reserved;
+
+/** Cost of the user's calls in this process that returned but are not in usage_log yet. */
+export function unwrittenSpend(userId: string): number {
+  return spendByUser.get(userId)?.unwritten ?? 0;
+}
+
+// Client method path ("serp.google") to its endpoint, found once by calling each method of a
+// client whose fetch only records the URL (the client calls fetch before its first await).
+let methodEndpoints: Map<string, YepEndpoint> | null = null;
+
+function endpointOf(path: string): YepEndpoint | undefined {
+  if (!methodEndpoints) {
+    const found = new Map<string, YepEndpoint>();
+    let seen: string | undefined;
+    const probe = createYepApi({
+      apiKey: "probe",
+      baseUrl: "http://probe.invalid",
+      maxRetries: 0,
+      fetch: (url) => {
+        seen = new URL(url).pathname;
+        return Promise.reject(new Error("probe"));
+      },
+    });
+    const walk = (object: object, prefix: string) => {
+      for (const [key, value] of Object.entries(object)) {
+        if (typeof value === "function" && key !== "call") {
+          seen = undefined;
+          void (value as (params: unknown) => Promise<unknown>)({}).catch(() => {});
+          if (seen) found.set(`${prefix}${key}`, seen as YepEndpoint);
+        } else if (value !== null && typeof value === "object") walk(value, `${prefix}${key}.`);
+      }
+    };
+    walk(probe, "");
+    methodEndpoints = found;
+  }
+  return methodEndpoints.get(path);
+}
+
+/** Worst-case price of a call before it is made: the documented maximum, or the minimum when there is none (token-priced). */
+function reservationFor(path: string, args: unknown[]): number {
+  const endpoint = path === "call" ? (args[0] as YepEndpoint) : endpointOf(path);
+  if (!endpoint || !pricing[endpoint]) return 0;
+  try {
+    const estimate = estimateCost(endpoint, (path === "call" ? args[1] : args[0]) as never);
+    return estimate.max ?? estimate.min;
+  } catch {
+    return 0;
+  }
+}
+
 const budgetReached = (budget: number, spent: number) =>
   new AppError(
     402,
@@ -34,15 +136,19 @@ const FREE_METHODS = new Set(["account.balance", "ai.models"]);
 const isFreeCall = (path: string, args: unknown[]) =>
   FREE_METHODS.has(path) || (path === "call" && pricing[args[0] as YepEndpoint]?.kind === "free");
 
-/** Wraps every paid method of the client (nested groups included) so `before` is awaited ahead of each call. */
-function guarded<T extends object>(target: T, before: () => Promise<void>, prefix = ""): T {
+/**
+ * Wraps every paid method of the client (nested groups included) so `before` is awaited ahead of
+ * each call. It returns a release function, called once the call has finished either way.
+ */
+function guarded<T extends object>(target: T, before: (path: string, args: unknown[]) => Promise<() => void>, prefix = ""): T {
   return new Proxy(target, {
     get(object, property, receiver) {
       const value: unknown = Reflect.get(object, property, receiver);
       const path = `${prefix}${String(property)}`;
       if (typeof value === "function") {
-        const call = (args: unknown[]) => (value as (...a: unknown[]) => unknown).apply(object, args);
-        return (...args: unknown[]) => (isFreeCall(path, args) ? call(args) : before().then(() => call(args)));
+        const call = (args: unknown[]) => (value as (...a: unknown[]) => Promise<unknown>).apply(object, args);
+        return (...args: unknown[]) =>
+          isFreeCall(path, args) ? call(args) : before(path, args).then((release) => call(args).finally(release));
       }
       return value !== null && typeof value === "object" ? guarded(value, before, `${path}.`) : value;
     },
@@ -53,11 +159,12 @@ function guarded<T extends object>(target: T, before: () => Promise<void>, prefi
  * A YepAPI client bound to the user's own key. Every billed or failed call is written to
  * usage_log, which is what the monthly budget is measured against.
  *
- * With a budget set, every paid call first re-reads the month's spend from usage_log (plus
- * this client's calls whose rows are still being written), so overlapping runs and parallel
+ * With a budget set, every paid call is first checked against the month's spend (see Spend:
+ * usage_log, calls whose rows are still being written, and the worst-case price of calls in
+ * flight, which each call reserves before it is made), so overlapping runs and parallel
  * requests see each other's spend and a long background run stops at the budget instead of
- * only being checked when it starts. Calls already in flight when the limit is crossed still
- * complete, so the month can end slightly above it.
+ * only being checked when it starts. A call is allowed while that total is under the limit, so
+ * the month can end above it by about one call's price.
  */
 export async function getYep(context: CallContext): Promise<YepApi> {
   const [settings] = await db
@@ -69,11 +176,10 @@ export async function getYep(context: CallContext): Promise<YepApi> {
     throw new AppError(400, "yepapi_key_missing", "Add your YepAPI key in Settings before running this.");
   }
   const budget = settings.monthlyBudgetUsd;
-  // Cost of this client's calls not yet visible in usage_log.
-  let unwritten = 0;
-  const spentSoFar = async () => (await monthSpend(context.userId)) + unwritten;
+  // This client's calls whose usage_log row could not be written; they stay counted for it.
+  let lost = 0;
   if (budget != null && !context.freeOnly) {
-    const spent = await spentSoFar();
+    const spent = spendTotal(await freshSpend(context.userId)) + lost;
     if (spent >= budget) throw budgetReached(budget, spent);
   }
   const client = createYepApi({
@@ -82,7 +188,8 @@ export async function getYep(context: CallContext): Promise<YepApi> {
     onCall: (call) => {
       // Free and unbilled calls are not worth a row, except failures, which help debugging.
       if (call.ok && call.costUsd === 0) return;
-      unwritten += call.costUsd;
+      const spend = spendOf(context.userId);
+      spend.unwritten += call.costUsd;
       void db
         .insert(schema.usageLog)
         .values({
@@ -97,17 +204,30 @@ export async function getYep(context: CallContext): Promise<YepApi> {
         })
         .then(
           () => {
-            unwritten -= call.costUsd;
+            spend.unwritten -= call.costUsd;
+            spend.logged += call.costUsd;
+            if (spend.reading) spend.writtenWhileReading += call.costUsd;
           },
           // A row that could not be written stays counted here, so this client still respects the budget.
-          () => {},
+          () => {
+            spend.unwritten -= call.costUsd;
+            lost += call.costUsd;
+          },
         );
     },
   });
   if (budget == null) return client;
-  return guarded(client, async () => {
-    const spent = await spentSoFar();
+  return guarded(client, async (path, args) => {
+    const spend = await freshSpend(context.userId);
+    // Read, checked and reserved with no await in between, so calls made together see each other.
+    const spent = spendTotal(spend) + lost;
     if (spent >= budget) throw budgetReached(budget, spent);
+    const amount = reservationFor(path, args);
+    spend.reserved += amount;
+    // By the time the call settles it has reported its actual cost (as unwritten).
+    return () => {
+      spend.reserved -= amount;
+    };
   });
 }
 
@@ -164,6 +284,9 @@ export const errorMessage = (error: unknown): string => toAppError(error)?.messa
 
 export type Cached<T> = { data: T; costUsd: number; cached: boolean; fetchedAt: Date };
 
+// Paid fetches in progress, by user and cache key, so identical lookups made together pay once.
+const inFlight = new Map<string, Promise<Cached<unknown>>>();
+
 /**
  * Per-user response cache. Repeating a lookup inside its TTL costs nothing.
  * Keys are per user because the data was bought with that user's credits.
@@ -185,6 +308,22 @@ export async function cached<T>(
       .limit(1);
     if (hit) return { data: hit.payload as T, costUsd: 0, cached: true, fetchedAt: hit.createdAt };
   }
+  if (ttlSeconds <= 0) return fetchAndStore(userId, key, ttlSeconds, run);
+  const flightKey = `${userId}:${key}`;
+  const pending = inFlight.get(flightKey) as Promise<Cached<T>> | undefined;
+  // Joining a fetch another request is already paying for costs this one nothing.
+  if (pending) return pending.then((shared) => ({ ...shared, costUsd: 0, cached: true }));
+  const fetching = fetchAndStore(userId, key, ttlSeconds, run).finally(() => inFlight.delete(flightKey));
+  inFlight.set(flightKey, fetching);
+  return fetching;
+}
+
+async function fetchAndStore<T>(
+  userId: string,
+  key: string,
+  ttlSeconds: number,
+  run: () => Promise<{ data: T; costUsd: number; partial?: boolean }>,
+): Promise<Cached<T>> {
   const result = await run();
   const now = new Date();
   // A partial result (some paid parts failed) is returned once but not reused.

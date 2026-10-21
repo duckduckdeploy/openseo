@@ -7,7 +7,7 @@ import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
 import { JsonLd } from '@/components/json-ld';
 import { RelatedTerms } from '@/components/related-terms';
-import { PriceTable, rowsFromFeatureCosts } from '@/components/price-table';
+import { PriceTable } from '@/components/price-table';
 import { StatusNote } from '@/components/section';
 import { YepapiOffer } from '@/components/yepapi-offer';
 import { features, getFeature } from '@/content/features';
@@ -64,6 +64,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
               applicationCategory: 'BusinessApplication',
               operatingSystem: 'Web, Linux, Windows, macOS (Docker)',
               license: 'https://opensource.org/license/mit',
+              offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
             },
             breadcrumbList([
               { name: 'Features', path: '/features' },
@@ -198,7 +199,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
             </p>
           </div>
           <div className="mx-auto mt-12 max-w-3xl">
-            <PriceTable caption={`What ${feature.name} actions cost`} rows={rowsFromFeatureCosts(feature.costs)} />
+            <PriceTable caption={`What ${feature.name} actions cost`} rows={feature.costs} />
             <div className="mt-6 space-y-3 text-center text-[0.9375rem] text-muted">
               {feature.costNote ? <p>{feature.costNote}</p> : null}
               <p>

@@ -11,7 +11,7 @@ import { useChangeMarket, useMarket, useToolNav } from "@/components/research/se
 import { Skeleton } from "@/components/research/serp-overview";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { SavedKeywordsList } from "@/components/research/types";
-import { csvDate, finite, splitLines, toSave } from "@/components/research/util";
+import { csvDate, DIFFICULTY_BANDS, type DifficultyBand, difficultyLevel, finite, splitLines, toSave } from "@/components/research/util";
 import { Button, Card, cx, ErrorNote, PageHeader } from "@/components/ui";
 import { api, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
@@ -24,13 +24,12 @@ type Row = { keyword: string; difficulty: number | null };
 type Data = { keywords?: Row[] | null };
 type Input = { keywords: string[]; country: string; language: string };
 
-/** The same bands as the difficulty pill: under 30 easy, under 60 medium, else hard. */
-const BANDS = [
-  { key: "easy", label: "Easy", note: "0–29", test: (d: number) => d < 30, tone: "bg-pos" },
-  { key: "medium", label: "Medium", note: "30–59", test: (d: number) => d >= 30 && d < 60, tone: "bg-warn" },
-  { key: "hard", label: "Hard", note: "60–100", test: (d: number) => d >= 60, tone: "bg-neg" },
-] as const;
-type Band = (typeof BANDS)[number]["key"] | "all";
+/** The same bands as the difficulty pill and the gauge (see difficultyLevel). */
+const TONES = { easy: "bg-pos", medium: "bg-warn", hard: "bg-neg" } as const;
+const BANDS = DIFFICULTY_BANDS.map((band) => ({ ...band, tone: TONES[band.key] }));
+type Band = DifficultyBand | "all";
+const bandOf = (row: Row) => difficultyLevel(row.difficulty)?.band ?? null;
+const keywordKey = (row: Row) => row.keyword;
 
 const inputFor = (keywords: string[], market: Market): Input | null => (keywords.length ? { keywords, country: market.country, language: market.language } : null);
 
@@ -72,8 +71,7 @@ export function KeywordDifficultyChecker({ project }: { project: Project }) {
             </Button>
           )
         }
-      >
-      </ListForm>
+      />
       <ErrorNote error={saved.error} />
       <ViewErrors lookups={lookups} />
 
@@ -90,25 +88,26 @@ export function KeywordDifficultyChecker({ project }: { project: Project }) {
           </div>
         </Card>
       ) : lookup.data ? (
-        <Results project={project} rows={lookup.data.keywords ?? []} market={market} lookups={lookups} />
+        <Results key={JSON.stringify(input)} project={project} rows={lookup.data.keywords ?? []} market={market} lookups={lookups} />
       ) : null}
     </>
   );
 }
 
 
+/** Keyed by the list and market, so the band and selection start over for a new check. */
 function Results({ project, rows, market, lookups }: { project: Project; rows: Row[]; market: Market; lookups: LookupQuery<unknown>[] }) {
   const [band, setBand] = useState<Band>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const known = rows.filter((row) => finite(row.difficulty));
-  const counts = BANDS.map((b) => ({ ...b, count: known.filter((row) => b.test(row.difficulty as number)).length }));
+  const counts = BANDS.map((b) => ({ ...b, count: known.filter((row) => bandOf(row) === b.key).length }));
   const average = known.length ? Math.round(known.reduce((sum, row) => sum + (row.difficulty as number), 0) / known.length) : null;
-  const shown = band === "all" ? rows : rows.filter((row) => finite(row.difficulty) && BANDS.find((b) => b.key === band)?.test(row.difficulty));
+  const shown = useMemo(() => (band === "all" ? rows : rows.filter((row) => bandOf(row) === band)), [rows, band]);
 
-  const columns: Column<Row>[] = [
+  const columns = useMemo<Column<Row>[]>(() => [
     { key: "keyword", header: "Keyword", rowHeader: true, sortValue: (row) => row.keyword, render: (row) => <KeywordLink keyword={row.keyword} market={market} /> },
     { key: "difficulty", header: "Difficulty", title: "Keyword difficulty, 0 (easy) to 100 (hard)", align: "right", firstOrder: "asc", sortValue: (row) => row.difficulty, render: (row) => <DifficultyPill value={row.difficulty} /> },
-  ];
+  ], [market]);
 
   return (
     <div className="space-y-6">
@@ -153,7 +152,7 @@ function Results({ project, rows, market, lookups }: { project: Project; rows: R
             <ExportButton filename={`keyword-difficulty-${market.country}-${csvDate()}.csv`} rows={() => rows.map((row) => ({ keyword: row.keyword, difficulty: row.difficulty ?? "" }))} />
           </div>
         </div>
-        <DataTable rows={shown} columns={columns} rowKey={(row) => row.keyword} caption="Keyword difficulty" initialSort={{ key: "difficulty", order: "asc" }} selection={{ selected, onChange: setSelected, label: (row) => row.keyword }} empty="No keywords in this band." />
+        <DataTable rows={shown} columns={columns} rowKey={keywordKey} caption="Keyword difficulty" initialSort={{ key: "difficulty", order: "asc" }} selection={{ selected, onChange: setSelected, label: (row) => row.keyword }} empty="No keywords in this band." />
       </Card>
     </div>
   );

@@ -22,6 +22,9 @@ export function decrypt(payload: string): string {
 export const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 
 export function newApiKey(): { key: string; prefix: string; hash: string } {
-  const key = `oseo_${randomBytes(32).toString("base64url")}`;
+  let key: string;
+  // Never the OAuth access token prefix (oseo_at_), so a new key needs only one lookup.
+  do key = `oseo_${randomBytes(32).toString("base64url")}`;
+  while (key.startsWith("oseo_at_"));
   return { key, prefix: key.slice(0, 12), hash: sha256(key) };
 }

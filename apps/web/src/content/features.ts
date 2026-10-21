@@ -288,7 +288,7 @@ export const features: Feature[] = [
     capabilities: [
       {
         title: 'Google Business profile lookups',
-        body: 'Look up a Google Business profile.',
+        body: 'Load the live listing: address, phone, website, hours, categories, rating, photos and amenities, checked against what a complete profile needs.',
       },
       {
         title: 'Reviews on demand',
@@ -306,7 +306,7 @@ export const features: Feature[] = [
     costs: [
       { action: 'Maps search', unit: 'One search', price: '$0.07' },
       { action: 'Geo-grid', unit: '5×5 grid, 25 Maps searches', price: '$1.75' },
-      { action: 'Business profile lookup', unit: 'Per lookup', price: null },
+      { action: 'Business profile lookup', unit: 'Per lookup', price: '$0.05' },
     ],
   },
   {

@@ -121,7 +121,7 @@
   },
   "keyword-overview-cards": {
     "width": 1176,
-    "height": 358
+    "height": 346
   },
   "keyword-overview-ideas": {
     "width": 1176,
@@ -133,7 +133,7 @@
   },
   "keyword-overview-serp": {
     "width": 1176,
-    "height": 1157
+    "height": 1113
   },
   "local-grid": {
     "width": 1142,
@@ -185,11 +185,11 @@
   },
   "search-bar": {
     "width": 1176,
-    "height": 143
+    "height": 110
   },
   "search-bar-city": {
     "width": 1176,
-    "height": 143
+    "height": 110
   },
   "serp-checker": {
     "width": 1440,
@@ -197,11 +197,11 @@
   },
   "serp-checker-mobile": {
     "width": 1176,
-    "height": 1225
+    "height": 1314
   },
   "serp-checker-table": {
     "width": 1176,
-    "height": 1270
+    "height": 1225
   },
   "site-audit": {
     "width": 1440,

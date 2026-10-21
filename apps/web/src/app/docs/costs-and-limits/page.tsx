@@ -130,7 +130,7 @@ export default function CostsPage() {
           ['Keywords per metrics lookup', '700 (100 for city-level volume)'],
           ['Keywords per SERP-competitor lookup', '200'],
           ['Domains per link intersect', '2 to 20'],
-          ['Geo-grid size', '3×3, 5×5, 7×7 or 9×9'],
+          ['Geo-grid size', '3×3, 5×5, 7×7 or 9×9 in a project; up to 7×7 in the local rank checker'],
           ['Saved keywords added at once', '1,000'],
         ]}
       />

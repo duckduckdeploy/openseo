@@ -8,7 +8,7 @@ const sizeOf = (name: ScreenName) => screens[name];
 /**
  * A real screenshot of the app (taken by scripts/screenshots.mjs), in the light or dark theme to
  * match the page's. The dark source's media query follows the system setting; lib/theme.ts rewrites
- * it when the reader has picked a theme, so only the image on screen is downloaded. `window` frames a whole screen like an app window; crops of one
+ * it when the reader has picked a theme (the first images on a page may still download both versions). `window` frames a whole screen like an app window; crops of one
  * part of a page sit in a plain frame.
  */
 export function ScreenImage({

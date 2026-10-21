@@ -155,7 +155,7 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
         </div>
 
         <div className="rounded-md border border-line bg-sunken/60 px-3 py-2.5 sm:col-span-2" aria-live="polite">
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Price of a check</p>
+          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Price per run and per month</p>
           {keywords.length === 0 ? (
             <p className="mt-1 text-[13px] text-muted">Add keywords to see what one run and one month would cost.</p>
           ) : (

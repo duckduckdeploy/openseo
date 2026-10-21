@@ -41,6 +41,7 @@ type Row = {
 type Data = { domain: string | null; device: "desktop" | "mobile"; keywords: Row[] };
 type Input = { keywords: string[]; domain?: string; device: "desktop" | "mobile"; locationCode: number; language: string };
 
+const keywordKey = (row: Row) => row.keyword;
 const cleanDomain = (value: string) => (hostOf(/^https?:\/\//i.test(value) ? value : `https://${value}`) ?? value).toLowerCase().replace(/^www\./, "");
 const validDomain = (value: string) => value.length >= 3 && !/\s/.test(value) && value.includes(".");
 
@@ -103,6 +104,8 @@ export function AiOverviewChecker({ project }: { project: Project }) {
           </>
         )}
       >
+        {/* The server matches the domain against every result it reads, so it is part of the check. */}
+        <span className="text-xs text-muted">Changing your domain runs the check again.</span>
       </ListForm>
       <ErrorNote error={saved.error} />
       <ViewErrors lookups={lookups} />
@@ -185,7 +188,7 @@ function Results({ data, market, lookups }: { data: Data; market: Market; lookup
     return [...counts.entries()].map(([domain, set]) => ({ domain, keywords: set.size })).sort((a, b) => b.keywords - a.keywords).slice(0, 15);
   }, [withAio]);
 
-  const columns: Column<Row>[] = [
+  const columns = useMemo<Column<Row>[]>(() => [
     { key: "keyword", header: "Keyword", rowHeader: true, sortValue: (row) => row.keyword, render: (row) => <KeywordLink keyword={row.keyword} market={market} /> },
     {
       key: "aio",
@@ -229,10 +232,10 @@ function Results({ data, market, lookups }: { data: Data; market: Market; lookup
     ...(own
       ? ([
           { key: "position", header: "Page-one rank", title: "Your organic position on the first page; a dash means not on page one", align: "right", firstOrder: "asc", sortValue: (row) => row.position, render: (row) => (row.position ? num(row.position) : <span className="text-faint">—</span>) },
-          { key: "url", header: "Your page", sortValue: (row) => row.url, render: (row) => <UrlCell url={row.url} /> },
+          { key: "url", header: "Your page", sortValue: (row) => row.url, render: (row) => <UrlCell url={row.url} market={market} /> },
         ] satisfies Column<Row>[])
       : []),
-  ];
+  ], [market, own]);
 
   return (
     <div className="space-y-6">
@@ -269,7 +272,7 @@ function Results({ data, market, lookups }: { data: Data; market: Market; lookup
             />
           </div>
         </div>
-        <DataTable rows={rows} columns={columns} rowKey={(row) => row.keyword} caption="SERP features and AI Overviews per keyword" initialSort={{ key: "aio", order: "desc" }} empty="No results." />
+        <DataTable rows={rows} columns={columns} rowKey={keywordKey} caption="SERP features and AI Overviews per keyword" initialSort={{ key: "aio", order: "desc" }} empty="No results." />
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">

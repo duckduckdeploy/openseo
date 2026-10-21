@@ -21,7 +21,7 @@ import {
 } from "@/components/research/serp-overview";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { KeywordIdeasData, KeywordIdeasInput, KeywordMetrics, SerpData, SerpInput, TrendPoint, UrlMetricsData, UrlMetricsInput } from "@/components/research/types";
-import { chronological, estimatedVisits, finite, isQuestion, money } from "@/components/research/util";
+import { chronological, difficultyLevel, estimatedVisits, finite, isQuestion, money } from "@/components/research/util";
 import { Badge, Card, cx, PageHeader } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
@@ -42,13 +42,12 @@ const CountryChip = ({ country }: { country: string }) => (
   <span className="rounded-sm border border-line px-1 py-px font-mono text-[10px] font-semibold uppercase text-muted">{country}</span>
 );
 
+const BAND_COLOR = { easy: "var(--color-pos)", medium: "var(--color-warn)", hard: "var(--color-neg)" } as const;
+
+/** The gauge's word and colour: the same levels as the difficulty pill (see difficultyLevel). */
 function difficulty(value: number | null | undefined) {
-  if (!finite(value)) return { word: "Not rated", color: "var(--color-faint)" };
-  if (value < 15) return { word: "Easy", color: "var(--color-pos)" };
-  if (value < 30) return { word: "Fairly easy", color: "var(--color-pos)" };
-  if (value < 50) return { word: "Medium", color: "var(--color-warn)" };
-  if (value < 70) return { word: "Hard", color: "var(--color-neg)" };
-  return { word: "Very hard", color: "var(--color-neg)" };
+  const level = difficultyLevel(value);
+  return level ? { word: level.word, color: BAND_COLOR[level.band] } : { word: "Not rated", color: "var(--color-faint)" };
 }
 
 /** The difficulty bands along the gauge, easy (green) to very hard (red). */
@@ -77,11 +76,11 @@ const arcPath = (from: number, to: number, radius = 78) => {
 /** Keyword difficulty as a full-width banded gauge with the score in the middle. */
 function DifficultyGauge({ value }: { value: number | null | undefined }) {
   const { word, color } = difficulty(value);
-  const score = finite(value) ? Math.min(100, Math.max(0, value)) : 0;
+  const score = difficultyLevel(value)?.score ?? 0;
   const gap = 0.9;
   let from = 0;
   return (
-    <svg viewBox="0 0 200 168" className="mx-auto block w-full max-w-64" role="img" aria-label={finite(value) ? `Difficulty ${Math.round(value)} of 100, ${word}` : "Difficulty not rated"}>
+    <svg viewBox="0 0 200 168" className="mx-auto block w-full max-w-64" role="img" aria-label={finite(value) ? `Difficulty ${score} of 100, ${word}` : "Difficulty not rated"}>
       {KD_BANDS.map((band) => {
         const start = from + (from ? gap : 0);
         const end = band.to - (band.to < 100 ? gap : 0);
@@ -95,7 +94,7 @@ function DifficultyGauge({ value }: { value: number | null | undefined }) {
         );
       })}
       <text x="100" y="112" textAnchor="middle" className="fill-ink font-display tabular" style={{ fontSize: 56, fontWeight: 600 }}>
-        {finite(value) ? Math.round(value) : "—"}
+        {finite(value) ? score : "—"}
       </text>
       <text x="100" y="140" textAnchor="middle" className="font-display" style={{ fontSize: 17, fontWeight: 700, fill: color }}>
         {word}
@@ -280,7 +279,7 @@ function GlobalVolume({ rows, loading }: { rows: { country: string; volume: numb
   return (
     <Panel title="Search volume by country">
       <p className="font-display text-4xl font-bold tabular">{loading && !known.length ? <Skeleton className="h-9 w-24" /> : compact(total || null)}</p>
-      <p className="mt-0.5 text-xs text-muted">across the {rows.length} markets below</p>
+      <p className="mt-0.5 text-xs text-muted">across the {known.length} {known.length === 1 ? "market" : "markets"} below</p>
       <ul className="mt-3 space-y-1.5">
         {loading && !known.length
           ? Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-3.5 w-full" />)
@@ -303,8 +302,8 @@ function GlobalVolume({ rows, loading }: { rows: { country: string; volume: numb
 /**
  * The keyword hub, laid out like the overviews SEOs know. The URL names a keyword and a market
  * (?q=&country=&lang=, &loc= for a city or state); everything for it loads at once: metrics,
- * volume in other countries, matching and related terms, Google suggestions, the top 10 and, with
- * the setting on, the authority of the top 10. With a city or state, volume is local and the
+ * volume in other countries, matching and related terms, Google suggestions, the top 10 and the
+ * authority of each of those pages. With a city or state, volume is local and the
  * results and suggestions are what searchers there see; difficulty, intent and the ideas stay
  * national, which is all YepAPI has below country level.
  */
@@ -314,8 +313,6 @@ export function KeywordOverview({ project }: { project: Project }) {
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
   const keyword = params.get("q")?.trim() ?? "";
-  // DR, UR, links and traffic of the top 10 always load with the SERP.
-  const authority = true;
 
   const inputs = useMemo(() => inputsFor(keyword, market), [keyword, market]);
   const metrics = useLookupQuery<MetricsData, MetricsInput>(project.id, "keyword_metrics", inputs?.metrics ?? null);
@@ -324,7 +321,7 @@ export function KeywordOverview({ project }: { project: Project }) {
   const related = useLookupQuery<KeywordIdeasData, KeywordIdeasInput>(project.id, "keyword_ideas", inputs?.related ?? null);
   const suggest = useLookupQuery<SerpData, SuggestInput>(project.id, "autocomplete", inputs?.suggest ?? null);
   const serp = useLookupQuery<SerpData, SerpInput>(project.id, "serp", inputs?.serp ?? null);
-  const urlMetrics = useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", authorityInput(serp.data, authority));
+  const urlMetrics = useLookupQuery<UrlMetricsData, UrlMetricsInput>(project.id, "url_metrics", authorityInput(serp.data));
 
   const findRow = (data: MetricsData | undefined) => data?.keywords?.find((k) => k?.keyword?.toLowerCase() === keyword.toLowerCase()) ?? data?.keywords?.[0];
   const row = findRow(metrics.data);
@@ -341,6 +338,8 @@ export function KeywordOverview({ project }: { project: Project }) {
     useLookupQuery<MetricsData, MetricsInput>(project.id, "keyword_metrics", globalInputs?.[4] ?? null),
   ];
   const lookups = [metrics, local, terms, related, suggest, serp, urlMetrics, fallback, ...global] as LookupQuery<unknown>[];
+  // Refresh skips the URL metrics: the fresh SERP re-derives their input.
+  const refreshable = lookups.filter((lookup) => lookup !== urlMetrics);
   const volumeOf = (r: KeywordMetrics | undefined) => (restricted ? (r?.clickstreamVolume ?? null) : (r?.volume ?? null));
 
   function search(k: string) {
@@ -432,7 +431,7 @@ export function KeywordOverview({ project }: { project: Project }) {
               </p>
             </div>
             <div className="w-full sm:w-auto">
-              <ViewMeta lookups={lookups} />
+              <ViewMeta lookups={lookups} refresh={refreshable} />
             </div>
           </div>
 
@@ -444,7 +443,7 @@ export function KeywordOverview({ project }: { project: Project }) {
                   {finite(row?.avgReferringDomains) && row.avgReferringDomains > 0
                     ? `~${num(Math.round(row.avgReferringDomains))} ref. domains to rank in the top 10`
                     : "Links needed to rank are not known for this keyword."}
-                  {authority && finite(top.avgDr) && ` · top 10 average DR ${top.avgDr}`}
+                  {finite(top.avgDr) && ` · top 10 average DR ${top.avgDr}`}
                 </p>
               </Panel>
               <Panel title={market.area ? "Local search volume" : "Search volume"} action={<CountryChip country={market.country} />}>
@@ -519,7 +518,7 @@ export function KeywordOverview({ project }: { project: Project }) {
                 SERP overview for “{keyword}”{market.area ? ` · ${marketName(market)}` : ""}
               </h2>
             </div>
-            <SerpOverview market={market} keyword={keyword} volume={volume} serp={serp} metrics={urlMetrics} authority={authority} />
+            <SerpOverview market={market} keyword={keyword} volume={volume} serp={serp} metrics={urlMetrics} />
           </section>
         </div>
       )}

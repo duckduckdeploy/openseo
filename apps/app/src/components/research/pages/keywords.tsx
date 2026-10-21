@@ -32,6 +32,7 @@ type View = (typeof VIEWS)[number][0];
 
 type Row = KeywordMetrics & { sources: Set<"terms" | "related" | "suggestions"> };
 type LocalInput = { keywords: string[]; cityLocationCode: number; language: string };
+const keywordKey = (row: Row) => row.keyword;
 
 function inputsFor(keyword: string, market: Market) {
   if (!keyword) return null;
@@ -84,13 +85,16 @@ export function KeywordResearch({ project }: { project: Project }) {
     return [...rows.values()].sort((a, b) => (b.volume ?? -1) - (a.volume ?? -1));
   }, [terms.data, related.data, suggest.data, keyword]);
 
-  // Local volume for the top ideas, when a city or state is chosen: one flat-priced lookup.
+  // Local volume for the top ideas, when a city or state is chosen: one flat-priced lookup, built
+  // once all three idea lists have settled, so the top 100 does not change (and buy again) as each arrives.
+  const settled = !terms.loading && !related.loading && !suggest.loading;
   const localInput = useMemo<LocalInput | null>(
-    () => (market.area && all.length ? { keywords: all.slice(0, LOCAL).map((row) => row.keyword), cityLocationCode: market.area.code, language: market.language } : null),
-    [all, market],
+    () => (market.area && settled && all.length ? { keywords: all.slice(0, LOCAL).map((row) => row.keyword), cityLocationCode: market.area.code, language: market.language } : null),
+    [all, market, settled],
   );
   const local = useLookupQuery<{ keywords?: KeywordMetrics[] | null }, LocalInput>(project.id, "keyword_metrics", localInput);
   const localVolume = useMemo(() => new Map((local.data?.keywords ?? []).map((row) => [row.keyword.toLowerCase(), row.volume ?? null] as const)), [local.data]);
+  const localPending = local.loading || (Boolean(market.area) && !settled);
   const lookups = [terms, related, suggest, local] as LookupQuery<unknown>[];
 
   const counts = {
@@ -101,18 +105,30 @@ export function KeywordResearch({ project }: { project: Project }) {
     suggestions: all.filter((row) => row.sources.has("suggestions")).length,
   };
   const needle = filters.text.trim().toLowerCase();
-  const visible = all.filter(
-    (row) =>
-      (view === "all" || (view === "questions" ? isQuestion(row.keyword) : row.sources.has(view))) &&
-      (!needle || row.keyword.toLowerCase().includes(needle)) &&
-      (!filters.intent || row.intent === filters.intent) &&
-      (filters.minVolume == null || (row.volume ?? 0) >= filters.minVolume) &&
-      (filters.maxDifficulty == null || (row.difficulty != null && row.difficulty <= filters.maxDifficulty)) &&
-      (filters.minWords == null || row.keyword.trim().split(/\s+/).length >= filters.minWords),
+  const { intent, minVolume, maxDifficulty, minWords } = filters;
+  const visible = useMemo(
+    () =>
+      all.filter(
+        (row) =>
+          (view === "all" || (view === "questions" ? isQuestion(row.keyword) : row.sources.has(view))) &&
+          (!needle || row.keyword.toLowerCase().includes(needle)) &&
+          (!intent || row.intent === intent) &&
+          (minVolume == null || (row.volume ?? 0) >= minVolume) &&
+          (maxDifficulty == null || (row.difficulty != null && row.difficulty <= maxDifficulty)) &&
+          (minWords == null || row.keyword.trim().split(/\s+/).length >= minWords),
+      ),
+    [all, view, needle, intent, minVolume, maxDifficulty, minWords],
   );
 
+  // The selection belongs to one search: a new seed or market starts with none.
+  const search = JSON.stringify(inputs);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const columns: Column<Row>[] = [
+  const [selectedFor, setSelectedFor] = useState(search);
+  if (selectedFor !== search) {
+    setSelectedFor(search);
+    setSelected(new Set());
+  }
+  const columns = useMemo<Column<Row>[]>(() => [
     { key: "keyword", header: "Keyword", rowHeader: true, sortValue: (row) => row.keyword, render: (row) => <KeywordLink keyword={row.keyword} market={market} /> },
     { key: "volume", header: market.area ? "Country vol." : "Volume", title: "Average monthly searches", align: "right", sortValue: (row) => row.volume, render: (row) => num(row.volume) },
     ...(market.area
@@ -123,7 +139,7 @@ export function KeywordResearch({ project }: { project: Project }) {
             title: `Monthly searches in ${marketName(market)}, for the top ${LOCAL}`,
             align: "right",
             sortValue: (row) => localVolume.get(row.keyword.toLowerCase()),
-            render: (row) => (local.loading ? <Skeleton className="ml-auto h-3 w-8" /> : num(localVolume.get(row.keyword.toLowerCase()))),
+            render: (row) => (localPending ? <Skeleton className="ml-auto h-3 w-8" /> : num(localVolume.get(row.keyword.toLowerCase()))),
           } satisfies Column<Row>,
         ]
       : []),
@@ -132,18 +148,14 @@ export function KeywordResearch({ project }: { project: Project }) {
     { key: "intent", header: "Intent", sortValue: (row) => (row.intent === "unknown" ? null : row.intent), render: (row) => <IntentBadge intent={row.intent} /> },
     { key: "competition", header: "Competition", title: "Advertiser competition in Google Ads, 0 to 1", sortValue: (row) => row.competition, firstOrder: "desc", render: (row) => <Competition value={row.competition} level={row.competitionLevel} /> },
     { key: "trend", header: "12-mo trend", render: (row) => <Sparkline trend={row.trend} /> },
-  ];
+  ], [market, localVolume, localPending]);
 
   const loading = terms.loading || related.loading;
 
   return (
     <>
       <SearchBar value={keyword} onSearch={(q) => nav({ q })} label="Seed keyword" icon={Sprout} placeholder="Enter a seed keyword, e.g. plumbing software" market={market} onMarket={changeMarket} areas pending={loading} button="Find ideas">
-        {(draft) => (
-          <>
-            <span className="text-xs text-muted">Ideas are national; with a city or state the top {LOCAL} also get their local volume.</span>
-          </>
-        )}
+        <span className="text-xs text-muted">Ideas are national; with a city or state the top {LOCAL} also get their local volume.</span>
       </SearchBar>
 
       <ViewErrors lookups={lookups} />
@@ -234,7 +246,7 @@ export function KeywordResearch({ project }: { project: Project }) {
               <DataTable
                 rows={visible}
                 columns={columns}
-                rowKey={(row) => row.keyword}
+                rowKey={keywordKey}
                 caption={`Keyword ideas for ${keyword}`}
                 initialSort={{ key: "volume", order: "desc" }}
                 selection={{ selected, onChange: setSelected, label: (row) => row.keyword }}

@@ -11,7 +11,7 @@ import { isActivePath } from './nav-links';
 interface MobileNavProps {
   signInUrl: string;
   signUpUrl: string;
-  githubUrl: string | null;
+  githubUrl: string;
 }
 
 /** Disclosure menu for small screens. Closes on navigation, Escape and outside click. */
@@ -85,16 +85,14 @@ export function MobileNav({ signInUrl, signUpUrl, githubUrl }: MobileNavProps) {
                 </li>
               );
             })}
-            {githubUrl ? (
-              <li>
-                <a href={githubUrl} className={itemClass}>
-                  <span className="inline-flex items-center gap-2.5">
-                    <BrandIcon brand="github" />
-                    GitHub
-                  </span>
-                </a>
-              </li>
-            ) : null}
+            <li>
+              <a href={githubUrl} className={itemClass}>
+                <span className="inline-flex items-center gap-2.5">
+                  <BrandIcon brand="github" />
+                  GitHub
+                </span>
+              </a>
+            </li>
             <li>
               <a href={signInUrl} className={itemClass}>
                 Sign in

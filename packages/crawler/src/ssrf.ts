@@ -81,18 +81,18 @@ export function parseIPv6(input: string): number[] | null {
   return [...head, ...tail];
 }
 
-function isPrivateIPv4Bytes(b: number[]): boolean {
-  const [a = 0, c = 0, d = 0] = b;
+function isPrivateIPv4Bytes(octets: number[]): boolean {
+  const [a = 0, b = 0, c = 0] = octets;
   if (a === 0 || a === 10 || a === 127) return true;
-  if (a === 100 && c >= 64 && c <= 127) return true; // CGNAT 100.64/10
-  if (a === 169 && c === 254) return true; // link-local, cloud metadata
-  if (a === 172 && c >= 16 && c <= 31) return true;
-  if (a === 192 && c === 168) return true;
-  if (a === 192 && c === 0 && (d === 0 || d === 2)) return true; // IETF protocol, TEST-NET-1
-  if (a === 192 && c === 88 && d === 99) return true; // 6to4 relay
-  if (a === 198 && (c === 18 || c === 19)) return true; // benchmarking
-  if (a === 198 && c === 51 && d === 100) return true; // TEST-NET-2
-  if (a === 203 && c === 0 && d === 113) return true; // TEST-NET-3
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT 100.64/10
+  if (a === 169 && b === 254) return true; // link-local, cloud metadata
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 192 && b === 0 && (c === 0 || c === 2)) return true; // IETF protocol, TEST-NET-1
+  if (a === 192 && b === 88 && c === 99) return true; // 6to4 relay
+  if (a === 198 && (b === 18 || b === 19)) return true; // benchmarking
+  if (a === 198 && b === 51 && c === 100) return true; // TEST-NET-2
+  if (a === 203 && b === 0 && c === 113) return true; // TEST-NET-3
   return a >= 224; // multicast, reserved, broadcast
 }
 
@@ -193,7 +193,7 @@ export function createGuard(opts: GuardOptions = {}): Guard {
       }
       const bad = entry.addresses.find((a) => isPrivateAddress(a));
       if (bad !== undefined) {
-        throw new SsrfError('private-address', url, `${host} resolves to non-public address ${bad}`);
+        throw new SsrfError('private-address', url, `${host} resolves to a non-public address`);
       }
     },
   };

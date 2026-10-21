@@ -297,6 +297,8 @@ export const aiAnswers = pgTable(
   (t) => [
     index("ai_answers_prompt_idx").on(t.promptId, t.model, t.createdAt),
     index("ai_answers_run_idx").on(t.runId),
+    // Per-model average cost for run estimates and the cost ceiling.
+    index("ai_answers_project_model_idx").on(t.projectId, t.model),
   ],
 );
 

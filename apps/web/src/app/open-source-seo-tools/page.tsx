@@ -169,11 +169,9 @@ export default function OpenSourceSeoToolsPage() {
           </div>
           <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
             <ButtonLink href="/docs/self-hosting">Self-host OpenSEO with Docker</ButtonLink>
-            {GITHUB_URL ? (
-              <ButtonLink href={GITHUB_URL} variant="secondary">
-                Source on GitHub
-              </ButtonLink>
-            ) : null}
+            <ButtonLink href={GITHUB_URL} variant="secondary">
+              Source on GitHub
+            </ButtonLink>
           </div>
         </section>
 

@@ -151,11 +151,7 @@ export function LocalRank({ project }: { project: Project }) {
           </>
         }
       >
-        {(draft) => (
-          <>
-            <span className="text-xs text-muted">{market.area ? `A ${size} × ${size} grid around ${marketName(market)}.` : "Pick a city or area in the field next to the country."}</span>
-          </>
-        )}
+        <span className="text-xs text-muted">{market.area ? `A ${size} × ${size} grid around ${marketName(market)}.` : "Pick a city or area in the field next to the country."}</span>
       </SearchBar>
 
       <ViewErrors lookups={lookups} />

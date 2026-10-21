@@ -150,11 +150,15 @@ function ProviderCard({ projectId, provider, state }: { projectId: string; provi
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const [picking, setPicking] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const connection = state[provider];
   const accounts = state.accounts.filter((a) => a.provider === provider);
   const disconnect = useMutation({
     mutationFn: () => api(`/projects/${projectId}/google/${provider}`, { method: "DELETE" }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["google", projectId] }),
+    onSuccess: () => {
+      setConfirming(false);
+      void queryClient.invalidateQueries({ queryKey: ["google", projectId] });
+    },
   });
   const label = connection ? (provider === "gsc" ? state.gsc?.siteUrl : `${state.ga4?.displayName} (${state.ga4?.propertyId})`) : null;
 
@@ -176,7 +180,7 @@ function ProviderCard({ projectId, provider, state }: { projectId: string; provi
               <Button size="sm" onClick={() => setPicking(true)}>
                 Change property
               </Button>
-              <Button size="sm" variant="ghost" loading={disconnect.isPending} onClick={() => disconnect.mutate()}>
+              <Button size="sm" variant="ghost" onClick={() => setConfirming(true)}>
                 Disconnect from this project
               </Button>
             </div>
@@ -191,8 +195,19 @@ function ProviderCard({ projectId, provider, state }: { projectId: string; provi
         <a href={connectUrl(provider, pathname)} className="inline-flex items-center gap-1.5 text-[13px] font-medium underline underline-offset-2">
           <Plug className="size-3.5" aria-hidden /> {accounts.length ? "Add another Google account" : "Connect a Google account"}
         </a>
-        <ErrorNote error={disconnect.error} />
       </div>
+      <ConfirmDialog
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={() => disconnect.mutate()}
+        title={`Disconnect ${PRODUCT[provider]}?`}
+        confirmLabel="Disconnect"
+        danger
+        pending={disconnect.isPending}
+        error={disconnect.error}
+      >
+        <p>This project stops reading {label ?? "this property"}. The Google account stays connected, so you can pick the property again later.</p>
+      </ConfirmDialog>
     </Card>
   );
 }
@@ -394,6 +409,7 @@ function SearchConsoleReport({ projectId }: { projectId: string }) {
   const [range, setRange] = useState<Range>("last_28_days");
   const [device, setDevice] = useState("");
   const [tab, setTab] = useQueryState<TabId>("tab", TABS, "striking");
+  // The tables below are keyed on these, so a new period or device starts them at page 1.
   const params: Record<string, string> = { range, ...(device ? { device } : {}) };
   const report = useQuery({
     queryKey: ["search", projectId, "report", params],
@@ -446,10 +462,10 @@ function SearchConsoleReport({ projectId }: { projectId: string }) {
         {report.data && <StrikingTable projectId={projectId} rows={report.data.striking} />}
       </TabPanel>
       <TabPanel id="queries" hidden={tab !== "queries"}>
-        {tab === "queries" && <TopTable projectId={projectId} dimension="query" params={params} />}
+        {tab === "queries" && <TopTable key={JSON.stringify(params)} projectId={projectId} dimension="query" params={params} />}
       </TabPanel>
       <TabPanel id="pages" hidden={tab !== "pages"}>
-        {tab === "pages" && <TopTable projectId={projectId} dimension="page" params={params} />}
+        {tab === "pages" && <TopTable key={JSON.stringify(params)} projectId={projectId} dimension="page" params={params} />}
       </TabPanel>
       <TabPanel id="opportunities" hidden={tab !== "opportunities"}>
         {tab === "opportunities" && <OpportunitiesTable projectId={projectId} range={range} />}

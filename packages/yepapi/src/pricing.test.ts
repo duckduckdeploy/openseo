@@ -151,11 +151,13 @@ describe('computeCost', () => {
     expect(computeCost('/v1/serp/google', params, { pagesFetched: 1 }).costUsd).toBe(0.01);
     expect(computeCost('/v1/serp/google', params, { pagesFetched: 3 }).costUsd).toBe(0.03);
     expect(computeCost('/v1/serp/google', params, { pagesFetched: 99 }).costUsd).toBe(0.05);
+    expect(computeCost('/v1/serp/google', params, { pagesFetched: 0 }).costUsd).toBe(0.01);
     expect(computeCost('/v1/serp/google', { query: 'q', depth: 50 }, {}).costUsd).toBe(0.05);
   });
 
-  it('prefers the cost the API reports for AI chat', () => {
-    expect(computeCost('/v1/ai/chat', { messages: [] }, { costUsd: 0.000162 })).toEqual({ costUsd: 0.000162, costEstimated: false });
+  it('prefers the cost the API reports for AI chat, never below the $0.01 minimum', () => {
+    expect(computeCost('/v1/ai/chat', { messages: [] }, { costUsd: 0.000162 })).toEqual({ costUsd: 0.01, costEstimated: true });
+    expect(computeCost('/v1/ai/chat', { messages: [] }, { costUsd: 0.042 })).toEqual({ costUsd: 0.042, costEstimated: false });
     expect(computeCost('/v1/ai/chat', { messages: [] }, {})).toEqual({ costUsd: 0.01, costEstimated: true });
     expect(computeCost('/v1/ai/models', undefined, [])).toEqual({ costUsd: 0, costEstimated: false });
   });

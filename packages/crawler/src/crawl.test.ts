@@ -1,11 +1,16 @@
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { DEFAULT_THRESHOLDS, crossPageIssues, hasNoindex } from './analyse';
 import { ISSUE_CATALOG } from './catalog';
 import type { IssueType } from './catalog';
 import { crawlSite } from './crawl';
 import { extractPage } from './extract';
-import type { CrawlOptions, CrawlResult, PageResult } from './types';
+import { HostThrottle } from './fetch';
+import type { FetchContext } from './fetch';
+import { DEFAULT_SITEMAP_LIMITS, discoverSitemapUrls } from './robots';
+import { createGuard } from './ssrf';
+import type { CrawlOptions, CrawlResult, FetchLike, PageResult } from './types';
 
 const WORDS = Array.from({ length: 40 }, (_, i) => `Sentence number ${i} talks about fixtures and crawling.`).join(' ');
 
@@ -546,6 +551,178 @@ describe('crawlSite options', () => {
     expect(result.summary.stoppedReason).toBe('aborted');
     expect(result.pages.length).toBeGreaterThanOrEqual(1);
     expect(result.pages.length).toBeLessThan(5);
+  });
+});
+
+describe('crawl limits and edge cases', () => {
+  /** Fake site on example.com / www.example.com. Handlers may be async to control timing. */
+  const fakeSite = (routes: Record<string, () => Response | Promise<Response>>) => {
+    const requested: string[] = [];
+    const fetch: FetchLike = async (url) => {
+      requested.push(url);
+      const u = new URL(url);
+      const handler = routes[`${u.host}${u.pathname}`] ?? routes[u.pathname];
+      return handler ? handler() : new Response('not found', { status: 404, headers: { 'content-type': 'text/plain' } });
+    };
+    return { requested, fetch, resolveHost: async () => ['93.184.216.34'] };
+  };
+  const htmlPage = (body: string) => () =>
+    new Response(html({ title: 'A page title for tests', description: desc('fake'), body: `<h1>Fake</h1><p>${WORDS}</p>${body}` }), {
+      headers: { 'content-type': 'text/html' },
+    });
+  const fakeOptions = (site: ReturnType<typeof fakeSite>, overrides: Partial<CrawlOptions> = {}): CrawlOptions => ({
+    startUrl: 'https://example.com/',
+    fetch: site.fetch,
+    resolveHost: site.resolveHost,
+    delayMs: 0,
+    useSitemaps: false,
+    ...overrides,
+  });
+
+  it('keeps a running queued count that ends at zero on a complete crawl', async () => {
+    const queued: number[] = [];
+    const result = await crawlSite(options({ concurrency: 1 }), { onPage: (_, progress) => void queued.push(progress.queued) });
+    expect(result.summary.stoppedReason).toBe('completed');
+    expect(queued.at(-1)).toBe(0);
+    expect(Math.max(...queued)).toBeGreaterThan(0);
+
+    const partial: number[] = [];
+    const capped = await crawlSite(options({ maxPages: 3, concurrency: 1 }), { onPage: (_, progress) => void partial.push(progress.queued) });
+    expect(capped.summary.stoppedReason).toBe('max_pages');
+    expect(partial.at(-1)).toBeGreaterThan(0);
+  });
+
+  it('stops scheduling pages when the time limit runs out', async () => {
+    const result = await crawlSite(options({ maxDurationMs: 0 }));
+    expect(result.summary.stoppedReason).toBe('time_limit');
+    expect(result.summary.truncated).toBe(true);
+    expect(result.pages.filter((p) => p.fetchClass !== 'robots_blocked')).toHaveLength(1);
+  });
+
+  it('does not let concurrent redirects overshoot maxPages while robots.txt loads', async () => {
+    const slowRobots = (): Promise<Response> =>
+      new Promise((resolve) => setTimeout(() => resolve(new Response('User-agent: *\nAllow: /\n', { headers: { 'content-type': 'text/plain' } })), 50));
+    const site = fakeSite({
+      'example.com/': htmlPage('<a href="/r1">1</a><a href="/r2">2</a><a href="/r3">3</a>'),
+      'example.com/r1': () => new Response(null, { status: 301, headers: { location: 'https://www.example.com/t1' } }),
+      'example.com/r2': () => new Response(null, { status: 301, headers: { location: 'https://www.example.com/t2' } }),
+      'example.com/r3': () => new Response(null, { status: 301, headers: { location: 'https://www.example.com/t3' } }),
+      'www.example.com/robots.txt': slowRobots,
+      'www.example.com/t1': htmlPage(''),
+      'www.example.com/t2': htmlPage(''),
+      'www.example.com/t3': htmlPage(''),
+    });
+    const result = await crawlSite(fakeOptions(site, { concurrency: 3, maxPages: 5 }));
+    expect(result.pages.filter((p) => p.fetchClass !== 'robots_blocked').length).toBeLessThanOrEqual(5);
+    expect(result.pages.filter((p) => p.url.includes('/t'))).toHaveLength(1);
+    expect(result.summary.stoppedReason).toBe('max_pages');
+  });
+
+  it('treats a 3xx without Location as a failed response, not a redirect', async () => {
+    const site = fakeSite({
+      '/': htmlPage('<a href="/bare">bare</a>'),
+      '/bare': () => new Response('moved', { status: 302, headers: { 'content-type': 'text/html' } }),
+    });
+    const result = await crawlSite(fakeOptions(site));
+    const bare = result.pages.find((p) => p.url === 'https://example.com/bare');
+    expect(bare).toMatchObject({ fetchClass: 'error', redirectChain: [] });
+    expect(bare?.errorMessage).toContain('without a Location header');
+    expect(result.issues.filter((i) => i.url === 'https://example.com/bare').map((i) => i.type)).toEqual(['fetch-failed']);
+  });
+
+  it('treats a robots.txt 5xx as disallow-all and reports it', async () => {
+    const site = fakeSite({
+      '/robots.txt': () => new Response('down', { status: 503, headers: { 'content-type': 'text/plain' } }),
+      '/': htmlPage(''),
+    });
+    const result = await crawlSite(fakeOptions(site));
+    expect(site.requested).toEqual(['https://example.com/robots.txt']);
+    expect(result.pages.every((p) => p.fetchClass === 'robots_blocked')).toBe(true);
+    expect(result.issues.find((i) => i.type === 'robots-txt-unavailable')?.relatedUrls).toEqual(['https://example.com/robots.txt']);
+
+    const ignored = await crawlSite(fakeOptions(site, { respectRobots: false }));
+    expect(ignored.pages[0]?.fetchClass).toBe('ok');
+    expect(ignored.summary.issuesByType['robots-txt-unavailable']).toBeUndefined();
+  });
+
+  it('fetches URLs with their original query order but dedupes on the sorted form', async () => {
+    const site = fakeSite({
+      '/': htmlPage('<a href="/q?b=2&a=1">one</a><a href="/q?a=1&b=2">same</a>'),
+      '/q': htmlPage(''),
+    });
+    const result = await crawlSite(fakeOptions(site, { startUrl: 'https://example.com/?z=1&y=2' }));
+    expect(site.requested).toContain('https://example.com/?z=1&y=2');
+    expect(site.requested.filter((u) => u.includes('/q'))).toEqual(['https://example.com/q?b=2&a=1']);
+    expect(result.pages.map((p) => p.url).sort()).toEqual(['https://example.com/?y=2&z=1', 'https://example.com/q?a=1&b=2']);
+  });
+});
+
+describe('robots directives', () => {
+  it('matches whole noindex/none directives only', () => {
+    expect(hasNoindex('noindex, follow')).toBe(true);
+    expect(hasNoindex('NONE')).toBe(true);
+    expect(hasNoindex('index, follow, max-image-preview:none')).toBe(false);
+    expect(hasNoindex('max-image-preview: none, max-snippet:-1')).toBe(false);
+    expect(hasNoindex('nofollow, noimageindex')).toBe(false);
+    expect(hasNoindex('unavailable_after: 2030-01-01, noindex')).toBe(true);
+  });
+
+  it('applies user-agent scoped X-Robots-Tag entries only to us', () => {
+    expect(hasNoindex('bingbot: noindex')).toBe(false);
+    expect(hasNoindex('bingbot: noindex, nofollow')).toBe(false);
+    expect(hasNoindex('googlebot: noindex')).toBe(true);
+    expect(hasNoindex('*: noindex')).toBe(true);
+    expect(hasNoindex('OpenSEOBot: none', ['OpenSEOBot'])).toBe(true);
+    expect(hasNoindex('otherbot: noindex, googlebot: nofollow')).toBe(false);
+    expect(hasNoindex('otherbot: noindex, googlebot: noindex')).toBe(true);
+  });
+});
+
+describe('sitemap discovery limits', () => {
+  const ctx = (): FetchContext => ({
+    fetch: globalThis.fetch as FetchLike,
+    guard: createGuard({ allowPrivateNetwork: true, allowedPorts: [Number(new URL(base).port)] }),
+    throttle: new HostThrottle(0),
+    userAgent: 'test',
+    timeoutMs: 5000,
+    maxBodyBytes: 1024 * 1024,
+    maxRedirects: 5,
+  });
+
+  it('records when the document limit leaves sitemaps unread', async () => {
+    const found = await discoverSitemapUrls([`${base}/sitemap-index.xml`], ctx(), { ...DEFAULT_SITEMAP_LIMITS, maxDocuments: 1 });
+    expect(found).toMatchObject({ urls: [], sitemaps: [`${base}/sitemap-index.xml`], capped: true, tooLarge: [] });
+    const full = await discoverSitemapUrls([`${base}/sitemap-index.xml`], ctx());
+    expect(full.capped).toBe(false);
+    expect(full.urls).toHaveLength(6);
+  });
+
+  it('records a sitemap over the size limit instead of dropping it silently', async () => {
+    const found = await discoverSitemapUrls([`${base}/sitemap-pages.xml`], ctx(), { ...DEFAULT_SITEMAP_LIMITS, maxBytes: 100 });
+    expect(found).toMatchObject({ urls: [], sitemaps: [], tooLarge: [`${base}/sitemap-pages.xml`] });
+  });
+
+  it('skips "missing from sitemap" when discovery was partial and reports oversized sitemaps', () => {
+    const data = extractPage('<html></html>', { url: 'https://example.com/a', isInternal: () => true });
+    const row = {
+      ...data,
+      url: 'https://example.com/a',
+      finalUrl: 'https://example.com/a',
+      fetchClass: 'ok',
+      isHtml: true,
+      indexable: true,
+      inSitemap: false,
+      depth: 0,
+      redirectChain: [],
+      securityHeaders: { strictTransportSecurity: 'x', contentSecurityPolicy: 'x', xContentTypeOptions: 'x', xFrameOptions: 'x', referrerPolicy: 'x', permissionsPolicy: null },
+    } as unknown as PageResult;
+    const facts = { startUrl: row.url, complete: true, sitemapChecked: true, sitemapFound: true, rateLimitStopped: false, externalLinks: [], thresholds: DEFAULT_THRESHOLDS };
+    const types = (extra: object): IssueType[] => crossPageIssues([{ ...row }], { ...facts, ...extra }).map((i) => i.type);
+    expect(types({})).toContain('page-not-in-sitemap');
+    expect(types({ sitemapCapped: true })).not.toContain('page-not-in-sitemap');
+    const oversized = types({ sitemapFound: false, sitemapsTooLarge: ['https://example.com/big.xml'] });
+    expect(oversized).toContain('sitemap-too-large');
+    expect(oversized).not.toContain('sitemap-missing');
   });
 });
 

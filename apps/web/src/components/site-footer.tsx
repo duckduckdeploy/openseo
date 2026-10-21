@@ -123,14 +123,12 @@ export function SiteFooter() {
                 Sign in
               </a>
             </li>
-            {GITHUB_URL ? (
-              <li>
-                <a href={GITHUB_URL} className={`${linkClass} inline-flex items-center gap-2`} rel="noopener">
-                  <BrandIcon brand="github" />
-                  GitHub
-                </a>
-              </li>
-            ) : null}
+            <li>
+              <a href={GITHUB_URL} className={`${linkClass} inline-flex items-center gap-2`} rel="noopener">
+                <BrandIcon brand="github" />
+                GitHub
+              </a>
+            </li>
             <li>
               <Link href="/privacy" className={linkClass}>
                 Privacy

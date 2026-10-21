@@ -134,11 +134,7 @@ export function DomainOverview({ project }: { project: Project }) {
         onMarket={changeMarket}
         pending={overview.loading}
       >
-        {(draft) => (
-          <>
-            <span className="text-xs text-muted">Domain data is for the whole country. Backlinks are worldwide.</span>
-          </>
-        )}
+        <span className="text-xs text-muted">Domain data is for the whole country. Backlinks are worldwide.</span>
       </SearchBar>
 
       <ViewErrors lookups={lookups} />
@@ -214,7 +210,7 @@ export function DomainOverview({ project }: { project: Project }) {
             active={tab}
             onChange={(next) => nav({ tab: next === "keywords" ? null : next }, { replace: true })}
             items={[
-              { key: "keywords", label: `Top keywords${keywords.data?.total ? ` · ${compact(keywords.data.total)}` : ""}`, content: <KeywordsTable project={project} market={market} domain={domain} lookup={keywords} total={traffic} /> },
+              { key: "keywords", label: `Top keywords${keywords.data?.total ? ` · ${compact(keywords.data.total)}` : ""}`, content: <KeywordsTable key={JSON.stringify(inputs.keywords)} project={project} market={market} domain={domain} lookup={keywords} total={traffic} /> },
               { key: "pages", label: `Top pages${pages.data?.total ? ` · ${compact(pages.data.total)}` : ""}`, content: <PagesTable domain={domain} market={market} lookup={pages} /> },
               { key: "competitors", label: "Competitors", content: <CompetitorsTable domain={domain} market={market} lookup={competitors} /> },
             ]}
@@ -238,25 +234,29 @@ function TableLoading({ lookup, label, children }: { lookup: LookupQuery<unknown
   return <>{children}</>;
 }
 
+/** A domain can rank for one keyword with two pages: a row is a keyword and its URL. */
+const keywordRowKey = (row: DomainKeyword) => `${row.keyword} ${row.url ?? ""}`;
+
+/** Keyed by the search, so its filters and selection start over for a new domain or market. */
 function KeywordsTable({ project, market, domain, lookup, total }: { project: Project; market: Market; domain: string; lookup: LookupQuery<DomainKeywordsData>; total: N }) {
   const [text, setText] = useState("");
   const [within, setWithin] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const all = lookup.data?.keywords ?? [];
+  const all = useMemo(() => lookup.data?.keywords ?? [], [lookup.data]);
   const needle = text.trim().toLowerCase();
   const max = Number(within) || null;
-  const rows = all.filter((row) => (!needle || row.keyword.toLowerCase().includes(needle)) && (!max || (finite(row.position) && row.position <= max)));
+  const rows = useMemo(() => all.filter((row) => (!needle || row.keyword.toLowerCase().includes(needle)) && (!max || (finite(row.position) && row.position <= max))), [all, needle, max]);
   // YepAPI leaves trafficPercent at 0; the share is computed from the domain's total traffic.
   const share = (row: DomainKeyword) => (finite(row.traffic) && finite(total) && total > 0 ? (row.traffic / total) * 100 : null);
-  const columns: Column<DomainKeyword>[] = [
+  const columns = useMemo<Column<DomainKeyword>[]>(() => [
     { key: "keyword", header: "Keyword", rowHeader: true, sortValue: (row) => row.keyword, render: (row) => <KeywordLink keyword={row.keyword} market={market} /> },
     { key: "position", header: "Pos.", title: "Current Google position", align: "right", firstOrder: "asc", sortValue: (row) => row.position, render: (row) => num(row.position) },
     { key: "volume", header: "Volume", align: "right", sortValue: (row) => row.volume, render: (row) => num(row.volume) },
     { key: "traffic", header: "Traffic", title: "Estimated monthly visits from this keyword", align: "right", sortValue: (row) => row.traffic, render: (row) => (finite(row.traffic) ? num(Math.round(row.traffic)) : "—") },
     { key: "share", header: "Share", title: "Share of the domain's organic traffic", align: "right", sortValue: share, render: (row) => percent(share(row), 1) },
     { key: "cpc", header: "CPC", align: "right", sortValue: (row) => row.cpc, render: (row) => money(row.cpc) },
-    { key: "url", header: "Ranking URL", sortValue: (row) => row.url, render: (row) => <UrlCell url={row.url} /> },
-  ];
+    { key: "url", header: "Ranking URL", sortValue: (row) => row.url, render: (row) => <UrlCell url={row.url} market={market} /> },
+  ], [market, total]);
   return (
     <Card>
       <TableLoading lookup={lookup} label="Loading top keywords">
@@ -277,7 +277,7 @@ function KeywordsTable({ project, market, domain, lookup, total }: { project: Pr
             {num(rows.length)} of the top {num(all.length)} by traffic
           </p>
           <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-            <SaveSelected projectId={project.id} count={selected.size} locationCode={market.locationCode} keywords={() => all.filter((row) => selected.has(row.keyword)).map((row) => toSave(row))} onSaved={() => setSelected(new Set())} />
+            <SaveSelected projectId={project.id} count={selected.size} locationCode={market.locationCode} keywords={() => [...new Map(all.filter((row) => selected.has(keywordRowKey(row))).map((row) => [row.keyword, toSave(row)])).values()]} onSaved={() => setSelected(new Set())} />
             <ExportButton
               filename={`keywords-${slug(domain)}-${csvDate()}.csv`}
               rows={() => rows.map((row) => ({ keyword: row.keyword, position: row.position ?? "", volume: row.volume ?? "", traffic: row.traffic ?? "", share: share(row) ?? "", cpc: row.cpc ?? "", url: row.url ?? "" }))}
@@ -287,7 +287,7 @@ function KeywordsTable({ project, market, domain, lookup, total }: { project: Pr
         <DataTable
           rows={rows}
           columns={columns}
-          rowKey={(row) => row.keyword}
+          rowKey={keywordRowKey}
           caption={`Top keywords of ${domain}`}
           initialSort={{ key: "traffic", order: "desc" }}
           selection={{ selected, onChange: setSelected, label: (row) => row.keyword }}
@@ -301,7 +301,7 @@ function KeywordsTable({ project, market, domain, lookup, total }: { project: Pr
 function PagesTable({ domain, market, lookup }: { domain: string; market: Market; lookup: LookupQuery<DomainPagesData> }) {
   const rows = lookup.data?.pages ?? [];
   const columns: Column<DomainPage>[] = [
-    { key: "url", header: "Page", rowHeader: true, sortValue: (row) => row.url, render: (row) => <UrlCell url={row.url} className="max-w-96 text-ink" /> },
+    { key: "url", header: "Page", rowHeader: true, sortValue: (row) => row.url, render: (row) => <UrlCell url={row.url} market={market} className="max-w-96 text-ink" /> },
     { key: "traffic", header: "Traffic", title: "Estimated monthly organic visits", align: "right", sortValue: (row) => row.traffic, render: (row) => (finite(row.traffic) ? num(Math.round(row.traffic)) : "—") },
     { key: "value", header: "Value", title: "What this traffic would cost in Google Ads, per month", align: "right", sortValue: (row) => row.trafficValue, render: (row) => (finite(row.trafficValue) ? `$${compact(row.trafficValue)}` : "—") },
     { key: "keywords", header: "Keywords", align: "right", sortValue: (row) => row.keywords, render: (row) => num(row.keywords) },

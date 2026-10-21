@@ -256,6 +256,13 @@ describe('error mapping', () => {
     });
   });
 
+  it('does not treat a bare 403 without a YepAPI envelope as a frozen account', async () => {
+    const { fetch } = fakeFetch({ status: 403, text: '<html>Attention Required! | Cloudflare</html>' });
+    const yep = createYepApi({ apiKey: KEY, fetch, maxRetries: 0 });
+    const error = await rejection(yep.domain.whois({ domain: 'a.com' }));
+    expect(error).toMatchObject({ status: 403, code: 'HTTP_403', isAccountFrozen: false, isAuthError: false, kind: 'unknown' });
+  });
+
   it('handles non-JSON error bodies', async () => {
     const { fetch } = fakeFetch({ status: 504, text: '<html>Gateway Timeout</html>' });
     const yep = createYepApi({ apiKey: KEY, fetch, maxRetries: 0 });
@@ -344,6 +351,17 @@ describe('retries', () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(requests).toHaveLength(2);
     expect((await pending).attempts).toBe(2);
+  });
+
+  it('stops retrying when Retry-After exceeds retryMaxDelayMs', async () => {
+    const { fetch, requests } = fakeFetch(
+      fail(429, 'RATE_LIMITED', 'slow down', { 'Retry-After': '120' }),
+      ok({ domain: 'a.com' }),
+    );
+    const yep = createYepApi({ apiKey: KEY, fetch, retryMaxDelayMs: 30_000 });
+    const error = await rejection(yep.domain.whois({ domain: 'a.com' }));
+    expect(requests).toHaveLength(1);
+    expect(error).toMatchObject({ status: 429, isRateLimited: true, retryAfterMs: 120_000, attempts: 1 });
   });
 
   it('gives up after maxRetries and reports the last error', async () => {
@@ -449,6 +467,43 @@ describe('onCall', () => {
       errorCode: 'NO_CREDITS',
     });
     expect(typeof calls[0]?.ms).toBe('number');
+  });
+
+  it('reports the estimated maximum for failures that may have been billed upstream', async () => {
+    const calls: YepCallInfo[] = [];
+    const onCall = (info: YepCallInfo) => {
+      calls.push(info);
+    };
+    const hanging = (request: { signal?: AbortSignal }) =>
+      new Promise<never>((_, reject) => {
+        request.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+      });
+
+    const invalid = createYepApi({ apiKey: KEY, fetch: fakeFetch({ status: 200, text: '' }).fetch, onCall });
+    await rejection(invalid.serp.google({ query: 'q', depth: 30 }));
+    expect(calls[0]).toMatchObject({ ok: false, errorCode: 'INVALID_RESPONSE', costUsd: 0.03, costEstimated: true });
+
+    const inFlight = new AbortController();
+    const aborting = createYepApi({ apiKey: KEY, fetch: fakeFetch(hanging).fetch, onCall });
+    const aborted = rejection(aborting.ai.chat({ messages: [] }, { signal: inFlight.signal }));
+    inFlight.abort();
+    await aborted;
+    expect(calls[1]).toMatchObject({ errorCode: 'ABORTED', costUsd: 0.01, costEstimated: true });
+
+    const before = new AbortController();
+    before.abort();
+    await rejection(aborting.domain.whois({ domain: 'a.com' }, { signal: before.signal }));
+    expect(calls[2]).toMatchObject({ errorCode: 'ABORTED', costUsd: 0, costEstimated: false });
+
+    vi.useFakeTimers();
+    const slow = createYepApi({ apiKey: KEY, fetch: fakeFetch(hanging).fetch, timeoutMs: 1000, onCall });
+    const timing = rejection(slow.onpage.lighthouse({ url: 'https://vercel.com' }));
+    await vi.advanceTimersByTimeAsync(1000);
+    await timing;
+    expect(calls[3]).toMatchObject({ errorCode: 'TIMEOUT', costUsd: 0.05, costEstimated: true });
+
+    await rejection(createYepApi({ apiKey: KEY, fetch: fakeFetch({ status: 200, text: '' }).fetch, onCall }).account.balance());
+    expect(calls[4]).toMatchObject({ errorCode: 'INVALID_RESPONSE', costUsd: 0, costEstimated: false });
   });
 });
 

@@ -92,7 +92,7 @@ export async function GET(request: Request) {
       width: 1200,
       height: 630,
       fonts: await loadFonts(),
-      headers: { 'cache-control': 'public, max-age=86400, s-maxage=2592000' },
+      headers: { 'cache-control': 'public, max-age=86400, s-maxage=2592000, immutable' },
     },
   );
 }

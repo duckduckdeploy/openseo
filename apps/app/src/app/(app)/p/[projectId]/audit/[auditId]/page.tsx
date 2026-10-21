@@ -14,7 +14,7 @@ type Severity = "critical" | "warning" | "info";
 type Summary = {
   finalStartUrl?: string;
   durationMs?: number;
-  stoppedReason?: "completed" | "max_pages" | "rate_limited" | "aborted";
+  stoppedReason?: "completed" | "max_pages" | "rate_limited" | "time_limit" | "aborted";
   truncated?: boolean;
   pagesTotal?: number;
   pagesCrawled?: number;
@@ -100,6 +100,7 @@ const STOP_REASON: Record<string, string> = {
   completed: "Every reachable page was crawled",
   max_pages: "Stopped at the page limit",
   rate_limited: "Stopped because the site kept answering 429 (too many requests)",
+  time_limit: "Stopped at the 30-minute time limit",
   aborted: "Cancelled before it finished",
 };
 const REASON: Record<string, string> = {

@@ -10,7 +10,7 @@ import {
   parseRetryAfter,
 } from './fetch';
 import type { FetchContext, FetchOutcome, Transport } from './fetch';
-import { discoverSitemapUrls, loadRobots } from './robots';
+import { discoverSitemapUrls, loadRobots, robotsUnavailable } from './robots';
 import type { RobotsRules } from './robots';
 import { SsrfError, createGuard } from './ssrf';
 import type {
@@ -33,7 +33,10 @@ const MAX_CRAWL_DELAY_MS = 10_000;
 const HTML_TYPE = /text\/html|application\/xhtml\+xml/i;
 
 interface FrontierEntry {
+  /** Normalised URL with sorted query parameters: the dedupe key and the row's `url`. */
   url: string;
+  /** What is requested: the same, but with the query parameters in the order they were found. */
+  fetchUrl: string;
   depth: number | null;
   source: DiscoverySource;
   state: 'pending' | 'taken';
@@ -110,6 +113,7 @@ async function runPool<T>(items: T[], size: number, fn: (item: T) => Promise<voi
 export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): Promise<CrawlResult> {
   const startedAt = Date.now();
   const maxPages = Math.max(1, options.maxPages ?? 100);
+  const maxDurationMs = Math.max(0, options.maxDurationMs ?? 30 * 60_000);
   const concurrency = Math.max(1, options.concurrency ?? 2);
   const userAgent = options.userAgent ?? DEFAULT_USER_AGENT;
   const robotsAgent = options.robotsUserAgent ?? (/^[^\s/]+/.exec(userAgent)?.[0] ?? '*');
@@ -124,6 +128,14 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     stripTrackingParams: options.stripTrackingParams ?? true,
     trailingSlash: options.trailingSlash ?? 'preserve',
   };
+  // URLs are fetched with their query order intact; `norm` (sorted) only builds the dedupe key.
+  const fetchNorm: NormalizeOptions = { ...norm, sortQuery: false };
+  const fetchForms = new Map<string, string>();
+  const toKey = (url: string): string => {
+    const key = normalizeUrl(url, undefined, norm) ?? url;
+    if (key !== url && !fetchForms.has(key)) fetchForms.set(key, url);
+    return key;
+  };
   const log = (level: 'debug' | 'info' | 'warn', message: string): void => {
     try {
       hooks.onLog?.(level, message);
@@ -132,8 +144,9 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     }
   };
 
-  const startUrl = normalizeUrl(withScheme(options.startUrl), undefined, norm);
-  if (!startUrl) throw new SsrfError('invalid-url', options.startUrl, `Invalid start URL: ${options.startUrl}`);
+  const startFetchUrl = normalizeUrl(withScheme(options.startUrl), undefined, fetchNorm);
+  if (!startFetchUrl) throw new SsrfError('invalid-url', options.startUrl, `Invalid start URL: ${options.startUrl}`);
+  const startUrl = toKey(startFetchUrl);
 
   const guardOptions = {
     allowPrivateNetwork: options.allowPrivateNetwork ?? false,
@@ -142,7 +155,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
   };
   const guard = createGuard(guardOptions);
   try {
-    await guard.assert(startUrl);
+    await guard.assert(startFetchUrl);
   } catch (err) {
     // A start URL that does not resolve is a crawl result, not a caller error.
     if (err instanceof SsrfError) throw err;
@@ -200,11 +213,16 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
   const sitemapSet = new Set<string>();
   const sitemapDocs: string[] = [];
   const sitemapOrigins = new Set<string>();
+  const sitemapsTooLarge: string[] = [];
+  let sitemapCapped = false;
+  const robotsUnavailableOrigins: string[] = [];
   const robotsCache = new Map<string, Promise<RobotsRules>>();
   let robotsTxtFound = false;
   let robotsBlockedRows = 0;
   let attempted = 0;
+  let pending = 0;
   let active = 0;
+  let timeLimitHit = false;
   let consecutiveRateLimited = 0;
   let rateLimitStopped = false;
   let waiters: (() => void)[] = [];
@@ -214,11 +232,19 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     waiters = [];
     for (const wake of current) wake();
   };
-  const stopped = (): boolean => rateLimitStopped || signal?.aborted === true;
-  const pendingCount = (): number => {
-    let n = 0;
-    for (const e of entries.values()) if (e.state === 'pending') n++;
-    return n;
+  const timeUp = (): boolean => {
+    if (!timeLimitHit && Date.now() - startedAt >= maxDurationMs) {
+      timeLimitHit = true;
+      log('warn', `Time limit of ${maxDurationMs} ms reached; finishing the pages in flight`);
+    }
+    return timeLimitHit;
+  };
+  const stopped = (): boolean => rateLimitStopped || signal?.aborted === true || timeUp();
+  /** Stores an entry, keeping the running count of pending entries in step. */
+  const setEntry = (entry: FrontierEntry): void => {
+    if (entries.get(entry.url)?.state === 'pending') pending--;
+    if (entry.state === 'pending') pending++;
+    entries.set(entry.url, entry);
   };
 
   const enqueue = (url: string, depth: number | null, source: DiscoverySource): void => {
@@ -243,7 +269,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     }
     if (depth !== null && options.maxDepth !== undefined && depth > options.maxDepth) return;
     if (entries.size >= MAX_FRONTIER) return;
-    entries.set(url, { url, depth, source, state: 'pending' });
+    setEntry({ url, fetchUrl: fetchForms.get(url) ?? url, depth, source, state: 'pending' });
     (depth === null ? lowQueue : linkQueue).push(url);
     notify();
   };
@@ -253,6 +279,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
       const entry = entries.get(linkQueue[linkHead++] ?? '');
       if (entry && entry.state === 'pending') {
         entry.state = 'taken';
+        pending--;
         return entry;
       }
     }
@@ -260,6 +287,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
       const entry = entries.get(lowQueue[lowHead++] ?? '');
       if (entry && entry.state === 'pending') {
         entry.state = 'taken';
+        pending--;
         return entry;
       }
     }
@@ -271,6 +299,10 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     if (!cached) {
       cached = loadRobots(origin, ctx, robotsAgent).then((rules) => {
         if (rules.found) robotsTxtFound = true;
+        if (respectRobots && robotsUnavailable(rules)) {
+          robotsUnavailableOrigins.push(origin);
+          log('warn', `robots.txt ${origin} returned ${rules.status}; treating the site as disallowed`);
+        }
         if (respectRobots && rules.crawlDelayMs !== null) {
           throttle.setMinDelay(new URL(origin).host, Math.min(rules.crawlDelayMs, MAX_CRAWL_DELAY_MS));
         }
@@ -293,9 +325,12 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     const seeds = [...new Set([...robots.sitemaps, `${origin}/sitemap.xml`])];
     const found = await discoverSitemapUrls(seeds, ctx);
     for (const doc of found.sitemaps) if (!sitemapDocs.includes(doc)) sitemapDocs.push(doc);
+    for (const doc of found.tooLarge) if (!sitemapsTooLarge.includes(doc)) sitemapsTooLarge.push(doc);
+    if (found.capped) sitemapCapped = true;
     for (const loc of found.urls) {
-      const url = normalizeUrl(loc, origin, norm);
-      if (!url || !isInternal(url)) continue;
+      const raw = normalizeUrl(loc, origin, fetchNorm);
+      if (!raw || !isInternal(raw)) continue;
+      const url = toKey(raw);
       sitemapSet.add(url);
       enqueue(url, null, 'sitemap');
     }
@@ -304,13 +339,13 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
 
   const record = async (page: PageResult): Promise<void> => {
     page.inSitemap = sitemapSet.has(page.url);
-    const verdict = computeIndexability(page);
+    const verdict = computeIndexability(page, robotsAgent);
     page.indexable = verdict.indexable;
     page.indexabilityReason = verdict.reason;
     pages.push(page);
     if (hooks.onPage) {
       try {
-        await hooks.onPage(page, { pagesProcessed: attempted, maxPages, queued: pendingCount(), discovered: entries.size });
+        await hooks.onPage(page, { pagesProcessed: attempted, maxPages, queued: pending, discovered: entries.size });
       } catch (err) {
         log('warn', `onPage hook threw: ${err instanceof Error ? err.message : String(err)}`);
       }
@@ -368,7 +403,8 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     page.contentType = contentType;
     page.isHtml = contentType !== null && HTML_TYPE.test(contentType);
     page.xRobotsTag = out.headers?.get('x-robots-tag') ?? null;
-    page.headerCanonical = canonicalFromLinkHeader(out.headers?.get('link') ?? null, url, norm);
+    const headerCanonical = canonicalFromLinkHeader(out.headers?.get('link') ?? null, url, fetchNorm);
+    page.headerCanonical = headerCanonical === null ? null : toKey(headerCanonical);
     page.securityHeaders = extractSecurityHeaders(out.headers);
     page.truncated = out.truncated;
     let html = page.isHtml && out.body ? decodeBody(out.body, contentType) : null;
@@ -383,10 +419,12 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
           if (cls === 'ok' || (renderedStatus >= 200 && renderedStatus < 300)) {
             if (cls !== 'ok') page.status = renderedStatus;
             cls = 'ok';
-            html = rendered.html;
+            // Rendered HTML gets the same size cap as fetched HTML.
+            const renderedBytes = Buffer.from(rendered.html);
             page.rendered = true;
-            page.sizeBytes = Buffer.byteLength(html);
-            page.truncated = false;
+            page.truncated = renderedBytes.byteLength > ctx.maxBodyBytes;
+            html = page.truncated ? renderedBytes.subarray(0, ctx.maxBodyBytes).toString('utf8') : rendered.html;
+            page.sizeBytes = Math.min(renderedBytes.byteLength, ctx.maxBodyBytes);
           }
         }
       } catch (err) {
@@ -395,7 +433,11 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     }
     page.fetchClass = out.status >= 300 && out.status < 400 ? 'redirect' : cls;
     if (page.fetchClass === 'ok' && html !== null) {
-      Object.assign(page, extractPage(html, { url, isInternal, normalize: norm }));
+      const data = extractPage(html, { url, isInternal, normalize: fetchNorm });
+      for (const link of [...data.internalLinks, ...data.externalLinks]) link.url = toKey(link.url);
+      for (const alt of data.hreflang) alt.href = toKey(alt.href);
+      if (data.canonical !== null) data.canonical = toKey(data.canonical);
+      Object.assign(page, data);
     }
     return page;
   };
@@ -406,7 +448,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
       await recordRobotsBlocked(entry.url, entry.depth, entry.source);
       return;
     }
-    const out = await fetchPage(entry.url);
+    const out = await fetchPage(entry.fetchUrl);
     if (out.error?.kind === 'aborted') {
       attempted--;
       return;
@@ -419,7 +461,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
 
     // Redirect row for the requested URL; the destination becomes its own row.
     const first = out.redirectChain[0];
-    const finalUrl = normalizeUrl(out.finalUrl, undefined, norm) ?? out.finalUrl;
+    const finalUrl = toKey(normalizeUrl(out.finalUrl, undefined, fetchNorm) ?? out.finalUrl);
     const row = blankPage(entry.url, entry.depth, entry.source);
     row.finalUrl = finalUrl;
     row.redirectChain = out.redirectChain;
@@ -452,12 +494,14 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     }
     const depth = existing && existing.depth !== null ? existing.depth : entry.depth;
     const source: DiscoverySource = entry.source === 'start' ? 'start' : (existing?.source ?? 'redirect');
-    entries.set(finalUrl, { url: finalUrl, depth, source, state: 'taken' });
+    setEntry({ url: finalUrl, fetchUrl: out.finalUrl, depth, source, state: 'taken' });
+    // Count it before the await so concurrent workers cannot all pass the maxPages check.
+    attempted++;
     if (!(await robotsAllows(finalUrl))) {
+      attempted--;
       await recordRobotsBlocked(finalUrl, depth, source);
       return;
     }
-    attempted++;
     // Reuse the response already in hand instead of fetching the destination again.
     await record(await buildPage(finalUrl, depth, source, { ...out, url: finalUrl, redirectChain: [], loop: false }));
   };
@@ -490,8 +534,8 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     const startOrigin = new URL(startUrl).origin;
     await discoverSitemaps(startOrigin);
 
-    const startEntry: FrontierEntry = { url: startUrl, depth: 0, source: 'start', state: 'taken' };
-    entries.set(startUrl, startEntry);
+    const startEntry: FrontierEntry = { url: startUrl, fetchUrl: startFetchUrl, depth: 0, source: 'start', state: 'taken' };
+    setEntry(startEntry);
     attempted++;
     active++;
     try {
@@ -520,11 +564,12 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
       const targets = [...sources.keys()].slice(0, Math.max(0, options.maxExternalLinks ?? 100));
       await runPool(targets, concurrency, async (url) => {
         if (stopped()) return;
-        let out = await fetchUrl(ctx, url, { method: 'HEAD', accept: '*/*' });
+        const requestUrl = fetchForms.get(url) ?? url;
+        let out = await fetchUrl(ctx, requestUrl, { method: 'HEAD', accept: '*/*' });
         const headInconclusive = out.error
           ? !['ssrf', 'dns', 'aborted'].includes(out.error.kind)
           : out.status >= 400 && out.status !== 429;
-        if (headInconclusive) out = await fetchUrl(ctx, url, { accept: '*/*', wantBody: () => false });
+        if (headInconclusive) out = await fetchUrl(ctx, requestUrl, { accept: '*/*', wantBody: () => false });
         if (out.error?.kind === 'aborted') return;
         const status = out.error ? 0 : out.status;
         const broken = out.error
@@ -537,13 +582,14 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     transport.close();
   }
 
-  const pending = pendingCount();
   const stoppedReason: StopReason = signal?.aborted
     ? 'aborted'
     : rateLimitStopped
       ? 'rate_limited'
       : pending > 0
-        ? 'max_pages'
+        ? timeLimitHit
+          ? 'time_limit'
+          : 'max_pages'
         : 'completed';
   const truncated = pending > 0 || stoppedReason === 'aborted';
 
@@ -555,6 +601,9 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
       complete: !truncated,
       sitemapChecked: options.useSitemaps !== false,
       sitemapFound: sitemapDocs.length > 0,
+      sitemapCapped,
+      sitemapsTooLarge,
+      robotsUnavailable: robotsUnavailableOrigins,
       rateLimitStopped,
       externalLinks,
       thresholds,

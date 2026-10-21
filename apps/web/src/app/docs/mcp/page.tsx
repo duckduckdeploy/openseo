@@ -27,7 +27,7 @@ const CLIENT_ICONS: Record<string, Brand> = {
 export const metadata = pageMeta({ title: doc.seoTitle, description: doc.description, path: `/docs/${slug}` });
 
 // "owner/repo" for plugin marketplaces, once the repository is public.
-const repo = GITHUB_URL ? GITHUB_URL.replace(/^https?:\/\/github\.com\//, '') : '<owner>/<repo>';
+const repo = GITHUB_URL.replace(/^https?:\/\/github\.com\//, '');
 
 const envKey = `# macOS and Linux: add to ~/.zshrc or ~/.bashrc
 export OPENSEO_API_KEY="oseo_..."

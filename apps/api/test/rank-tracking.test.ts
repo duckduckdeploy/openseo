@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { dataDb, db, schema } from "../src/db";
 import { processRankRun } from "../src/services/rank";
 import { readyUser, signUp } from "./client";
@@ -48,6 +48,25 @@ describe("trackers", () => {
     expect(await user.api.ok("POST", `/trackers/${tracker.id}/keywords`, { keywords: ["one", "two"] })).toEqual({ added: 1, skipped: 1 });
     const many = Array.from({ length: 999 }, (_, i) => `kw ${i}`);
     expect((await user.api.post(`/trackers/${tracker.id}/keywords`, { keywords: many })).status).toBe(400);
+  });
+
+  it("counts only keywords not yet tracked toward the 1,000 cap", async () => {
+    const user = await readyUser();
+    const tracker = await newTracker(user, { keywords: Array.from({ length: 999 }, (_, i) => `kw ${i}`) });
+    // 999 tracked + "kw 0" (already tracked) + "new one" = 1,000.
+    expect(await user.api.ok("POST", `/trackers/${tracker.id}/keywords`, { keywords: ["kw 0", "new one"] })).toEqual({ added: 1, skipped: 1 });
+    expect((await user.api.post(`/trackers/${tracker.id}/keywords`, { keywords: ["kw 1", "one too many"] })).status).toBe(400);
+  });
+
+  it("defaults to manual, and refuses a run priced above maxCostUsd", async () => {
+    const user = await readyUser();
+    const tracker = await user.api.ok("POST", `/projects/${user.project.id}/trackers`, { domain: "acme.com", locationCode: 2840, locationName: "United States", keywords: ["a", "b"] });
+    expect(tracker).toMatchObject({ schedule: "manual", nextRunAt: null });
+    // 2 keywords x 1 device at depth 100 = $0.20.
+    const refused = await user.api.post(`/trackers/${tracker.id}/runs`, { maxCostUsd: 0.19 });
+    expect(refused.status).toBe(400);
+    expect(refused.body.error?.code).toBe("cost_ceiling_exceeded");
+    expect((await user.api.post(`/trackers/${tracker.id}/runs`, { maxCostUsd: 0.2 })).status).toBe(202);
   });
 
   it("hides trackers, runs and history from other users, and 404s malformed ids", async () => {
@@ -110,6 +129,31 @@ describe("rank runs", () => {
     const after = await user.api.ok("GET", `/trackers/${tracker.id}/results?device=mobile`);
     expect(after.runs).toHaveLength(2);
     expect(after.keywords.every((k: { history: unknown[] }) => k.history.length === 2)).toBe(true);
+  });
+
+  it("stops every worker, not just the failing one, when storing a result fails", async () => {
+    const user = await readyUser();
+    const tracker = await newTracker(user, { devices: ["desktop"], keywords: Array.from({ length: 30 }, (_, i) => `storage keyword ${i}`) });
+    const run = await user.api.ok("POST", `/trackers/${tracker.id}/runs`);
+    const before = harness.fake.requests.length;
+    // The first check cannot store its result, nor the error row after it: its worker throws.
+    const insert = vi.spyOn(dataDb, "insert");
+    const broken = () => {
+      throw new Error("disk full");
+    };
+    insert.mockImplementationOnce(broken).mockImplementationOnce(broken);
+    try {
+      await processRankRun(run.id);
+      // The other workers finish the checks they had in flight, then stop.
+      await new Promise((r) => setTimeout(r, 300));
+    } finally {
+      insert.mockRestore();
+    }
+    const stored = await runRow(run.id);
+    expect(stored).toMatchObject({ status: "failed" });
+    expect(stored?.error).toMatch(/internal error: disk full/);
+    const checks = harness.fake.requests.slice(before).filter((r) => r.path === "/v1/serp/google");
+    expect(checks.length).toBeLessThanOrEqual(8);
   });
 
   it("does not run a check that was cancelled while queued", async () => {
@@ -177,8 +221,8 @@ describe("rank runs", () => {
     expect(await user.api.ok("POST", `/trackers/${tracker.id}/keywords`, { keywords: ["drain cleaning"] })).toEqual({ added: 1, skipped: 0 });
     const restored = (await user.api.ok("GET", `/trackers/${tracker.id}/results`)).keywords.find((k: { keyword: string }) => k.keyword === "drain cleaning");
     expect(restored.id).toBe(drain.id);
-    // Oldest first: the first run's position, then nothing for the run it was left out of.
-    expect(restored.history).toEqual([drain.position, null]);
+    // Only runs that checked it: the run it was left out of is skipped, not shown as "not found".
+    expect(restored.history).toEqual([drain.position]);
   });
 
   it("pins keywords and updates tracker settings", async () => {

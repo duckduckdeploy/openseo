@@ -4,6 +4,7 @@ import { db, schema } from "../db";
 import { env } from "../env";
 import { encrypt } from "../lib/crypto";
 import { AppError, notFound, parse } from "../lib/errors";
+import { unwrittenSpend } from "../lib/yep";
 import type { Market } from "./lookups";
 import { runLookup } from "./run-lookup";
 
@@ -124,8 +125,13 @@ async function spentToday() {
     .select({ total: sql<number>`coalesce(sum(${schema.usageLog.costUsd}), 0)::float8` })
     .from(schema.usageLog)
     .where(and(eq(schema.usageLog.userId, PUBLIC_USER_ID), gte(schema.usageLog.createdAt, start)));
-  return row?.total ?? 0;
+  // Plus calls that returned but whose usage rows are still being written.
+  return (row?.total ?? 0) + unwrittenSpend(PUBLIC_USER_ID);
 }
+
+// Worst-case cost of the runs in progress in this process. usage_log only sees a run's spend once
+// its calls return, so a burst of runs started together would all pass the daily check without it.
+let reservedUsd = 0;
 
 export async function runPublicTool(tool: string, body: unknown, visitor: string) {
   if (!publicToolsEnabled()) throw notFound("Free tool");
@@ -134,10 +140,12 @@ export async function runPublicTool(tool: string, body: unknown, visitor: string
   const input = parse(spec.input as z.ZodType, body ?? {}) as { country?: string };
   const locationCode = PUBLIC_COUNTRIES[input.country ?? "us"];
   if (!locationCode) throw new AppError(400, "bad_request", "That country isn't available in the free tool. Sign up to use any country.");
-  if ((await spentToday()) >= env.PUBLIC_TOOLS_DAILY_USD) {
+  // Checked and reserved with no await in between, so concurrent runs see each other.
+  if ((await spentToday()) + reservedUsd >= env.PUBLIC_TOOLS_DAILY_USD) {
     throw new AppError(429, "resting", "The free tools have used today's budget. They're back tomorrow, or sign up to run this now.");
   }
   const remaining = takeRun(visitor);
+  reservedUsd += MAX_RUN_USD;
   const market: Market = { id: null, locationCode, country: input.country ?? "us", language: "en" };
   const { name, input: lookupInput } = (spec.lookup as (i: unknown) => { name: string; input: unknown })(input);
   try {
@@ -149,5 +157,8 @@ export async function runPublicTool(tool: string, body: unknown, visitor: string
     // A failed run doesn't count against the visitor.
     runsByVisitor.set(visitor, Math.max(0, (runsByVisitor.get(visitor) ?? 1) - 1));
     throw error;
+  } finally {
+    // Settled: what the run actually spent is now in usage_log, or in unwrittenSpend until it is.
+    reservedUsd = Math.max(0, reservedUsd - MAX_RUN_USD);
   }
 }

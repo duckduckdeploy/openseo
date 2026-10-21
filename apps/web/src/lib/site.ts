@@ -7,7 +7,7 @@ export const SITE_URL = env(process.env.NEXT_PUBLIC_SITE_URL, 'https://openseo.g
 export const APP_URL = env(process.env.NEXT_PUBLIC_APP_URL, 'http://localhost:3200');
 
 /** The public repository. A fork can point its site at its own with NEXT_PUBLIC_GITHUB_URL. */
-export const GITHUB_URL: string | null =
+export const GITHUB_URL: string =
   process.env.NEXT_PUBLIC_GITHUB_URL?.trim().replace(/\/+$/, '') || 'https://github.com/duckduckdeploy/openseo';
 
 /** The public API address. Agents connect to `${PUBLIC_API_URL}/mcp`. */
@@ -21,7 +21,6 @@ export const YEPAPI_URL = 'https://yepapi.com?ref=openseo';
 export const NEWS_URL = 'https://news.openseo.gg';
 
 export const SITE_NAME = 'OpenSEO';
-export const SITE_TAGLINE = 'The open-source SEO suite you control.';
 /** Homepage title tag: keyword first. */
 export const SITE_TITLE = 'OpenSEO: Free Open-Source Ahrefs & SEMrush';
 export const SITE_DESCRIPTION =

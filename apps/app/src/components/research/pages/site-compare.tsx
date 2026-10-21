@@ -117,8 +117,7 @@ export function TrafficChecker({ project, embedded }: { project: Project; embedd
         onMarket={changeMarket}
         button="Check traffic"
         pending={lookup.loading}
-      >
-      </ListForm>
+      />
       <ViewErrors lookups={lookups} />
       {!domains.length ? (
         <Card>
@@ -194,8 +193,7 @@ export function AuthorityChecker({ project, embedded }: { project: Project; embe
         clean={cleanDomain}
         button="Check authority"
         pending={lookup.loading}
-      >
-      </ListForm>
+      />
       <ViewErrors lookups={lookups} />
       {!domains.length ? (
         <Card>
