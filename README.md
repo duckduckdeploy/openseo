@@ -89,21 +89,64 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 
 ## 🧰 Workflows
 
-| Area | What you get |
-|---|---|
-| 🩺 [SEO audit](https://openseo.gg/tools/seo-audit) | A full audit of any domain on one page: findings in order of importance, traffic and authority, keywords close to the top 3, a keyword gap and a backlink gap with its closest competitors, backlink profile. Search data only, no crawl |
-| 🔎 [Keyword overview](https://openseo.gg/tools/keyword-analysis-tool) | Difficulty, volume, traffic potential, volume by country, ideas and the live top 10 for one keyword, down to a city |
-| 💡 [Keyword ideas](https://openseo.gg/tools/keyword-generator) | Matching terms, related searches, questions and suggestions with volume, CPC, difficulty, intent and trend; saved lists with tags |
-| 📋 [SERP checker](https://openseo.gg/tools/serp-checker) | The live top 10 on desktop or mobile, with each result's DR, UR, links and traffic |
-| 📍 [Rank tracking](https://openseo.gg/features/keyword-rank-tracker) | Google positions on desktop and mobile, by country, city or exact coordinates, on a schedule. Each check reads the top 20, 50 or 100 ($0.02 to $0.10), in the background on a schedule or on demand. History survives removing a keyword |
-| 📊 [Search performance](https://openseo.gg/features/search-console-dashboard) | Search Console and GA4: totals against the previous period, striking-distance queries, organic landing pages, opportunity scores |
-| 🌐 [Domain overview](https://openseo.gg/tools/website-seo-analysis) | Estimated traffic, ranking distribution, top keywords, top pages, competitors |
-| 📄 [Page analyser](https://openseo.gg/tools/on-page-seo-audit) | One page's authority, links, traffic, on-page checks, keywords and backlinks |
-| 🔗 [Backlink checker](https://openseo.gg/tools/backlink-checker) | Summary, monthly history, backlinks, referring domains, anchors, top pages, link intersect |
-| 🥊 [Competitors](https://openseo.gg/tools/seo-competitor-analysis) | Organic and SERP competitors, keyword gap |
-| 🕷️ [Site audit](https://openseo.gg/features/site-audit) | Our own crawler for technical issues on your pages: 59 checks and a health score; Lighthouse with failed audits rated by severity |
-| 🧠 [AI visibility](https://openseo.gg/features/ai-visibility-tracker) | Tracked prompts across many chat models with web search: mentions, citations, position, share of voice. A mention counts only when the answer points to your domain, so a namesake isn't counted as you, and prompts that name your brand are left out of the rates |
-| 🗺️ [Local rank tracker](https://openseo.gg/features/local-rank-tracker) | Business lookup, profile, reviews, geo-grid rank maps |
+<table>
+  <tr>
+    <th width="26%" align="left">Area</th>
+    <th align="left">What you get</th>
+  </tr>
+  <tr>
+    <td width="26%">🩺 <a href="https://openseo.gg/tools/seo-audit">SEO audit</a></td>
+    <td>A full audit of any domain on one page: findings in order of importance, traffic and authority, keywords close to the top 3, a keyword gap and a backlink gap with its closest competitors, backlink profile. Search data only, no crawl</td>
+  </tr>
+  <tr>
+    <td width="26%">🔎 <a href="https://openseo.gg/tools/keyword-analysis-tool">Keyword overview</a></td>
+    <td>Difficulty, volume, traffic potential, volume by country, ideas and the live top 10 for one keyword, down to a city</td>
+  </tr>
+  <tr>
+    <td width="26%">💡 <a href="https://openseo.gg/tools/keyword-generator">Keyword ideas</a></td>
+    <td>Matching terms, related searches, questions and suggestions with volume, CPC, difficulty, intent and trend; saved lists with tags</td>
+  </tr>
+  <tr>
+    <td width="26%">📋 <a href="https://openseo.gg/tools/serp-checker">SERP checker</a></td>
+    <td>The live top 10 on desktop or mobile, with each result's DR, UR, links and traffic</td>
+  </tr>
+  <tr>
+    <td width="26%">📍 <a href="https://openseo.gg/features/keyword-rank-tracker">Rank tracking</a></td>
+    <td>Google positions on desktop and mobile, by country, city or exact coordinates, on a schedule. Each check reads the top 20, 50 or 100 ($0.02 to $0.10), in the background on a schedule or on demand. History survives removing a keyword</td>
+  </tr>
+  <tr>
+    <td width="26%">📊 <a href="https://openseo.gg/features/search-console-dashboard">Search performance</a></td>
+    <td>Search Console and GA4: totals against the previous period, striking-distance queries, organic landing pages, opportunity scores</td>
+  </tr>
+  <tr>
+    <td width="26%">🌐 <a href="https://openseo.gg/tools/website-seo-analysis">Domain overview</a></td>
+    <td>Estimated traffic, ranking distribution, top keywords, top pages, competitors</td>
+  </tr>
+  <tr>
+    <td width="26%">📄 <a href="https://openseo.gg/tools/on-page-seo-audit">Page analyser</a></td>
+    <td>One page's authority, links, traffic, on-page checks, keywords and backlinks</td>
+  </tr>
+  <tr>
+    <td width="26%">🔗 <a href="https://openseo.gg/tools/backlink-checker">Backlink checker</a></td>
+    <td>Summary, monthly history, backlinks, referring domains, anchors, top pages, link intersect</td>
+  </tr>
+  <tr>
+    <td width="26%">🥊 <a href="https://openseo.gg/tools/seo-competitor-analysis">Competitors</a></td>
+    <td>Organic and SERP competitors, keyword gap</td>
+  </tr>
+  <tr>
+    <td width="26%">🕷️ <a href="https://openseo.gg/features/site-audit">Site audit</a></td>
+    <td>Our own crawler for technical issues on your pages: 59 checks and a health score; Lighthouse with failed audits rated by severity</td>
+  </tr>
+  <tr>
+    <td width="26%">🧠 <a href="https://openseo.gg/features/ai-visibility-tracker">AI visibility</a></td>
+    <td>Tracked prompts across many chat models with web search: mentions, citations, position, share of voice. A mention counts only when the answer points to your domain, so a namesake isn't counted as you, and prompts that name your brand are left out of the rates</td>
+  </tr>
+  <tr>
+    <td width="26%">🗺️ <a href="https://openseo.gg/features/local-rank-tracker">Local rank tracker</a></td>
+    <td>Business lookup, profile, reviews, geo-grid rank maps</td>
+  </tr>
+</table>
 
 <table>
   <tr>
