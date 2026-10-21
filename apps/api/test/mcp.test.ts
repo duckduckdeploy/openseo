@@ -191,6 +191,69 @@ describe("MCP server", () => {
     expect((await api.ok("GET", "/me")).links).toEqual({ mcpUrl: "http://localhost:4100/mcp", docsUrl: "http://localhost:3101/docs/mcp" });
   });
 
+  it("keeps a lookup's own row ceiling: maps_search returns up to 20, so it defaults to 20", async () => {
+    const { call, key } = await agent();
+    const { body } = await rpc({ apiKey: key }, "tools/list");
+    const maps = (body.result.tools as { name: string; description: string; inputSchema: { properties: { limit: { maximum: number } } } }[]).find((t) => t.name === "maps_search")!;
+    expect(maps.inputSchema.properties.limit.maximum).toBe(20);
+    expect(maps.description).toContain("Returns 10 rows unless you pass limit.");
+    const found = await call("maps_search", { query: "plumber" });
+    expect(found.isError).toBe(false);
+    expect(found.json.data.results.length).toBeGreaterThan(0);
+  });
+
+  it("answers with what an agent reads, not the provider's layout fields", async () => {
+    const { call } = await agent();
+    expect((await call("autocomplete", { query: "plumber" })).json.data).toEqual({ query: "plumber", suggestions: ["plumber near me", "plumber cost", "plumber best", "plumber vs", "plumber reviews"] });
+
+    const place = (await call("maps_search", { query: "plumber", limit: 2 })).json.data.results[0];
+    expect(place).toMatchObject({ id: expect.any(String), name: expect.any(String), photoCount: 1 });
+    expect(place).not.toHaveProperty("photos");
+    expect(place).not.toHaveProperty("directionsUrl");
+
+    const competitors = (await call("competitors_domain", { domain: "acme.com", limit: 5 })).json.data.competitors as { domain: string }[];
+    expect(competitors.map((c) => c.domain)).not.toContain("acme.com");
+
+    const gap = (await call("keyword_gap", { domain: "acme.com", competitor: "globex.com", limit: 2 })).json.data;
+    expect(gap).toMatchObject({ mode: "gap", domain: "acme.com", competitor: "globex.com" });
+    expect(gap.keywords[0].competitor).toMatchObject({ position: 1, url: "https://globex.com/a-0" });
+    expect(gap.keywords[0].yours).toBeUndefined();
+
+    const serp = (await call("serp", { query: "plumber", depth: 10 })).json.data;
+    expect(serp.results[0]).toEqual({ position: 1, type: "organic", title: expect.any(String), url: expect.any(String), domain: expect.any(String), description: "Example result." });
+
+    const project = (await call("get_project")).json;
+    expect(project).not.toHaveProperty("userId");
+    expect(JSON.stringify((await call("get_usage")).json)).not.toContain('"id"');
+  });
+
+  it("lists the curated AI models unless asked for all of them", async () => {
+    const { call } = await agent();
+    const curated = (await call("list_ai_models")).json;
+    expect(curated).toHaveProperty("curated");
+    expect(curated).not.toHaveProperty("models");
+    const all = (await call("list_ai_models", { all: true })).json.models;
+    expect(all.length).toBe(curated.otherModels);
+    expect(Object.keys(all[0])).toEqual(expect.arrayContaining(["id", "name", "inputPerM", "outputPerM"]));
+  });
+
+  it("does not cache an empty Google Trends answer as a result", async () => {
+    const { call } = await agent();
+    const first = await call("keyword_trends", { keywords: ["no trend data"] });
+    expect(first.isError).toBe(true);
+    expect(first.text).toMatch(/Google Trends returned no data/);
+    const before = harness.fake.requests.length;
+    expect((await call("keyword_trends", { keywords: ["no trend data"] })).isError).toBe(true);
+    expect(harness.fake.requests.length).toBe(before + 1);
+    expect((await call("keyword_trends", { keywords: ["plumber"] })).json.data.timeline.length).toBeGreaterThan(1);
+  });
+
+  it("shows a running AI visibility run in the results an agent polls", async () => {
+    const { call } = await agent();
+    const results = (await call("get_ai_visibility_results")).json;
+    expect(results).toHaveProperty("activeRun", null);
+  });
+
   it("tells the agent to have Search Console connected, then reads it once it is", async () => {
     const { call, api, project } = await agent();
     const before = await call("get_search_performance");

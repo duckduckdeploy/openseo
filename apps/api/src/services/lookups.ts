@@ -3,7 +3,7 @@ import { estimateCost, type KeywordFilter, type YepApi } from "@openseo/yepapi";
 import { z } from "zod";
 import { cleanSources } from "../lib/brand-analysis";
 import { hostMatches, hostOf, toDomain } from "../lib/domain";
-import { badRequest } from "../lib/errors";
+import { AppError, badRequest } from "../lib/errors";
 import { buildGrid } from "../lib/geo";
 import { locationInfo } from "../lib/locations";
 import { mapLimit } from "../lib/pool";
@@ -275,7 +275,7 @@ export const lookups: Lookup[] = [
   define({
     name: "keyword_difficulty",
     title: "Keyword difficulty",
-    description: "Keyword difficulty (0 easy to 100 hard) for up to 1,000 keywords at once. Cheaper than keyword_metrics when only difficulty is needed. Country-level data.",
+    description: "Keyword difficulty (0 easy to 100 hard) for up to 1,000 keywords at once. Use it when only difficulty is needed. Country-level data.",
     feature: "keyword_research",
     ttl: 7 * DAY,
     input: z.object({
@@ -299,6 +299,10 @@ export const lookups: Lookup[] = [
     estimate: (i) => est(estimateCost("/v1/seo/trends", { keywords: i.keywords })),
     run: async (yep, i, p) => {
       const res = await yep.keywords.trends({ keywords: i.keywords, location: (i.country ?? p.country).toLowerCase() });
+      // YepAPI sometimes answers with one blank point ({ date: "", values: [] }). Don't cache that as a result.
+      if (!res.data.timeline?.some((point) => point.date && point.values?.length)) {
+        throw new AppError(502, "upstream_empty", "Google Trends returned no data for these keywords. Try again later.");
+      }
       return { data: res.data, costUsd: res.costUsd };
     },
   }),
@@ -493,7 +497,7 @@ export const lookups: Lookup[] = [
     name: "keyword_gap",
     title: "Keyword gap",
     description:
-      "Compare two domains. mode=gap returns keywords the competitor ranks for and your domain does not; mode=shared returns keywords both rank for, with each side's position.",
+      "Compare two domains. mode=gap returns keywords the competitor ranks for and your domain does not; mode=shared returns keywords both rank for, with each side's position when the provider has it.",
     feature: "competitors",
     ttl: 7 * DAY,
     input: z.object({
@@ -806,7 +810,7 @@ export const lookups: Lookup[] = [
     name: "ai_citations",
     title: "AI visibility check",
     description:
-      "Ask one question to several AI assistants with web search on, and get each answer with the sources it cited, in order: links cleaned and redirects resolved, so citations can be compared across assistants. Token-priced per model, usually $0.03 to $0.30 each. Cached for a day.",
+      "Ask one question to several AI assistants with web search on, and get each answer with the sources it cited, in order: links cleaned and redirects resolved, so citations can be compared across assistants. Token-priced per model, usually $0.03 to $0.30 each.",
     feature: "ai_visibility",
     ttl: DAY,
     input: z.object({

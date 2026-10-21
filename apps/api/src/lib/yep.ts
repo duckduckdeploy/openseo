@@ -277,6 +277,8 @@ export function toAppError(error: unknown): AppError | null {
   if (error.isValidation) return new AppError(400, "yepapi_validation", `YepAPI rejected the request: ${error.message}`);
   if (error.isRateLimited) return new AppError(429, "yepapi_rate_limited", "YepAPI is rate limiting requests. Try again shortly.");
   if (error.isTimeout) return new AppError(504, "yepapi_timeout", "YepAPI took too long to respond. You were not charged if the call failed.");
+  // e.g. backlinks/summary for a site with no known links: "Backlinks summary failed: Empty backlinks summary".
+  if (/\bempty\b/i.test(error.message)) return new AppError(404, "yepapi_no_data", "YepAPI has no data for this target yet. New or small sites often have none.");
   return new AppError(502, "yepapi_error", `YepAPI returned an error: ${error.message}`);
 }
 

@@ -61,6 +61,8 @@ const place = (i: number, lat = 30.2672, lng = -97.7431) => ({
   longitude: lng - i * 0.002,
   rating: 3.8 + (i % 12) / 10,
   userRatingCount: 20 + i * 17,
+  directionsUrl: `https://www.google.com/maps/dir//''/data=place_${i}`,
+  photos: [{ attribution: "Owner", reference: `places/place_${i}/photos/${"x".repeat(300)}`, width: 4000, height: 3000 }],
 });
 
 export function handle(path: string, body: any): unknown {
@@ -68,7 +70,7 @@ export function handle(path: string, body: any): unknown {
     case "/v1/serp/google":
       return serp(body);
     case "/v1/serp/google-autocomplete":
-      return { query: body.query, totalResults: 5, results: ["near me", "cost", "best", "vs", "reviews"].map((s, i) => ({ position: i + 1, type: "autocomplete", title: `${body.query} ${s}`, url: "", description: "", domain: "" })) };
+      return { query: body.query, totalResults: 5, results: ["near me", "cost", "best", "vs", "reviews"].map((s, i) => ({ position: i + 1, type: "autocomplete", title: "", url: "", description: "", domain: "", data: { suggestion: `${body.query} ${s}`, relevance: 1100 - i, searchQueryUrl: `https://www.google.com/search?q=${encodeURIComponent(`${body.query} ${s}`)}` } })) };
     case "/v1/seo/keywords/ideas":
     case "/v1/seo/keywords/related":
       return { seed: body.keyword, keywords: Array.from({ length: Math.min(body.limit ?? 50, 60) }, (_, i) => keyword(`${body.keyword} ${["tool", "software", "free", "best", "pricing", "guide", "tips", "examples"][i % 8]} ${Math.floor(i / 8) || ""}`.trim())) };
@@ -77,6 +79,8 @@ export function handle(path: string, body: any): unknown {
     case "/v1/seo/keywords":
       return { keywords: body.keywords.map((k: string) => keyword(k)), skipped: [] };
     case "/v1/seo/trends":
+      // YepAPI sometimes answers with one blank point and still bills the call.
+      if (body.keywords.includes("no trend data")) return { keywords: body.keywords, timeline: [{ date: "", values: [] }] };
       return { keywords: body.keywords, timeline: months.map((date, i) => ({ date, values: body.keywords.map((k: string) => (hash(k) + i * 7) % 100) })), averages: body.keywords.map((k: string) => hash(k) % 100) };
     case "/v1/seo/domain/overview":
       return { domain: body.domain, domainRank: 412, organicTraffic: 48210, organicKeywords: 3120, backlinks: 15400, referringDomains: 1280 };
@@ -93,7 +97,8 @@ export function handle(path: string, body: any): unknown {
     case "/v1/seo/domain/pages":
       return { domain: body.domain, total: 240, pages: Array.from({ length: Math.min(body.limit ?? 100, 30) }, (_, i) => ({ url: `https://${body.domain}/page-${i}`, traffic: 9000 - i * 250, trafficValue: 4000 - i * 100, keywords: 300 - i * 8, top3: 20 - (i % 20), top10: 60 - i })) };
     case "/v1/seo/competitors/domain":
-      return { domain: body.domain, competitors: sites.slice(0, 8).map((d, i) => ({ domain: d, avgPosition: 8 + i * 2, intersections: 900 - i * 90, organicCount: 5000 - i * 300, organicEtv: 70000 - i * 6000 })) };
+      // Like YepAPI, the domain itself comes first.
+      return { domain: body.domain, competitors: [body.domain, ...sites.slice(0, 7)].map((d, i) => ({ domain: d, avgPosition: 8 + i * 2, intersections: 900 - i * 90, organicCount: 5000 - i * 300, organicEtv: 70000 - i * 6000 })) };
     case "/v1/seo/competitors/serp":
       return { competitors: sites.slice(0, 8).map((d, i) => ({ domain: d, avgPosition: 4 + i, medianPosition: 4 + i, rating: 900 - i * 80, etv: 5000 - i * 400, keywordsCount: body.keywords.length - (i % 3), visibility: 0.9 - i * 0.08 })) };
     case "/v1/seo/competitors/keywords":

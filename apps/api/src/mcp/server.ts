@@ -20,8 +20,17 @@ const maxCost = z
   .positive()
   .describe("Spending ceiling in USD for this call, agreed with the user. The call is refused if its worst-case price is higher. Spend comes from the user's own YepAPI balance.");
 
+const COORDINATE_KEY = /^(lat|lng|latitude|longitude|centerLat|centerLng)$/;
+/** Provider floats come with 15 digits (traffic 374938.47578718886, competition 0.25999999046325684). Coordinates keep theirs. */
+const roundNumbers = (key: string, value: unknown) =>
+  typeof value === "number" && !Number.isInteger(value) && !COORDINATE_KEY.test(key)
+    ? Math.abs(value) >= 1000
+      ? Math.round(value)
+      : Math.round(value * 100) / 100
+    : value;
+
 const text = (value: unknown): ToolResult => {
-  let body = typeof value === "string" ? value : JSON.stringify(value, null, 1);
+  let body = typeof value === "string" ? value : JSON.stringify(value, roundNumbers, 1);
   if (body.length > MAX_RESULT_CHARS) body = `${body.slice(0, MAX_RESULT_CHARS)}\n… truncated. Ask for fewer rows (lower limit) or a narrower filter.`;
   return { content: [{ type: "text", text: body }] };
 };
@@ -32,10 +41,86 @@ const dryRun = z.boolean().optional().describe("Return the price estimate only. 
 const MCP_DEFAULT_LIMIT = 50;
 const TREND_KEYS = new Set(["trend", "monthlySearches"]);
 
+const rows = (value: unknown) => (Array.isArray(value) ? (value as Json[]) : []);
+/** Keeps the named fields that carry a value; blank strings and nulls are noise to an agent. */
+const pick = (row: Json, keys: string[]) => Object.fromEntries(keys.filter((key) => row[key] != null && row[key] !== "").map((key) => [key, row[key]]));
+const hostOnly = (value: unknown) => String(value ?? "").toLowerCase().replace(/^www\./, "");
+
+/** One SERP result as an agent reads it: what it is, where it points and its text, without layout data. */
+function serpRow(row: Json): Json {
+  const data = (row.data ?? {}) as Json;
+  const base = pick(row, ["position", "type", "title", "url", "domain", "description"]);
+  if (data.isFeaturedSnippet) base.featuredSnippet = true;
+  if (row.type === "aiOverview") {
+    const items = rows(data.items);
+    const sources = new Map<string, Json>();
+    for (const ref of items.flatMap((item) => rows(item.references))) if (typeof ref.url === "string") sources.set(ref.url, pick(ref, ["title", "url", "domain"]));
+    return { ...base, text: items.map((item) => [item.title, item.text].filter(Boolean).join(": ")).join("\n\n"), sources: [...sources.values()] };
+  }
+  // Videos, People Also Ask, related searches…: a list of strings or small objects.
+  if (Array.isArray(data.items)) {
+    base.items = data.items.map((item) => (item && typeof item === "object" ? pick(item as Json, ["title", "question", "url", "domain", "source"]) : item));
+  }
+  return base;
+}
+
+/** Google Places rows: drops photo references, icon and Google redirect links, which are most of the bytes. */
+const KEEP_URLS = new Set(["googleMapsUrl", "website"]);
+const slimPlace = (value: unknown): unknown =>
+  Array.isArray(value)
+    ? value.map(slimPlace)
+    : value && typeof value === "object"
+      ? Object.fromEntries(
+          Object.entries(value as Json).flatMap(([key, inner]): [string, unknown][] => {
+            if (key === "photos" || key === "images") return [[`${key.slice(0, -1)}Count`, Array.isArray(inner) ? inner.length : 0]];
+            if ((/Url$/.test(key) && !KEEP_URLS.has(key)) || ["iconBackgroundColor", "plusCode", "nextPageToken", "reviewId"].includes(key)) return [];
+            return [[key, slimPlace(inner)]];
+          }),
+        )
+      : value;
+
+/** Smaller shapes for lookups whose raw rows are mostly empty fields an agent has to wade through. */
+const AGENT_VIEWS: Record<string, (data: Json) => unknown> = {
+  // Each raw row repeats blank title/url/domain and a long Google search link around one suggestion.
+  autocomplete: (data) => ({
+    query: data.query,
+    suggestions: rows(data.results)
+      .map((row) => (typeof (row.data as Json | undefined)?.suggestion === "string" ? (row.data as Json).suggestion : row.title))
+      .filter(Boolean),
+  }),
+  // Raw rows carry every layout field Google has (ampVersion, rectangle, cacheUrl…): about 600 tokens a result.
+  serp: (data) => ({ query: data.query, totalResults: data.totalResults, itemTypes: data.itemTypes, results: rows(data.results).map(serpRow) }),
+  maps_search: slimPlace,
+  maps_place: slimPlace,
+  maps_reviews: slimPlace,
+  // The provider lists the domain itself as its own top competitor.
+  competitors_domain: (data) => ({ ...data, competitors: rows(data.competitors).filter((row) => hostOnly(row.domain) !== hostOnly(data.domain)) }),
+  // domain1/domain2 swap with the mode, so name the sides; and drop a side the provider left blank.
+  keyword_gap: (data) => {
+    const gap = data.mode === "gap";
+    const side = (value: unknown) => {
+      const s = (value ?? {}) as Json;
+      return s.position || s.url ? pick(s, ["position", "url", "etv"]) : undefined;
+    };
+    return {
+      mode: data.mode,
+      domain: gap ? data.domain2 : data.domain1,
+      competitor: gap ? data.domain1 : data.domain2,
+      keywords: rows(data.keywords).map((row) => ({
+        ...pick(row, ["keyword", "volume", "cpc", "competition", "difficulty", "intent"]),
+        yours: side(gap ? row.domain2 : row.domain1),
+        competitor: side(gap ? row.domain1 : row.domain2),
+      })),
+    };
+  },
+};
+
 /** A lookup result for an agent: what it cost first, then the data, without monthly trends unless asked. */
 function forAgent(result: unknown, includeTrend: boolean): unknown {
   if (!result || typeof result !== "object" || (result as Json).dryRun) return result;
-  const { name, estimate, data, costUsd, cached, fetchedAt, ...rest } = result as Json;
+  const { name, estimate, data: raw, costUsd, cached, fetchedAt, ...rest } = result as Json;
+  const view = AGENT_VIEWS[name as string];
+  const data = view && raw && typeof raw === "object" ? view(raw as Json) : raw;
   const strip = (value: unknown): unknown =>
     Array.isArray(value)
       ? value.map(strip)
@@ -45,7 +130,7 @@ function forAgent(result: unknown, includeTrend: boolean): unknown {
   return { name, costUsd, cached, fetchedAt, estimate, ...rest, data: includeTrend ? data : strip(data) };
 }
 
-/** Drops fields an agent has no use for (internal user ids) from account-level answers. */
+/** Drops fields an agent has no use for (internal user ids) from every answer. */
 const withoutUserIds = (value: unknown): unknown =>
   Array.isArray(value)
     ? value.map(withoutUserIds)
@@ -90,7 +175,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   ) {
     server.registerTool(name, { description, inputSchema: shape, annotations: { readOnlyHint: readOnly } }, (async (args: unknown) => {
       try {
-        const value = await handler(args as z.infer<z.ZodObject<S>>);
+        const value = withoutUserIds(await handler(args as z.infer<z.ZodObject<S>>));
         // A dry run says outright that it spent nothing, like a paid result says what it spent.
         const isDryRun = value !== null && typeof value === "object" && (value as Json).dryRun === true;
         return text(isDryRun ? { dryRun: true, costUsd: 0, ...(value as Json) } : value);
@@ -106,8 +191,18 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   // ── Account and projects ────────────────────────────────────────────────
   tool("whoami", "The signed-in user and whether a YepAPI key is connected.", {}, () => rest("GET", "/me"), true);
   tool("get_balance", "Remaining YepAPI balance for the user's key, whether auto top-up is on, and this month's paid calls, spend and monthly limit. Free.", {}, () => rest("GET", "/balance"), true);
-  tool("get_usage", "What OpenSEO has spent with the user's YepAPI key this month, by feature. Free.", {}, async () => withoutUserIds(await rest("GET", "/usage")), true);
-  tool("list_projects", "List the user's projects with their website, market and language.", {}, async () => withoutUserIds(await rest("GET", "/projects")), true);
+  tool(
+    "get_usage",
+    "What OpenSEO has spent with the user's YepAPI key this month, by feature and by day, with the 10 latest calls. Free.",
+    {},
+    async () => {
+      // The REST answer lists the last 50 calls with row ids and timings, which an agent can't act on.
+      const usage = (await rest("GET", "/usage")) as Json;
+      return { ...usage, recent: rows(usage.recent).slice(0, 10).map((call) => pick(call, ["endpoint", "feature", "ok", "status", "costUsd", "createdAt"])) };
+    },
+    true,
+  );
+  tool("list_projects", "List the user's projects with their website, market and language.", {}, () => rest("GET", "/projects"), true);
   tool(
     "create_project",
     "Create a project for a website.",
@@ -141,7 +236,18 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
     (a) => rest("GET", `/locations?q=${encodeURIComponent(a.query)}${a.country ? `&country=${a.country}` : ""}`),
     true,
   );
-  tool("list_ai_models", "Chat models available for AI visibility tracking, with the curated default set. Free.", {}, () => rest("GET", "/ai/models"), true);
+  tool(
+    "list_ai_models",
+    "Chat models for AI visibility tracking and ai_compare: the curated set (one per assistant, default marks the four tracked unless changed). Pass all: true for every available model with its price per million tokens. Free.",
+    { all: z.boolean().optional().describe("List every model (over 100) instead of the curated set") },
+    async (a) => {
+      const data = (await rest("GET", "/ai/models")) as Json;
+      const models = rows(data.models);
+      if (a.all) return { curated: data.curated, models: models.map((m) => pick(m, ["id", "name", "inputPerM", "outputPerM", "searchGrounded"])) };
+      return { curated: data.curated, otherModels: models.length, note: "Pass all: true to list every model." };
+    },
+    true,
+  );
 
   // ── Paid lookups (keyword, domain, backlink, competitor, SERP, on-page, Maps, AI) ──
   for (const lookup of lookups) {
@@ -150,9 +256,13 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
     // Lookups with a row limit default to MCP_DEFAULT_LIMIT here, so an omitted limit is left
     // optional in the schema (the SDK would otherwise fill in the lookup's larger default).
     const hasLimit = "limit" in shape;
+    // Keep the lookup's own ceiling (maps_search allows 20) and never default above it.
+    const limitSchema = hasLimit ? (shape.limit as z.ZodDefault<z.ZodNumber>) : undefined;
+    const maxLimit = limitSchema?.unwrap().maxValue ?? 1000;
+    const defaultLimit = Math.min(MCP_DEFAULT_LIMIT, maxLimit, Number(limitSchema?.def.defaultValue ?? MCP_DEFAULT_LIMIT));
     const hasTrend = /trend/i.test(lookup.description) && lookup.name !== "keyword_trends";
     const notes = [
-      hasLimit ? `Returns ${MCP_DEFAULT_LIMIT} rows unless you pass limit.` : "",
+      hasLimit ? `Returns ${defaultLimit} rows unless you pass limit.` : "",
       hasTrend ? "Monthly trends are left out unless include_trend is true." : "",
       "The result starts with costUsd, what this call actually spent (0 when cached).",
     ].join(" ");
@@ -161,7 +271,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
       `${lookup.description}${cache} ${notes}`.replace(/\s+/g, " ").trim(),
       {
         ...shape,
-        ...(hasLimit ? { limit: z.number().int().min(1).max(1000).optional().describe(`Rows to return (default ${MCP_DEFAULT_LIMIT}, max 1000). More rows cost more.`) } : {}),
+        ...(hasLimit ? { limit: z.number().int().min(1).max(maxLimit).optional().describe(`Rows to return (default ${defaultLimit}, max ${maxLimit}). More rows cost more.`) } : {}),
         ...(hasTrend ? { include_trend: z.boolean().optional().describe("Include the 12-month trend for every row. Large: keep the limit small.") } : {}),
         project_id: projectId,
         max_cost_usd: maxCost.optional(),
@@ -170,7 +280,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
       },
       async (a) => {
         const { project_id, max_cost_usd, dry_run, refresh, include_trend, ...input } = a as Json;
-        if (hasLimit && input.limit === undefined) input.limit = MCP_DEFAULT_LIMIT;
+        if (hasLimit && input.limit === undefined) input.limit = defaultLimit;
         const query = new URLSearchParams();
         if (dry_run) query.set("dryRun", "1");
         if (refresh) query.set("refresh", "1");
@@ -342,9 +452,14 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   );
   tool(
     "get_ai_visibility_results",
-    "AI visibility report: mention and citation rates overall and per model, share of voice against competitors, most-cited domains, a prompt-by-model grid and the trend across runs.",
+    "AI visibility report: mention and citation rates overall and per model, share of voice against competitors, most-cited domains, a prompt-by-model grid and the trend across runs. activeRun shows a run still in progress (done of total answers, spend so far).",
     { project_id: projectId },
-    async (a) => rest("GET", `/projects/${await resolveProject(a.project_id)}/ai/results`),
+    async (a) => {
+      const id = await resolveProject(a.project_id);
+      // The report only covers finished runs; without the active one an agent polling after run_ai_visibility sees nothing change.
+      const [results, setup] = await Promise.all([rest("GET", `/projects/${id}/ai/results`), rest("GET", `/projects/${id}/ai`)]);
+      return { activeRun: (setup as Json).activeRun ?? null, ...(results as Json) };
+    },
     true,
   );
   tool(
