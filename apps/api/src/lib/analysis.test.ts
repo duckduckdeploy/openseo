@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { analyseAnswer, brandKey, cleanSources, cleanSourceUrl, firstMention, isBrandedPrompt, proseForMatching } from "./brand-analysis";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { analyseAnswer, brandKey, cleanSources, cleanSourceUrl, firstMention, isBrandedPrompt, proseForMatching, resolveCitation } from "./brand-analysis";
 import { hostMatches, toDomain } from "./domain";
 import { buildGrid } from "./geo";
 import { firstRunAt, nextRunAfter } from "./pool";
@@ -22,12 +22,12 @@ describe("analyseAnswer", () => {
   it("orders brands by first mention and detects citations by domain", () => {
     const hits = analyseAnswer(
       "Globex is the usual pick. Acme Tools is a newer option.",
-      [{ url: "https://blog.acme.com/guide" }, { url: "https://example.org" }],
+      [{ url: "https://blog.acme.com/guide" }, { url: "https://example.org" }, { url: "https://globex.io/pricing" }],
       brands,
     );
     expect(hits).toEqual([
       { name: "Acme", mentioned: true, cited: true, position: 2 },
-      { name: "Globex", mentioned: true, cited: false, position: 1 },
+      { name: "Globex", mentioned: true, cited: true, position: 1 },
       { name: "Initech", mentioned: false, cited: false, position: null },
     ]);
   });
@@ -53,12 +53,53 @@ describe("analyseAnswer", () => {
     expect(analyseAnswer("Many teams use acme.com for this [2].", [], brands)[0]?.mentioned).toBe(true);
   });
 
+  it("counts a named brand with a domain only when the answer points to that domain", () => {
+    // A different product with the same name, linked to its own site.
+    expect(analyseAnswer("Acme is a solid choice.", [{ url: "https://acme.so/features" }], brands)[0]).toEqual({ name: "Acme", mentioned: false, cited: false, position: null });
+    expect(analyseAnswer("Acme is a solid choice.", [], brands)[0]?.mentioned).toBe(false);
+    // The domain in a source, a link, a bare URL or the prose ties the name to the brand.
+    expect(analyseAnswer("Acme is a solid choice.", [{ url: "https://docs.acme.com/" }], brands)[0]).toMatchObject({ mentioned: true, cited: true, position: 1 });
+    expect(analyseAnswer("Acme is a solid choice ([site](https://acme.com/)).", [], brands)[0]).toMatchObject({ mentioned: true, cited: false });
+    expect(analyseAnswer("Acme is a solid choice, see www.acme.com.", [], brands)[0]?.mentioned).toBe(true);
+    expect(analyseAnswer("Acme (acme.com) is a solid choice.", [], brands)[0]?.mentioned).toBe(true);
+    // Not a lookalike host.
+    expect(analyseAnswer("Acme is a solid choice.", [{ url: "https://notacme.com/" }], brands)[0]?.mentioned).toBe(false);
+    // A brand without a domain is still matched by name.
+    expect(analyseAnswer("Initech works too.", [], brands)[2]).toMatchObject({ mentioned: true, position: 1 });
+  });
+
+  it("orders only the brands the answer points to", () => {
+    const hits = analyseAnswer("Acme first, then Globex.", [{ url: "https://globex.io/" }], brands);
+    expect(hits.slice(0, 2)).toEqual([
+      { name: "Acme", mentioned: false, cited: false, position: null },
+      { name: "Globex", mentioned: true, cited: true, position: 1 },
+    ]);
+  });
+
   it("keeps positions in answer order after blanking", () => {
-    const hits = analyseAnswer("[1] https://acme.com Globex comes first, then Acme.", [], brands);
+    const hits = analyseAnswer("[1] https://acme.com Globex (globex.io) comes first, then Acme.", [], brands);
     expect(hits.slice(0, 2)).toEqual([
       { name: "Acme", mentioned: true, cited: false, position: 2 },
       { name: "Globex", mentioned: true, cited: false, position: 1 },
     ]);
+  });
+});
+
+describe("resolveCitation", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const grounding = { url: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQ", title: "acme.com" };
+
+  it("follows a Gemini grounding redirect to the cited page", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 302, headers: { location: "https://www.acme.com/guide" } })));
+    expect(await resolveCitation(grounding)).toEqual({ url: "https://www.acme.com/guide" });
+  });
+
+  it("falls back to the domain Gemini gives as the title when the redirect can't be followed", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
+    const resolved = await resolveCitation(grounding);
+    expect(resolved).toEqual({ url: "https://acme.com/" });
+    // So an answer that names the brand and cites it through Gemini counts as both.
+    expect(analyseAnswer("Acme is a solid choice.", [resolved!], [{ name: "Acme", domain: "acme.com" }])[0]).toMatchObject({ mentioned: true, cited: true });
   });
 });
 
@@ -86,7 +127,7 @@ describe("branded prompts", () => {
   });
 
   it("keys answers by brand name and domain", () => {
-    expect(brandKey({ name: " Acme ", domain: "Acme.com" })).toBe("acme|acme.com");
+    expect(brandKey({ name: " Acme ", domain: "Acme.com" })).toBe("acme|acme.com|url");
     expect(brandKey({ name: "Acme" })).toBe("acme|");
   });
 });

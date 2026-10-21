@@ -416,7 +416,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   );
   tool(
     "update_ai_visibility_setup",
-    "Change the brand, aliases, domain, competitors, tracked models, web search or schedule for AI visibility.",
+    "Change the brand, aliases, domain, competitors, tracked models, web search or schedule for AI visibility. A brand or competitor with a domain counts as mentioned only when the answer also points to that domain, so set the domain for any name another product shares.",
     {
       project_id: projectId,
       brand: z.string().optional(),

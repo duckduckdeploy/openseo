@@ -2,7 +2,7 @@ import { DEFAULT_MODEL_IDS } from "@openseo/shared";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { dataDb, db, schema } from "../db";
 import type { AiBrandHit } from "../db/schema";
-import { analyseAnswer, brandKey, cleanSourceUrl, cleanSources, isBrandedPrompt, type TrackedBrand } from "../lib/brand-analysis";
+import { analyseAnswer, brandKey, cleanSourceUrl, cleanSources, isBrandedPrompt, resolveCitation, type Source, type TrackedBrand } from "../lib/brand-analysis";
 import { hostOf } from "../lib/domain";
 import { conflict, isUniqueViolation, runInProgress } from "../lib/errors";
 import { mapLimit } from "../lib/pool";
@@ -171,7 +171,9 @@ export async function processAiRun(runId: string) {
       spent += res.costUsd;
       const content = res.data.message.content;
       const answer = typeof content === "string" ? content : "";
-      const sources = cleanSources((res.data.sources ?? []).map((s) => ({ url: s.url, title: s.title })));
+      // Gemini cites through Google redirect links; resolved, they show which site was cited.
+      const resolved = await Promise.all((res.data.sources ?? []).map((s) => resolveCitation({ url: s.url, title: s.title })));
+      const sources = cleanSources(resolved.filter((source): source is Source => source !== null));
       const hits: AiBrandHit[] = analyseAnswer(answer, sources, brands);
       const ownHit = hits[0];
       await dataDb.insert(schema.aiAnswers).values({

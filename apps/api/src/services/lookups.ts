@@ -1,7 +1,7 @@
 import { sortLighthouseAudits } from "@openseo/shared";
 import { estimateCost, type KeywordFilter, type YepApi } from "@openseo/yepapi";
 import { z } from "zod";
-import { cleanSources } from "../lib/brand-analysis";
+import { cleanSources, resolveCitation } from "../lib/brand-analysis";
 import { hostMatches, hostOf, toDomain } from "../lib/domain";
 import { AppError, badRequest } from "../lib/errors";
 import { buildGrid } from "../lib/geo";
@@ -66,44 +66,6 @@ function keywordFilters(input: { minVolume?: number; maxDifficulty?: number; min
   if (input.maxDifficulty != null) filters.push({ field: "difficulty", op: "<=", value: input.maxDifficulty });
   if (input.minWords != null) filters.push({ field: "words", op: ">=", value: input.minWords });
   return filters.length ? filters : undefined;
-}
-
-// ── Helpers for the AI visibility check ───────────────────────────────────────
-
-const REDIRECT_HOSTS = new Set(["vertexaisearch.cloud.google.com"]);
-
-/**
- * The page a cited link really points at. Some models cite through a redirect (Gemini's grounding
- * links): it is followed once, without loading the page. Search-engine junk glued onto a path
- * ("/best-desk&c=123&mkt=en-us") is cut. Null when the link cannot be read.
- */
-async function resolveCitation(source: { url: string; title?: string }): Promise<{ url: string; title?: string } | null> {
-  let url: URL;
-  try {
-    url = new URL(source.url);
-  } catch {
-    return null;
-  }
-  if (REDIRECT_HOSTS.has(url.hostname)) {
-    try {
-      const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(4000) });
-      const location = res.headers.get("location");
-      if (location) url = new URL(location, url);
-    } catch {
-      // Unreachable: fall back to the domain the model gave as the title.
-    }
-    if (REDIRECT_HOSTS.has(url.hostname)) {
-      const domain = source.title?.trim();
-      if (!domain || !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) return null;
-      return { url: `https://${domain}/` };
-    }
-    // The title of a redirected citation is only its domain.
-    return { url: url.toString() };
-  }
-  if (!url.search && url.pathname.includes("&")) url.pathname = url.pathname.slice(0, url.pathname.indexOf("&"));
-  // A title that is only the URL again adds nothing.
-  const title = source.title && !/^https?:\/\//i.test(source.title.trim()) ? source.title : undefined;
-  return title ? { url: url.toString(), title } : { url: url.toString() };
 }
 
 const MAPS_SEARCH_USD = 0.07;

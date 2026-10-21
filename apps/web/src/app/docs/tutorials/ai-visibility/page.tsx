@@ -85,7 +85,7 @@ export default function AiVisibilityTutorial() {
         caption="AI visibility measures"
         head={['Measure', 'How it is counted']}
         rows={[
-          ['Mentioned', 'The answer’s text contains your brand name, one of your other names, or your domain, as a whole word in any letter case. Links, email addresses and citation markers such as [1] do not count: a link to your site is a citation, not a mention.'],
+          ['Mentioned', 'The answer’s text contains your brand name, one of your other names, or your domain, as a whole word in any letter case, and the answer points to your domain: in a source, a link or the domain written out. A name alone does not count, so another product with the same name is not counted as you. Links, email addresses and citation markers such as [1] are not mentions on their own: a link to your site is a citation. Brands tracked without a domain are matched by name.'],
           ['Cited', 'One of the sources the model listed is on your domain or a subdomain of it.'],
           ['Position', 'The order in which tracked brands are first mentioned in the answer: 1 means you came up first.'],
           ['Mention rate, citation rate', 'Share of answers in a run that mention or cite you, counting only prompts that do not name your brand.'],

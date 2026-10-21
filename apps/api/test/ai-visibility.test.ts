@@ -174,7 +174,7 @@ describe("AI visibility runs", () => {
     const urls = stored.flatMap((a) => a.sources.map((s) => s.url));
     expect(urls.length).toBeGreaterThan(0);
     expect(urls.some((u) => /utm_|#/.test(u))).toBe(false);
-    expect(stored.every((a) => a.brandKey === "acme|acme.com")).toBe(true);
+    expect(stored.every((a) => a.brandKey === "acme|acme.com|url")).toBe(true);
   });
 
   it("404s a malformed run or prompt id", async () => {

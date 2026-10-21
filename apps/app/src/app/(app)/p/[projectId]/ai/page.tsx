@@ -509,7 +509,7 @@ function SetupTab({ projectId, settings }: { projectId: string; settings: AiSett
       }}
     >
       <Card>
-        <CardHeader title="Your brand" description="An answer counts as a mention when it names the brand or an alias, and as a citation when a source links to the domain." />
+        <CardHeader title="Your brand" description="An answer counts as a mention when it names the brand or an alias and points to the domain (a source, a link or the domain written out), so a namesake isn’t counted as you. It counts as a citation when a source links to the domain." />
         <div className="grid gap-4 p-4 sm:grid-cols-2">
           <Field label="Brand name">
             <Input value={brand} onChange={(event) => setBrand(event.target.value)} required maxLength={100} />

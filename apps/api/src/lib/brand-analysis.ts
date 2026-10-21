@@ -74,7 +74,55 @@ export function cleanSources(sources: Source[]): Source[] {
   return out;
 }
 
+const REDIRECT_HOSTS = new Set(["vertexaisearch.cloud.google.com"]);
+
+/**
+ * The page a cited link really points at. Some models cite through a redirect (Gemini's grounding
+ * links): it is followed once, without loading the page. Search-engine junk glued onto a path
+ * ("/best-desk&c=123&mkt=en-us") is cut. Null when the link cannot be read.
+ */
+export async function resolveCitation(source: { url: string; title?: string }): Promise<{ url: string; title?: string } | null> {
+  let url: URL;
+  try {
+    url = new URL(source.url);
+  } catch {
+    return null;
+  }
+  if (REDIRECT_HOSTS.has(url.hostname)) {
+    try {
+      const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(4000) });
+      const location = res.headers.get("location");
+      if (location) url = new URL(location, url);
+    } catch {
+      // Unreachable: fall back to the domain the model gave as the title.
+    }
+    if (REDIRECT_HOSTS.has(url.hostname)) {
+      const domain = source.title?.trim();
+      if (!domain || !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) return null;
+      return { url: `https://${domain}/` };
+    }
+    // The title of a redirected citation is only its domain.
+    return { url: url.toString() };
+  }
+  if (!url.search && url.pathname.includes("&")) url.pathname = url.pathname.slice(0, url.pathname.indexOf("&"));
+  // A title that is only the URL again adds nothing.
+  const title = source.title && !/^https?:\/\//i.test(source.title.trim()) ? source.title : undefined;
+  return title ? { url: url.toString(), title } : { url: url.toString() };
+}
+
 const brandTerms = (brand: TrackedBrand) => [brand.name, ...(brand.aliases ?? []), ...(brand.domain ? [brand.domain] : [])];
+
+const URL_IN_TEXT = /\b(?:https?:\/\/|www\.)[^\s<>()[\]"']+/gi;
+
+/** Hosts the answer links to: its sources, links and bare URLs in the text. */
+function linkedHosts(answer: string, sources: Source[]): string[] {
+  const inText = [...answer.matchAll(URL_IN_TEXT)].map((m) => {
+    // A URL that ends a sentence keeps its full stop: "see www.acme.com."
+    const url = m[0].replace(/[.,;:!?]+$/, "");
+    return hostOf(url.startsWith("www.") ? `https://${url}` : url);
+  });
+  return [...sources.map((s) => hostOf(s.url)), ...inText].filter((host): host is string => !!host);
+}
 
 /**
  * A prompt that names the brand itself ("Is Acme any good?"). Answers to it nearly always mention
@@ -84,14 +132,21 @@ export function isBrandedPrompt(prompt: string, brand: TrackedBrand): boolean {
   return firstMention(proseForMatching(prompt), brandTerms(brand)) >= 0;
 }
 
-/** Identifies the brand an answer was analysed for, so trends only compare like with like. */
+/**
+ * Identifies the brand an answer was analysed for, so trends only compare like with like. The
+ * "|url" suffix marks answers checked against the domain (see analyseAnswer); answers stored before
+ * that counted the name alone, so they are not compared with them.
+ */
 export function brandKey(brand: TrackedBrand): string {
-  return `${brand.name.trim().toLowerCase()}|${(brand.domain ?? "").trim().toLowerCase()}`;
+  const domain = (brand.domain ?? "").trim().toLowerCase();
+  return `${brand.name.trim().toLowerCase()}|${domain}${domain ? "|url" : ""}`;
 }
 
 /**
  * Deterministic visibility check for one answer.
- * - mentioned: brand name, an alias, or its domain appears in the prose (not in a link or citation)
+ * - mentioned: brand name, an alias, or its domain appears in the prose (not in a link or citation).
+ *   For a brand with a domain, the answer must also point to that domain (a source, a link or the
+ *   domain written out), so a different product with the same name is not counted as the brand.
  * - cited: one of the answer's sources is on the brand's domain
  * - position: order of first mention among all tracked brands (1 = first)
  * The first brand in `brands` is the user's own.
@@ -99,10 +154,13 @@ export function brandKey(brand: TrackedBrand): string {
 export function analyseAnswer(answer: string, sources: Source[], brands: TrackedBrand[]): BrandHit[] {
   const prose = proseForMatching(answer);
   const sourceHosts = sources.map((s) => hostOf(s.url));
+  const hosts = linkedHosts(answer, sources);
   const found = brands.map((brand) => {
-    const index = firstMention(prose, brandTerms(brand));
-    const cited = brand.domain ? sourceHosts.some((host) => hostMatches(host, brand.domain as string)) : false;
-    return { name: brand.name, index, cited };
+    const named = firstMention(prose, brandTerms(brand));
+    const domain = brand.domain;
+    const pointsToDomain = !domain || firstMention(prose, [domain]) >= 0 || hosts.some((host) => hostMatches(host, domain));
+    const cited = domain ? sourceHosts.some((host) => hostMatches(host, domain)) : false;
+    return { name: brand.name, index: pointsToDomain ? named : -1, cited };
   });
   const order = found
     .filter((f) => f.index >= 0)
