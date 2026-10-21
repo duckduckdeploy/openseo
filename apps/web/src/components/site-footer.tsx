@@ -102,6 +102,11 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/best-seo-mcp-servers" className={linkClass}>
+                Best SEO MCP servers
+              </Link>
+            </li>
+            <li>
               <Link href="/pricing" className={linkClass}>
                 Pricing
               </Link>

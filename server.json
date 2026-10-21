@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.duckduckdeploy/openseo",
+  "title": "OpenSEO",
+  "description": "Open-source SEO: keywords, SERPs, backlinks, rank tracking, audits, AI visibility, Search Console",
+  "version": "1.0.0",
+  "websiteUrl": "https://openseo.gg/features/seo-mcp-server",
+  "repository": {
+    "url": "https://github.com/duckduckdeploy/openseo",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.openseo.gg/mcp"
+    }
+  ]
+}

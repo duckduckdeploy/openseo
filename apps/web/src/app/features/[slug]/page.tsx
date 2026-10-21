@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { BrandRow, brandName } from '@/components/brand-icon';
 import { ButtonLink } from '@/components/button';
 import { CtaBand } from '@/components/cta-band';
+import { FaqList } from '@/components/faq';
 import { JsonLd } from '@/components/json-ld';
 import { RelatedTerms } from '@/components/related-terms';
 import { PriceTable } from '@/components/price-table';
@@ -14,7 +15,7 @@ import { features, getFeature } from '@/content/features';
 import { TourShots } from '@/components/tour-section';
 import { featureTour, tourStop } from '@/content/tour';
 import { pageMeta } from '@/lib/metadata';
-import { breadcrumbList } from '@/lib/schema';
+import { breadcrumbList, faqPage } from '@/lib/schema';
 import { SIGN_UP_URL, SITE_NAME, SITE_URL } from '@/lib/site';
 
 interface FeaturePageProps {
@@ -70,6 +71,7 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
               { name: 'Features', path: '/features' },
               { name: feature.name, path: `/features/${feature.slug}` },
             ]),
+            ...(feature.faqs?.length ? [faqPage(feature.faqs)] : []),
           ],
         }}
       />
@@ -215,6 +217,21 @@ export default async function FeaturePage({ params }: FeaturePageProps) {
         </section>
 
         {feature.slug === 'search-console-dashboard' ? null : <YepapiOffer />}
+
+        {feature.faqs?.length ? (
+          <section aria-labelledby="faq-title" className="band-white border-t border-line">
+            <div className="container-page py-20 md:py-28">
+              <div className="mx-auto max-w-3xl">
+                <h2 id="faq-title" className="text-title text-center">
+                  {feature.h1} FAQ
+                </h2>
+                <div className="mt-12">
+                  <FaqList faqs={feature.faqs} />
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {/* Glossary */}
         <div className="container-page border-t border-line py-20 md:py-28">

@@ -37,6 +37,7 @@ export function GET() {
     link('Pricing', '/pricing', 'What each action costs, paid per lookup with a monthly limit.'),
     ...comparisons.map((c) => link(`${c.name} alternative`, `/compare/${c.slug}`, c.summary)),
     link('Open-source SEO tools', '/open-source-seo-tools', 'The open-source SEO tools worth running: rank trackers, crawlers, site audits and full suites, compared.'),
+    link('Best SEO MCP servers', '/best-seo-mcp-servers', 'SEO MCP servers for Claude, ChatGPT and Cursor compared: OpenSEO, DataForSEO, Ahrefs, Semrush, SE Ranking and more, with licence, hosting and price.'),
     link('SEO glossary', '/glossary', 'SEO terms explained in plain English.'),
     '',
   ].join('\n');
