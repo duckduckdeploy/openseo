@@ -1,7 +1,8 @@
 import type { FreeToolKind } from '@/components/free-tool';
-import { BarChart3, Bot, ClipboardCheck, FileSearch, Gauge, Globe, Grid3x3, Lightbulb, Link2, ListOrdered, Network, Search, Sparkles, Swords, TrendingUp, type LucideIcon } from 'lucide-react';
+import { BarChart3, Bot, ClipboardCheck, FileSearch, Gauge, Globe, Grid3x3, Lightbulb, Link2, ListOrdered, Network, ScanSearch, Search, Sparkles, Swords, TrendingUp, type LucideIcon } from 'lucide-react';
 import { ASSISTANT_BRANDS, type Brand } from '@/components/brand-icon';
 import type { ScreenName } from '@/components/screenshot';
+import { AUDIT_CHECKS } from './features';
 import type { Faq } from './pricing';
 
 /** One part of a tool's screen, shown as its own section on the tool's page. */
@@ -57,6 +58,10 @@ export interface ResearchTool {
   costs: ToolCost[];
   total: string;
   costNote: string;
+  /** For a free tool: the line under the buttons and the pricing paragraph, in place of the per-lookup wording. */
+  free?: { line: string; lede: string };
+  /** How it works, when the usual search-and-read steps don't fit. */
+  steps?: ToolUse[];
   faqs: Faq[];
   /** Section of the screen-by-screen guide. */
   guide: string;
@@ -373,6 +378,101 @@ export const tools: ResearchTool[] = [
       ...shared,
     ],
     guide: '/docs/tutorials/seo-tools#seo-audit',
+  },
+  {
+    slug: 'site-audit',
+    seoTitle: 'Site Audit: Free Website Crawler for Technical SEO',
+    h1: 'Site audit',
+    description: `Free site audit with our website crawler: ${AUDIT_CHECKS} checks for status codes, redirect chains, broken links, canonicals and sitemaps, with fixes for Claude.`,
+    glossary: ['web-crawler', 'crawling', '404-error', 'redirect-chain', 'orphan-page', 'canonical-tag', 'xml-sitemap', 'robots-txt'],
+    name: 'Site audit',
+    icon: ScanSearch,
+    headline: 'Crawl any website for technical SEO issues',
+    summary: `A free SEO crawler: up to 500 pages of any site, ${AUDIT_CHECKS} technical checks, status codes and links, and every fix exported for a coding agent.`,
+    lede: `Enter a website and our crawler follows its links the way a search engine does, up to 500 pages. It records the exact status code of every URL and every redirect hop, then runs ${AUDIT_CHECKS} technical SEO checks: broken pages and links, redirect chains, canonicals, duplicate titles, orphan pages, sitemaps, hreflang, structured data and which AI crawlers can get in.`,
+    points: [`${AUDIT_CHECKS} technical checks`, 'Exact status codes', 'Fixes for Claude or any coding agent'],
+    appPath: '/tools/site-audit',
+    hero: { shot: 'site-audit-tool', alt: 'Site audit report for upliftdesk.com: health score, AI discoverability score, issue counts and the top issues found' },
+    parts: [
+      {
+        shot: 'site-audit-tool-top-issues',
+        alt: 'The top issues of a crawl, each with its severity and the number of URLs affected, with buttons for the AI fix brief and the export of all issues',
+        title: 'Errors, warnings and notices',
+        body: 'Every issue found, worst first: errors that hurt crawling and indexing, warnings worth fixing and notices to know about. Open one to see the pages it affects and the links behind it.',
+      },
+      {
+        shot: 'site-audit-tool-status',
+        alt: 'Charts of the crawl: links found by crawl status and HTTP status codes by click depth',
+        title: 'Status codes, redirects and click depth',
+        body: 'The crawler fetches every URL itself, so a 301 is a 301 and a 404 is a 404. See status codes by click depth, every hop of a redirect chain and how long each page takes to answer.',
+      },
+      {
+        shot: 'site-audit-tool-pages',
+        alt: 'Every crawled page with its status code, title, word count, click depth, incoming links, internal PageRank and issue count',
+        title: 'Every page and link it found',
+        body: 'Each page with its status, title, depth, response time, incoming links and internal PageRank. Filter by status code, sort by what matters and open one to see the links in and out.',
+      },
+      {
+        shot: 'site-audit-tool-exports',
+        alt: 'Exports of a crawl: the AI fix brief, one zip of every issue and bulk CSV exports of pages and links',
+        title: 'Exports for Claude and coding agents',
+        body: 'Download every issue as CSV files in one zip, with the links behind each, or as one fix brief: issues worst first, why each matters, how to fix it and the pages grouped by template, so your coding agent fixes the template once.',
+      },
+    ],
+    uses: [
+      { title: 'Find broken pages and links', body: 'Every 4XX and 5XX page and the pages that link to them, so you fix the link as well as the page.' },
+      { title: 'Check a site before and after a launch', body: 'Catch redirects, noindex tags and canonicals left over from staging before search engines do.' },
+      { title: 'Hand fixes to a coding agent', body: 'Give Claude, Cursor or Codex the fix brief and let it work through the issues in your codebase.' },
+      { title: 'Audit a client or prospect', body: 'Crawl any site, not only your own, and walk into the call with its technical issues.' },
+    ],
+    steps: [
+      { title: 'Enter a website', body: 'Its address, and how many pages to crawl, up to 500. Robots.txt is respected.' },
+      { title: 'Let it crawl', body: 'It follows links and sitemaps, then runs every check. A few hundred pages take a few minutes.' },
+      { title: 'Fix and crawl again', body: 'Work through the issues or export them, then crawl again to see what is fixed.' },
+    ],
+    costs: [
+      { action: 'Crawl of up to 500 pages', price: 'Free' },
+      { action: 'Crawl in a project, up to 10,000 pages', price: 'Free' },
+      { action: 'JavaScript rendering, in projects (optional)', price: '$0.02 per page' },
+      { action: 'Blocked pages fetched through proxies, in projects (optional)', price: '$0.03 per page' },
+    ],
+    total: 'Free',
+    costNote: '',
+    free: {
+      line: 'Free: the crawl runs on our own crawler, not on paid lookups.',
+      lede: 'The crawl runs on our own crawler, so it costs nothing. In a project, you can also render JavaScript pages and fetch pages behind bot protection through YepAPI, only for the pages that need it and up to a cap you set.',
+    },
+    faqs: [
+      {
+        question: 'What is the difference between a website crawler and an SEO crawler?',
+        answer: [
+          'A website crawler follows the links of a site and fetches its pages. An SEO crawler does that and then checks what it found the way a search engine would: status codes, redirects, indexability, canonicals, duplicate content and links. This one does both.',
+        ],
+      },
+      {
+        question: 'Does it render JavaScript?',
+        answer: [
+          'The free crawl reads the HTML each page sends, as most search engine crawlers do first, and flags pages that are empty without JavaScript. In a project, the audit can render those pages in a browser, at $0.02 a page, up to a cap you set.',
+        ],
+      },
+      {
+        question: 'Can it crawl a site that blocks bots?',
+        answer: [
+          'It identifies itself and respects robots.txt. When a site blocks it anyway, the report says which pages were blocked. In a project, the audit can fetch those pages through YepAPI’s proxies, at $0.03 a page.',
+        ],
+      },
+      {
+        question: 'Can I schedule crawls?',
+        answer: [
+          'Yes, in a project. Audits run weekly or monthly, up to 10,000 pages, and each is compared with the last: which issues are new, which you fixed and which titles, descriptions and status codes changed.',
+        ],
+      },
+      {
+        question: 'Can my AI assistant run it?',
+        answer: ['Yes. The OpenSEO MCP server has tools to start a site audit, read its issues and links, and get the fix brief, so Claude can crawl a site and fix what it finds.'],
+      },
+    ],
+    guide: '/docs/tutorials/site-audit',
   },
   {
     slug: 'website-seo-analysis',

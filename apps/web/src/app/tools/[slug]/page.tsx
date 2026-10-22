@@ -132,7 +132,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
                 </ButtonLink>
               </div>
               <p className="mt-5 text-[0.9375rem] text-muted">
-                {tool.total}, paid per lookup from your own key.{' '}
+                {tool.free ? tool.free.line : `${tool.total}, paid per lookup from your own key.`}{' '}
                 <a href="#costs" className={textLink}>
                   What it costs
                 </a>
@@ -171,7 +171,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
             </h2>
           </div>
           <ol className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-3">
-            {steps.map((step, index) => (
+            {(tool.steps ?? steps).map((step, index) => (
               <li key={step.title} className="card p-7">
                 <span className="inline-flex size-10 items-center justify-center rounded-full bg-orange font-display text-lg font-bold text-night">{index + 1}</span>
                 <h3 className="card-title mt-5">{step.title}</h3>
@@ -215,7 +215,8 @@ export default async function ToolPage({ params }: ToolPageProps) {
               {tool.h1} pricing
             </h2>
             <p className="mt-6 text-xl leading-relaxed text-pretty text-muted">
-              <strong className="font-semibold text-ink">{tool.total}.</strong> You pay the data provider for the lookups a search runs, from your own key, under a monthly limit you set. {tool.costNote}
+              <strong className="font-semibold text-ink">{tool.total}.</strong>{" "}
+              {tool.free ? tool.free.lede : `You pay the data provider for the lookups a search runs, from your own key, under a monthly limit you set. ${tool.costNote}`}
             </p>
           </div>
           <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-lg border border-line bg-surface shadow-hard-sm">

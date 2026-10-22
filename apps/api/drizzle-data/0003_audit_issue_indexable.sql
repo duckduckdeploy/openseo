@@ -1,0 +1,1 @@
+ALTER TABLE "audit_issues" ADD COLUMN "indexable" boolean;

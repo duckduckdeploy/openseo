@@ -79,7 +79,7 @@ export const docPages: DocPage[] = [
     title: 'Audit a site',
     h1: 'How to do a technical SEO audit',
     seoTitle: 'How to Do an SEO Audit: Technical SEO Checklist',
-    description: 'How to run a technical SEO audit: crawl your site for free, fix issues by severity, check single pages and test page speed with Lighthouse.',
+    description: 'How to run a technical SEO audit: crawl your site for free, fix issues by severity, track them audit to audit and export the fixes for a coding agent.',
     section: 'Tutorials',
   },
   {
@@ -143,7 +143,7 @@ export const docPages: DocPage[] = [
     title: 'MCP tools',
     h1: 'SEO MCP tools reference',
     seoTitle: 'SEO MCP Tools: All 67 Tools Explained',
-    description: 'All 67 tools of the OpenSEO SEO MCP server: keyword research, rank tracking, site audits, AI visibility and Search Console, and which ones spend.',
+    description: 'All 69 tools of the OpenSEO SEO MCP server: keyword research, rank tracking, site audits, AI visibility and Search Console, and which ones spend.',
     section: 'Reference',
   },
   {

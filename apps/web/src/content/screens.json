@@ -232,8 +232,28 @@
     "height": 900
   },
   "site-audit-issues": {
+    "width": 1174,
+    "height": 1132
+  },
+  "site-audit-tool": {
+    "width": 1440,
+    "height": 900
+  },
+  "site-audit-tool-exports": {
     "width": 1176,
-    "height": 854
+    "height": 932
+  },
+  "site-audit-tool-pages": {
+    "width": 1176,
+    "height": 852
+  },
+  "site-audit-tool-status": {
+    "width": 1176,
+    "height": 317
+  },
+  "site-audit-tool-top-issues": {
+    "width": 1176,
+    "height": 612
   },
   "website-authority-checker": {
     "width": 1440,

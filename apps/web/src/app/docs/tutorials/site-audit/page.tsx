@@ -17,85 +17,150 @@ export default function SiteAuditTutorial() {
   return (
     <DocArticle slug={slug}>
       <p>
-        OpenSEO crawls your site with its own crawler, so a normal audit costs nothing. It checks every page it reaches
-        against {ISSUE_TYPES.length} kinds of problem ({count('critical')} critical, {count('warning')} warnings and{' '}
-        {count('info')} notices) and sums them up as a health score.
+        OpenSEO crawls your site with its own crawler, so the crawl itself costs nothing. It checks every page it
+        reaches against {ISSUE_TYPES.length} kinds of problem ({count('critical')} errors, {count('warning')} warnings
+        and {count('info')} notices), sums them up as a health score, and compares each audit with the one before.
+      </p>
+      <p>
+        Run it in a project for scheduled audits of up to 10,000 pages with history, or use the{' '}
+        <Link href="/tools/site-audit">Site audit tool</Link> for a one-off crawl of any site, up to 500
+        pages.
       </p>
 
       <h2 id="run">Run a site audit</h2>
       <Steps>
         <Step title="Start it">
           <p>
-            Open <Ui>Site audit</Ui> and click <Ui>New audit</Ui>. The start URL defaults to your project&apos;s
-            website. Choose how many pages to crawl, up to 5,000. Then click <Ui>Start audit</Ui>.
+            Open <Ui>Site audit</Ui> in your project. The start URL defaults to the project&apos;s website. Choose how
+            many pages to crawl, up to 10,000, then click <Ui>Start crawl</Ui>. Under <Ui>More options</Ui> you can
+            skip or limit URLs by pattern and check links to other sites.
           </p>
         </Step>
         <Step title="Let it crawl">
           <p>
             The crawler is polite: two requests at a time, at least half a second apart, and it follows{' '}
             <code>robots.txt</code>, including its Crawl-delay (up to 10 seconds). It finds pages through links and
-            through your XML sitemaps. Progress updates every 10 pages; you can leave the page or cancel.
+            through your XML sitemaps, and records the exact status code of every URL and every redirect hop. You can
+            leave the page while it runs.
           </p>
         </Step>
-        <Step title="Only if your site needs it: render JavaScript">
+        <Step title="Only if your site needs it: render JavaScript or get past blocks">
           <p>
             Sites that build their content in the browser look empty to a plain crawler, and the audit flags them with
-            &quot;Content needs JavaScript rendering&quot;. For those, tick <strong>Render JavaScript</strong>. Each page
-            is then rendered through YepAPI at $0.02, up to 500 pages, and you confirm the maximum before it starts.
+            &quot;Content needs JavaScript rendering&quot;. Set <strong>JavaScript rendering</strong> to{' '}
+            <Ui>Where needed</Ui> and only those pages are rendered through YepAPI, at $0.02 each.
+          </p>
+          <p>
+            If a firewall or bot protection refuses the crawler, tick <strong>Get past blocks</strong>: those pages are
+            fetched through YepAPI&apos;s proxies at $0.03 each. Both stop at the spending cap you set; the crawl itself
+            carries on.
+          </p>
+        </Step>
+        <Step title="Schedule it">
+          <p>
+            On the <strong>History</strong> tab, <Ui>Settings and schedule</Ui> saves these choices and runs the audit
+            weekly or monthly.
           </p>
         </Step>
       </Steps>
 
       <h2 id="read">Read the site audit report</h2>
       <p>
-        The top of the audit shows the health score, pages crawled, how many are indexable, how many were blocked or
-        failed, the issue counts by severity, and whether a <code>robots.txt</code> and sitemaps were found.
+        The <strong>Overview</strong> shows the health score and the AI discoverability score, issue counts by
+        severity, and the top issues, or what changed since the previous audit. Under them: response times, status
+        codes, content types, how the links found were crawled and status codes by click depth.
       </p>
       <Screenshot
         name="site-audit"
         window
-        alt="A site audit of upliftdesk.com: health score 96, pages crawled, indexable, blocked and failed pages, issue counts and response time"
-        caption="An audit of the first 100 pages of upliftdesk.com."
+        alt="A site audit of upliftdesk.com: health score, AI discoverability score, issue counts and the top issues"
+        caption="The overview of a site audit."
       />
-      <p>
-        If the crawl stopped at your page limit, a note says so. Findings that compare pages with each other
-        (duplicates, orphan pages, broken links) are then partial; run it again with a higher limit to cover the whole
-        site.
-      </p>
-      <h3 id="issues">Work through the issues</h3>
-      <p>
-        The <strong>Issues</strong> tab groups findings by severity, then by type. Open a group to see what it means,
-        how to fix it, and every affected URL with the detail for that page (which link is broken, which canonical is
-        wrong and so on). Start with critical issues: they stop pages from being crawled, indexed or shown.{' '}
-        <Ui>Issues CSV</Ui> exports everything for a spreadsheet or a ticket.
-      </p>
-      <h3 id="pages">Look at single pages</h3>
-      <p>
-        The <strong>Pages</strong> tab lists every URL with its status, indexability, word count, depth, response time
-        and issue count. Sort by most issues or slowest response, filter by URL, and click a page for everything
-        recorded about it: why it is or is not indexable, its redirect chain, title, description, headings, structured
-        data and its issues.
-      </p>
-
       <DocTable
         caption="How to read the health score"
         head={['Score', 'Reading']}
         mono={[0]}
         rows={[
-          ['80–100', 'Healthy. Remaining issues are mostly notices.'],
-          ['50–79', 'Real problems on a good share of pages. Fix critical issues and warnings first.'],
-          ['0–49', 'Widespread problems, or most pages could not be read (blocked, failing or empty).'],
+          ['80–100', 'Healthy. Few URLs have an error.'],
+          ['50–79', 'Errors on a good share of URLs. Fix them first, then warnings.'],
+          ['0–49', 'Errors on most URLs, often one sitewide problem such as a broken link in the footer.'],
         ]}
       />
       <p>
-        The exact formula and every check are listed in <Link href="/docs/audit-checks">Site audit checks</Link>.
+        The health score is the share of crawled URLs without an error. The AI discoverability score adds up which AI
+        crawlers <code>robots.txt</code> lets in, whether pages read without JavaScript, how fast they answer and
+        whether there is an <code>llms.txt</code>. The exact formulas and every check are listed in{' '}
+        <Link href="/docs/audit-checks">Site audit checks</Link>.
+      </p>
+      <p>
+        If the crawl stopped at your page limit, a note says so. Findings that compare pages with each other
+        (duplicates, orphan pages, broken links) are then partial; run it again with a higher limit to cover the whole
+        site.
       </p>
 
-      <Screenshot name="site-audit-issues" alt="Issues grouped into warnings and notices, each with the number of affected URLs" caption="Issues grouped by severity. Open one for the affected URLs and how to fix it." />
+      <h3 id="issues">Work through the issues</h3>
+      <p>
+        <strong>All issues</strong> groups findings by category: crawling and status codes, redirects, indexability,
+        content, links, sitemaps and more. Open an issue to see what it means, how to fix it and every affected URL
+        with the detail for that page (which link is broken, which canonical is wrong and so on), most important pages
+        first. Start with errors: they stop pages from being crawled, indexed or shown.
+      </p>
+      <Screenshot name="site-audit-issues" alt="All issues of a site audit grouped by category, each with its severity and the number of affected URLs" caption="Issues grouped by category. Open one for the affected URLs and how to fix it." />
+
+      <h3 id="search-traffic">Check pages that get search traffic</h3>
+      <p>
+        When the project has <Link href="/docs/tutorials/search-console">Search Console</Link> connected, the audit
+        reads each page&apos;s clicks from Google for the last 28 days and the 28 before. It then flags pages Google
+        still sends visitors to that redirect, return an error, are noindex or point their canonical elsewhere, and
+        pages whose clicks fell by half or more. The Pages tab shows the clicks and can sort by them.
+      </p>
+
+      <h3 id="pages">Look at pages and links</h3>
+      <p>
+        <strong>Pages</strong> lists every URL with its status, indexability, word count, depth, response time,
+        incoming links, internal PageRank and issue count. Filter and sort, and click a page for everything recorded
+        about it: why it is or is not indexable, its redirect chain, title, description, headings, structured data,
+        issues, and the links in and out. <strong>Links</strong> lists every link found, with its anchor and the status
+        of the page it points to.
+      </p>
+
+      <h3 id="history">Compare audits</h3>
+      <p>
+        Each audit is compared with the previous audit of the same site. Every issue shows how many URLs are new (found
+        for the first time), added (crawled before without the issue), removed (fixed) and missing (not crawled this
+        time). The audit also flags pages that became non-indexable or whose status code, title, description, H1 or
+        word count changed. <strong>History</strong> charts the scores and lists every past audit.
+      </p>
+
+      <h2 id="export">Export the fixes for a coding agent</h2>
+      <p>
+        <strong>Exports</strong> has three kinds of download:
+      </p>
+      <ul>
+        <li>
+          <strong>AI fix brief</strong>: one Markdown file for Claude, Cursor or any coding agent. It lists the issues
+          worst first with why each matters and how to fix it, groups URLs by template (such as{' '}
+          <code>/blog/*</code>) so the template is fixed once, and names the pages most linked to a broken URL.
+        </li>
+        <li>
+          <strong>Export all issues</strong>: a zip with one CSV per issue, and for link issues a second file of the
+          links behind it.
+        </li>
+        <li>
+          <strong>Bulk export</strong>: every crawled URL, every link, links to broken pages or redirects, uncrawled links, images without alt text, resources or external links, each as one CSV.
+        </li>
+      </ul>
+      <Screenshot name="site-audit-tool-exports" alt="Exports of a site audit: the AI fix brief, the zip of every issue and bulk exports" caption="Hand the fix brief to your coding agent, or the CSVs to your team." />
+      <Callout title="Agents can run it too">
+        <p>
+          Over the <Link href="/docs/mcp">MCP server</Link>, an agent can start an audit, read its issues and links,
+          and fetch the fix brief, then fix what it finds in your codebase.
+        </p>
+      </Callout>
 
       <h2 id="lighthouse">Test a page with Lighthouse</h2>
       <p>
-        Below the audit list, the <strong>Lighthouse</strong> card tests one URL on mobile or desktop ($0.05; a repeat
+        In a project, the <strong>Lighthouse</strong> tab tests one URL on mobile or desktop ($0.05; a repeat
         within the hour is free). It shows the four Lighthouse scores, the Core Web Vitals (largest contentful paint,
         layout shift, total blocking time, first contentful paint, speed index) graded good, needs work or poor, and
         every failed audit with a severity, most serious first:

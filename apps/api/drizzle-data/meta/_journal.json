@@ -15,6 +15,27 @@
       "when": 1792582377680,
       "tag": "0001_ai_answers_project_model_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792699060870,
+      "tag": "0002_site_audit_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792706865365,
+      "tag": "0003_audit_issue_indexable",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792708608509,
+      "tag": "0004_audit_clicks_phase",
+      "breakpoints": true
     }
   ]
 }

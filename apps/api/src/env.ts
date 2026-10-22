@@ -30,6 +30,9 @@ const schema = z.object({
   // Site audits per user: how many may run at once, and how many may start in a day.
   AUDIT_MAX_ACTIVE_PER_USER: z.coerce.number().int().min(1).max(100).default(3),
   AUDIT_MAX_PER_DAY: z.coerce.number().int().min(1).max(10000).default(30),
+  // Page caps: project audits, and one-off audits from the Site Audit tool.
+  AUDIT_MAX_PAGES: z.coerce.number().int().min(10).max(1_000_000).default(10_000),
+  AUDIT_TOOL_MAX_PAGES: z.coerce.number().int().min(10).max(1_000_000).default(500),
 
   // Optional: free tools on the public website, run with the site's own YepAPI key (services/public-tools.ts).
   // Unset: off. Spending stops at the monthly budget and, each day, at the daily one; each visitor

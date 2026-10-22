@@ -715,7 +715,7 @@ function AiView() {
     <>
       <PageHeader
         title="AI visibility"
-        description="Ask the questions your customers ask, across the assistants they use, and see how often your brand is mentioned and cited."
+        description="Prompt tracking: ask the questions your customers ask, across the assistants they use, and see how often your brand is mentioned and cited."
       />
       {state.isPending && <Spinner />}
       <ErrorNote error={state.error} />

@@ -10,6 +10,8 @@ export interface RobotsRules {
   /** HTTP status of the robots.txt request; 0 when it failed. */
   status: number;
   isAllowed(url: string): boolean;
+  /** The same check for another user-agent token, e.g. an AI crawler. */
+  isAllowedFor(url: string, userAgent: string): boolean;
   sitemaps: string[];
   crawlDelayMs: number | null;
 }
@@ -20,11 +22,12 @@ const ALLOW_ALL = (status: number): RobotsRules => ({
   found: false,
   status,
   isAllowed: () => true,
+  isAllowedFor: () => true,
   sitemaps: [],
   crawlDelayMs: null,
 });
 
-const DISALLOW_ALL = (status: number): RobotsRules => ({ ...ALLOW_ALL(status), isAllowed: () => false });
+const DISALLOW_ALL = (status: number): RobotsRules => ({ ...ALLOW_ALL(status), isAllowed: () => false, isAllowedFor: () => false });
 
 /** robots.txt answered 5xx or 429, which Google treats as "disallow everything". */
 export const robotsUnavailable = (rules: RobotsRules): boolean => rules.status === 429 || rules.status >= 500;
@@ -36,6 +39,7 @@ export function parseRobots(robotsUrl: string, text: string, userAgent: string):
     found: true,
     status: 200,
     isAllowed: (url) => robots.isAllowed(url, userAgent) !== false,
+    isAllowedFor: (url, agent) => robots.isAllowed(url, agent) !== false,
     sitemaps: robots.getSitemaps(),
     crawlDelayMs: typeof delay === 'number' && Number.isFinite(delay) && delay > 0 ? delay * 1000 : null,
   };
@@ -108,6 +112,10 @@ export const DEFAULT_SITEMAP_LIMITS: SitemapLimits = {
 export interface SitemapDiscovery {
   /** Raw `<loc>` values from urlsets. */
   urls: string[];
+  /** The sitemap document each entry of `urls` came from (same index). */
+  sources: string[];
+  /** Documents that could not be read: an error status, no response, or not a sitemap. `fromIndex` when a sitemap index named it. */
+  failed: { url: string; status: number; fromIndex: boolean }[];
   /** Sitemap documents that parsed as a urlset or index. */
   sitemaps: string[];
   /** Sitemaps skipped because they exceeded `maxBytes`. */
@@ -123,12 +131,15 @@ export async function discoverSitemapUrls(
   limits: SitemapLimits = DEFAULT_SITEMAP_LIMITS,
 ): Promise<SitemapDiscovery> {
   const urls: string[] = [];
+  const sources: string[] = [];
+  const failed: SitemapDiscovery['failed'] = [];
   const sitemaps: string[] = [];
   const tooLarge: string[] = [];
   let capped = false;
   const seen = new Set<string>();
   let queue = seeds.map((url) => ({ url, depth: 0 }));
   let fetched = 0;
+  const done = (): SitemapDiscovery => ({ urls, sources, failed, sitemaps, tooLarge, capped });
 
   while (queue.length > 0 && fetched < limits.maxDocuments && urls.length < limits.maxUrls) {
     const next: { url: string; depth: number }[] = [];
@@ -138,14 +149,17 @@ export async function discoverSitemapUrls(
         capped = true;
         continue;
       }
-      if (ctx.signal?.aborted) return { urls, sitemaps, tooLarge, capped };
+      if (ctx.signal?.aborted) return done();
       seen.add(item.url);
       fetched++;
       const res = await fetchUrl(ctx, item.url, {
         accept: 'application/xml,text/xml,*/*;q=0.5',
         maxBodyBytes: limits.maxBytes,
       });
-      if (res.error || !res.body || res.status < 200 || res.status >= 300) continue;
+      if (res.error || !res.body || res.status < 200 || res.status >= 300) {
+        if (res.error?.kind !== 'aborted') failed.push({ url: item.url, status: res.error ? 0 : res.status, fromIndex: item.depth > 0 });
+        continue;
+      }
       if (res.truncated) {
         tooLarge.push(item.url);
         continue;
@@ -160,7 +174,10 @@ export async function discoverSitemapUrls(
         }
       }
       const parsed = parseSitemapXml(decodeBody(bytes, res.headers?.get('content-type') ?? null));
-      if (parsed.kind === 'unknown') continue;
+      if (parsed.kind === 'unknown') {
+        failed.push({ url: item.url, status: res.status, fromIndex: item.depth > 0 });
+        continue;
+      }
       sitemaps.push(item.url);
       if (parsed.kind === 'urlset') {
         for (const loc of parsed.locs) {
@@ -169,6 +186,7 @@ export async function discoverSitemapUrls(
             break;
           }
           urls.push(loc);
+          sources.push(item.url);
         }
       } else if (item.depth >= limits.maxDepth) {
         if (parsed.locs.length > 0) capped = true;
@@ -185,5 +203,5 @@ export async function discoverSitemapUrls(
     queue = next;
   }
   if (queue.some((item) => !seen.has(item.url))) capped = true;
-  return { urls, sitemaps, tooLarge, capped };
+  return done();
 }

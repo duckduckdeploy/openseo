@@ -15,7 +15,7 @@ export default function McpToolsPage() {
   return (
     <DocArticle slug={slug}>
       <p>
-        The MCP server at <code>{'{API_URL}'}/mcp</code> offers 67 tools. Each one calls the same REST route the
+        The MCP server at <code>{'{API_URL}'}/mcp</code> offers 69 tools. Each one calls the same REST route the
         dashboard uses, with the caller&apos;s API key, so validation, prices, caching and limits are identical. Most
         tools take an optional <code>project_id</code>; leave it out when the account has one project. With no project
         at all, paid lookups run on their own in the market their input names (the United States by default).
@@ -144,10 +144,12 @@ export default function McpToolsPage() {
         head={head}
         mono={[2]}
         rows={[
-          ['start_site_audit', 'Crawl a site. With render_js, max_cost_usd is required.', 'free; $0.02/page rendered'],
+          ['start_site_audit', 'Crawl a site. Rendering (render_mode) and the fallback for blocked pages (use_fallback) need max_cost_usd, which caps the audit.', 'free; $0.02/page rendered, $0.03/page unblocked'],
           ['list_site_audits', 'Past and running audits with health scores.', 'free'],
-          ['get_site_audit', 'One audit: summary and issue counts with explanations and fixes.', 'free'],
-          ['get_audit_issues', 'Affected URLs, optionally one issue type or severity.', 'free'],
+          ['get_site_audit', 'One audit: summary and issue counts with explanations, fixes and changes since the previous audit.', 'free'],
+          ['get_audit_issues', 'Affected URLs, optionally one issue type, severity or change (new, added, removed, missing).', 'free'],
+          ['get_audit_links', 'Links with each target’s status: links to 4xx pages, redirects, nofollow links, what links to a URL.', 'free'],
+          ['get_audit_fix_brief', 'A Markdown brief for fixing the issues in code, worst first, with URL patterns and samples.', 'free'],
         ]}
       />
 

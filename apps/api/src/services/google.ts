@@ -461,6 +461,26 @@ async function searchAnalytics(
   return res.rows ?? [];
 }
 
+/**
+ * Clicks per page for a site audit: the last 28 days and the 28 before, up to 25,000 pages each.
+ * Null when the project has no Search Console connected.
+ */
+export async function auditTraffic(projectId: string): Promise<{ siteUrl: string; period: { startDate: string; endDate: string }; pages: { url: string; clicks: number; previousClicks: number }[] } | null> {
+  const [project] = await dataDb.select().from(schema.projects).where(eq(schema.projects.id, projectId)).limit(1);
+  if (!project) return null;
+  const [connected] = await dataDb.select({ id: schema.gscConnections.projectId }).from(schema.gscConnections).where(eq(schema.gscConnections.projectId, projectId)).limit(1);
+  if (!connected) return null;
+  const { connection, account } = await gscFor(project);
+  const { current, previous } = gscPeriods("last_28_days");
+  const options = { dimensions: ["page"], rowLimit: 25_000 };
+  const [now, before] = await Promise.all([searchAnalytics(account, connection.siteUrl, current, options), searchAnalytics(account, connection.siteUrl, previous, options)]);
+  const pages = new Map<string, { url: string; clicks: number; previousClicks: number }>();
+  const row = (url: string) => pages.get(url) ?? pages.set(url, { url, clicks: 0, previousClicks: 0 }).get(url)!;
+  for (const r of now) if (r.keys?.[0]) row(r.keys[0]).clicks += r.clicks;
+  for (const r of before) if (r.keys?.[0]) row(r.keys[0]).previousClicks += r.clicks;
+  return { siteUrl: connection.siteUrl, period: current, pages: [...pages.values()] };
+}
+
 const round = (value: number, digits: number) => Math.round(value * 10 ** digits) / 10 ** digits;
 
 /** Clicks and impressions summed; CTR from the sums; position weighted by impressions. */

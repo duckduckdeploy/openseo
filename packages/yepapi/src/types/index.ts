@@ -111,6 +111,7 @@ export interface EndpointMap {
 
   '/v1/scrape': { params: Scrape.ScrapeParams; data: Scrape.ScrapeData };
   '/v1/scrape/js': { params: Scrape.ScrapeJsParams; data: Scrape.ScrapeJsData };
+  '/v1/scrape/stealth': { params: Scrape.ScrapeStealthParams; data: Scrape.ScrapeJsData };
 }
 
 export type YepEndpoint = keyof EndpointMap;

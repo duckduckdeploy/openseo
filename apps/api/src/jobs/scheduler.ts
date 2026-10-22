@@ -4,6 +4,7 @@ import { nextRunAfter } from "../lib/pool";
 import { AppError, isRunInProgress } from "../lib/errors";
 import { failAiRun, startAiRun } from "../services/ai";
 import { cleanupOAuth } from "../services/oauth";
+import { buildAuditRequest, failAudit, startAudit } from "../services/audit";
 import { failRankRun, startRankRun } from "../services/rank";
 import { dispatch } from "./dispatch";
 import { defineJob } from "./queue";
@@ -68,6 +69,33 @@ defineJob("scheduler.tick", 1, async (_data, log) => {
         await dataDb.update(schema.aiSettings).set({ nextRunAt: new Date(now.getTime() + RETRY_MS) }).where(eq(schema.aiSettings.projectId, project.id));
       }
       log.info({ projectId: project.id, reason: (error as Error).message }, "scheduled AI run not started");
+    }
+  }
+
+  const dueAudits = await dataDb
+    .select({ settings: schema.auditSettings, project: schema.projects })
+    .from(schema.auditSettings)
+    .innerJoin(schema.projects, eq(schema.projects.id, schema.auditSettings.projectId))
+    .where(and(isNotNull(schema.auditSettings.nextRunAt), lte(schema.auditSettings.nextRunAt, now), ne(schema.auditSettings.schedule, "manual")))
+    .limit(200);
+  for (const { settings, project } of dueAudits) {
+    const claimed = await dataDb
+      .update(schema.auditSettings)
+      .set({ nextRunAt: nextRunAfter(settings.schedule, settings.nextRunAt ?? now, now, settings.createdAt.getUTCDate()) })
+      .where(and(eq(schema.auditSettings.projectId, project.id), lte(schema.auditSettings.nextRunAt, now)))
+      .returning({ id: schema.auditSettings.projectId });
+    if (!claimed.length) continue;
+    // No start URL and no website: wait for the next period, the settings page says why.
+    const request = buildAuditRequest(project, settings, {}, "schedule");
+    if (!request) continue;
+    try {
+      const audit = await startAudit(project.userId, project.id, request);
+      await dispatch("audit.run", { auditId: audit.id }, (message) => failAudit(audit.id, message));
+    } catch (error) {
+      if (retrySoon(error)) {
+        await dataDb.update(schema.auditSettings).set({ nextRunAt: new Date(now.getTime() + RETRY_MS) }).where(eq(schema.auditSettings.projectId, project.id));
+      }
+      log.info({ projectId: project.id, reason: (error as Error).message }, "scheduled audit not started");
     }
   }
 });

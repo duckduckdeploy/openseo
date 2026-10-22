@@ -180,17 +180,18 @@ export const features: Feature[] = [
     slug: 'site-audit',
     seoTitle: 'Site Audit - Open Source & 100% Free SEO Audit',
     h1: 'Open Source Technical site audit',
-    description: `Crawl your site for free with ${AUDIT_CHECKS} technical SEO checks and a health score: redirects, canonicals, indexability, sitemaps, hreflang. Plus Lighthouse.`,
+    description: `Crawl your site for free with ${AUDIT_CHECKS} technical SEO checks, scheduled with history, and export every fix for Claude or any coding agent.`,
     whatTitle: 'How the site audit works',
     glossary: ['seo-audit', 'technical-seo', 'crawling', 'canonical-tag', 'redirect-chain', 'core-web-vitals'],
     name: 'Site audit',
-    headline: 'Technical audits from our own crawler, plus Lighthouse',
+    headline: 'Technical audits from our own crawler, with history and fixes your coding agent can run',
     summary:
-      `A free crawler with ${AUDIT_CHECKS} technical checks and a health score, and Lighthouse on mobile or desktop with the failed audits listed.`,
+      `A free crawler with ${AUDIT_CHECKS} technical checks, scheduled audits compared run to run, exports for coding agents, and Lighthouse.`,
     icon: ClipboardCheck,
     what: [
-      `OpenSEO has its own crawler. It runs ${AUDIT_CHECKS} technical checks across your site and rolls the result into a health score.`,
-      'For page performance, run Lighthouse on mobile or desktop. The report lists the audits that failed, so you know what to fix.',
+      `OpenSEO has its own crawler. It requests every URL itself, so status codes, redirect chains, headers and response times are exact, and runs ${AUDIT_CHECKS} technical checks across the site.`,
+      'Schedule it weekly or monthly and each audit is compared with the last: which issues are new, which you fixed, which titles and pages changed. Export the issues as CSV files, or as one fix brief that Claude, Cursor or any coding agent can work through.',
+      'For JavaScript sites and sites behind bot protection, the audit can render pages or fetch blocked ones through YepAPI, only for the pages that need it and up to a cap you set. For page performance, run Lighthouse on mobile or desktop.',
     ],
     capabilities: [
       {
@@ -199,7 +200,23 @@ export const features: Feature[] = [
       },
       {
         title: 'Health score',
-        body: 'One score that sums up the technical state of the site.',
+        body: 'The share of crawled URLs without an error, tracked from audit to audit.',
+      },
+      {
+        title: 'Scheduled audits with history',
+        body: 'Run weekly or monthly. Each issue shows what is new, what was fixed and what is no longer crawled, and changed titles, descriptions and status codes are flagged.',
+      },
+      {
+        title: 'Exports for coding agents',
+        body: 'Every issue as a CSV of the affected pages and the links behind it, in one zip, plus a fix brief that groups pages by template so an agent fixes the template once.',
+      },
+      {
+        title: 'Search traffic checks',
+        body: 'With Search Console connected: pages Google still sends visitors to that redirect, fail, are noindex or canonicalised elsewhere, and pages whose clicks halved.',
+      },
+      {
+        title: 'AI discoverability',
+        body: 'Which AI crawlers robots.txt lets in, whether pages read without JavaScript, how fast they answer and whether there is an llms.txt.',
       },
       {
         title: 'Lighthouse, mobile or desktop',
@@ -218,15 +235,16 @@ export const features: Feature[] = [
       { action: 'Lighthouse', unit: 'One run, mobile or desktop', price: '$0.05' },
       { action: 'Site crawl', unit: 'Per crawl, plain HTML', price: 'Free' },
       { action: 'JavaScript rendering', unit: 'Per page rendered, optional', price: '$0.02' },
+      { action: 'Blocked pages', unit: 'Per page fetched through proxies, optional', price: '$0.03' },
     ],
   },
   {
     slug: 'ai-visibility-tracker',
-    seoTitle: 'AI Visibility Tracker: Open Source AI Citations Tracking',
+    seoTitle: 'AI Visibility Tracker and Prompt Tracking, Open Source',
     absoluteTitle: true,
     h1: 'Open Source AI Visibility Tracker',
-    description: 'Track whether ChatGPT, Gemini, Claude, Perplexity and 120+ AI models mention your brand and cite your site, prompt by prompt, over time.',
-    whatTitle: 'How AI visibility tracking works',
+    description: 'Prompt tracking for ChatGPT, Gemini, Claude, Perplexity and 120+ AI models: see whether they mention your brand and cite your site, prompt by prompt, over time.',
+    whatTitle: 'How AI visibility and prompt tracking work',
     glossary: ['ai-visibility', 'generative-engine-optimization', 'ai-citations', 'prompt-tracking', 'brand-mentions', 'share-of-voice'],
     worksWith: ASSISTANT_BRANDS,
     name: 'AI visibility',
@@ -316,14 +334,14 @@ export const features: Feature[] = [
     slug: 'seo-mcp-server',
     seoTitle: 'SEO MCP Server: 20+ Free SEO Tools - Fresh Data',
     h1: 'SEO MCP server and API',
-    description: 'An SEO MCP server with 67 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
+    description: 'An SEO MCP server with 69 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
     whatTitle: 'How the MCP server works',
     glossary: ['mcp', 'ai-seo-agent', 'llm', 'keyword-research', 'rank-tracking'],
     worksWith: ['mcp', 'claude', 'chatgpt', 'claudecode', 'cursor', 'codex', 'geminicli'],
     name: 'MCP server and REST API',
     headline: 'SEO your AI agent can do, with a spending cap',
     summary:
-      'An open-source SEO MCP server with 67 tools: keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your own Search Console data, for Claude, ChatGPT, Cursor and any MCP client.',
+      'An open-source SEO MCP server with 69 tools: keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your own Search Console data, for Claude, ChatGPT, Cursor and any MCP client.',
     icon: Terminal,
     what: [
       'OpenSEO is an open-source SEO MCP server and REST API. Connect Claude, ChatGPT, Cursor, Codex, Gemini CLI or any MCP client, and your agent can research keywords, check live Google results, analyse backlinks and competitors, track rankings, audit a site, check AI visibility and read your Google Search Console and Analytics data. One server covers what usually takes three or four separate MCP servers.',
@@ -379,7 +397,7 @@ export const features: Feature[] = [
       {
         question: 'What is the best SEO MCP server?',
         answer: [
-          'It depends on what your agent needs. If you want one server that covers keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your Search Console data, OpenSEO does all of it with 67 tools, is open source, and charges no subscription: you pay the data provider per lookup from your own key.',
+          'It depends on what your agent needs. If you want one server that covers keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your Search Console data, OpenSEO does all of it with 69 tools, is open source, and charges no subscription: you pay the data provider per lookup from your own key.',
           'If you already pay for Ahrefs or Semrush, their own MCP servers use the data in your plan. Raw data APIs such as DataForSEO suit developers who want to build their own tools. See [the best SEO MCP servers compared](/best-seo-mcp-servers).',
         ],
       },

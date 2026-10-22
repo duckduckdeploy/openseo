@@ -139,6 +139,7 @@ export interface YepApi {
   scrape: {
     page: Method<'/v1/scrape'>;
     js: Method<'/v1/scrape/js'>;
+    stealth: Method<'/v1/scrape/stealth'>;
   };
 }
 
@@ -306,6 +307,7 @@ export function createYepApi(options: YepApiOptions): YepApi {
     scrape: {
       page: method('/v1/scrape'),
       js: method('/v1/scrape/js'),
+      stealth: method('/v1/scrape/stealth'),
     },
   };
 }

@@ -1,5 +1,8 @@
-import { DEFAULT_THRESHOLDS, computeIndexability, crossPageIssues, pageIssues, summarise } from './analyse';
+import { computeAiDiscoverability } from './ai';
+import { DEFAULT_THRESHOLDS, computeIndexability, crossPageIssues, markIndexability, pageIssues, summarise } from './analyse';
 import { canonicalFromLinkHeader, extractPage, extractSecurityHeaders } from './extract';
+import type { ExtractedPage } from './extract';
+import { emptyInlinks } from './graph';
 import {
   HostThrottle,
   classifyResponse,
@@ -15,11 +18,17 @@ import type { RobotsRules } from './robots';
 import { SsrfError, createGuard } from './ssrf';
 import type {
   CrawlHooks,
+  CrawlPhase,
   CrawlOptions,
   CrawlResult,
   DiscoverySource,
   ExternalLinkCheck,
+  FetchVia,
+  HttpProbe,
   PageResult,
+  RenderResult,
+  ResourceResult,
+  ResourceType,
   StopReason,
 } from './types';
 import { effectivePort, matchesAny, normalizeUrl, stripWww, withScheme } from './url';
@@ -31,6 +40,7 @@ const MAX_ROBOTS_BLOCKED_ROWS = 1000;
 const MAX_FRONTIER = 200_000;
 const MAX_CRAWL_DELAY_MS = 10_000;
 const HTML_TYPE = /text\/html|application\/xhtml\+xml/i;
+const LLMS_TXT_MAX_BYTES = 64 * 1024;
 
 interface FrontierEntry {
   /** Normalised URL with sorted query parameters: the dedupe key and the row's `url`. */
@@ -56,18 +66,26 @@ function blankPage(url: string, depth: number | null, source: DiscoverySource): 
     contentType: null,
     isHtml: false,
     rendered: false,
+    via: 'direct',
     responseTimeMs: null,
+    loadTimeMs: null,
     sizeBytes: null,
     truncated: false,
     depth,
     inSitemap: false,
+    sitemaps: [],
     discoveredFrom: source,
     indexable: false,
     indexabilityReason: 'fetch-error',
     inboundLinkCount: 0,
+    inlinks: emptyInlinks(),
+    pageRank: 0,
     title: null,
+    titleCount: 0,
     metaDescription: null,
+    metaDescriptionCount: 0,
     metaRobots: null,
+    metaRefresh: null,
     xRobotsTag: null,
     canonical: null,
     canonicalCount: 0,
@@ -83,6 +101,8 @@ function blankPage(url: string, depth: number | null, source: DiscoverySource): 
     images: [],
     imageCount: 0,
     imagesMissingAlt: 0,
+    scripts: [],
+    stylesheets: [],
     openGraph: {},
     twitter: {},
     structuredData: [],
@@ -91,7 +111,15 @@ function blankPage(url: string, depth: number | null, source: DiscoverySource): 
     mixedContent: [],
     securityHeaders: extractSecurityHeaders(null),
     jsRenderingSuspected: false,
+    needsJavaScript: false,
   };
+}
+
+/** Rendering revealed content the fetched HTML lacked: an empty shell, or under half the words and 100+ missing. */
+function contentNeedsJavaScript(fetched: ExtractedPage, rendered: ExtractedPage): boolean {
+  if (rendered.jsRenderingSuspected) return false;
+  if (fetched.jsRenderingSuspected) return true;
+  return rendered.wordCount - fetched.wordCount >= 100 && fetched.wordCount < rendered.wordCount / 2;
 }
 
 async function runPool<T>(items: T[], size: number, fn: (item: T) => Promise<void>): Promise<void> {
@@ -135,6 +163,13 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     const key = normalizeUrl(url, undefined, norm) ?? url;
     if (key !== url && !fetchForms.has(key)) fetchForms.set(key, url);
     return key;
+  };
+  const phase = async (name: CrawlPhase): Promise<void> => {
+    try {
+      await hooks.onPhase?.(name);
+    } catch (err) {
+      log('warn', `onPhase hook threw: ${err instanceof Error ? err.message : String(err)}`);
+    }
   };
   const log = (level: 'debug' | 'info' | 'warn', message: string): void => {
     try {
@@ -211,9 +246,12 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
   let lowHead = 0;
   const excluded = new Set<string>();
   const sitemapSet = new Set<string>();
+  /** Sitemap documents listing each URL. */
+  const sitemapSources = new Map<string, Set<string>>();
   const sitemapDocs: string[] = [];
   const sitemapOrigins = new Set<string>();
   const sitemapsTooLarge: string[] = [];
+  const sitemapsFailed: { url: string; status: number }[] = [];
   let sitemapCapped = false;
   const robotsUnavailableOrigins: string[] = [];
   const robotsCache = new Map<string, Promise<RobotsRules>>();
@@ -326,19 +364,27 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     const found = await discoverSitemapUrls(seeds, ctx);
     for (const doc of found.sitemaps) if (!sitemapDocs.includes(doc)) sitemapDocs.push(doc);
     for (const doc of found.tooLarge) if (!sitemapsTooLarge.includes(doc)) sitemapsTooLarge.push(doc);
+    // The /sitemap.xml guess may simply not exist; a sitemap that robots.txt or an index names should.
+    for (const failure of found.failed) {
+      if (failure.fromIndex || robots.sitemaps.includes(failure.url)) sitemapsFailed.push({ url: failure.url, status: failure.status });
+    }
     if (found.capped) sitemapCapped = true;
-    for (const loc of found.urls) {
+    found.urls.forEach((loc, i) => {
       const raw = normalizeUrl(loc, origin, fetchNorm);
-      if (!raw || !isInternal(raw)) continue;
+      if (!raw || !isInternal(raw)) return;
       const url = toKey(raw);
       sitemapSet.add(url);
+      let docs = sitemapSources.get(url);
+      if (!docs) sitemapSources.set(url, (docs = new Set()));
+      docs.add(found.sources[i] ?? '');
       enqueue(url, null, 'sitemap');
-    }
+    });
     log('info', `Sitemaps on ${origin}: ${found.sitemaps.length} documents, ${found.urls.length} URLs`);
   };
 
   const record = async (page: PageResult): Promise<void> => {
     page.inSitemap = sitemapSet.has(page.url);
+    page.sitemaps = [...(sitemapSources.get(page.url) ?? [])];
     const verdict = computeIndexability(page, robotsAgent);
     page.indexable = verdict.indexable;
     page.indexabilityReason = verdict.reason;
@@ -393,6 +439,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
   const buildPage = async (url: string, depth: number | null, source: DiscoverySource, out: FetchOutcome): Promise<PageResult> => {
     const page = blankPage(url, depth, source);
     page.responseTimeMs = out.responseTimeMs;
+    page.loadTimeMs = out.loadTimeMs;
     if (out.error) {
       page.errorKind = out.error.kind;
       page.errorMessage = out.error.message;
@@ -411,32 +458,58 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     if (html !== null) page.sizeBytes = out.body?.byteLength ?? 0;
 
     let cls = classifyResponse(out.status, out.headers, html);
-    if (options.render && page.isHtml && (cls === 'ok' || (cls === 'blocked' && out.status !== 401))) {
+    const extract = (source: string): ExtractedPage => extractPage(source, { url, isInternal, normalize: fetchNorm });
+
+    /** Replaces the fetched HTML with HTML obtained another way. False when that gave nothing usable. */
+    const useAlternate = async (via: Exclude<FetchVia, 'direct'>, get: (u: string) => Promise<RenderResult | null>): Promise<boolean> => {
       try {
-        const rendered = await options.render(url);
-        if (rendered && typeof rendered.html === 'string' && rendered.html.trim() !== '' && !looksLikeChallenge(rendered.html)) {
-          const renderedStatus = rendered.status ?? 200;
-          if (cls === 'ok' || (renderedStatus >= 200 && renderedStatus < 300)) {
-            if (cls !== 'ok') page.status = renderedStatus;
-            cls = 'ok';
-            // Rendered HTML gets the same size cap as fetched HTML.
-            const renderedBytes = Buffer.from(rendered.html);
-            page.rendered = true;
-            page.truncated = renderedBytes.byteLength > ctx.maxBodyBytes;
-            html = page.truncated ? renderedBytes.subarray(0, ctx.maxBodyBytes).toString('utf8') : rendered.html;
-            page.sizeBytes = Math.min(renderedBytes.byteLength, ctx.maxBodyBytes);
-          }
-        }
+        const alt = await get(url);
+        if (!alt || typeof alt.html !== 'string' || alt.html.trim() === '' || looksLikeChallenge(alt.html)) return false;
+        const altStatus = alt.status ?? 200;
+        if (cls !== 'ok' && !(altStatus >= 200 && altStatus < 300)) return false;
+        // A page fetched directly keeps its real status; the alternate only supplies the content.
+        if (cls !== 'ok') page.status = altStatus;
+        cls = 'ok';
+        // Alternate HTML gets the same size cap as fetched HTML.
+        const bytes = Buffer.from(alt.html);
+        page.via = via;
+        page.rendered = via === 'render';
+        page.truncated = bytes.byteLength > ctx.maxBodyBytes;
+        html = page.truncated ? bytes.subarray(0, ctx.maxBodyBytes).toString('utf8') : alt.html;
+        page.sizeBytes = Math.min(bytes.byteLength, ctx.maxBodyBytes);
+        return true;
       } catch (err) {
-        log('warn', `render failed for ${url}, using fetched HTML: ${err instanceof Error ? err.message : String(err)}`);
+        log('warn', `${via} failed for ${url}, using fetched HTML: ${err instanceof Error ? err.message : String(err)}`);
+        return false;
+      }
+    };
+
+    // Blocked by a firewall or bot challenge: the fallback (a proxy service) is tried first, then rendering.
+    const readableBlock = cls === 'blocked' && out.status !== 401;
+    if (readableBlock && options.fallback && (await useAlternate('fallback', options.fallback))) page.isHtml = true;
+
+    let fetched: ExtractedPage | null = cls === 'ok' && page.via === 'direct' && page.isHtml && html !== null ? extract(html) : null;
+    if (options.render && page.isHtml && (cls === 'ok' || readableBlock)) {
+      // Still blocked: rendering is the last way in. Fetched through the fallback: already have the content.
+      // Fetched directly: render every page, or only app shells.
+      const wanted =
+        cls !== 'ok' ||
+        (page.via === 'direct' && ((options.renderWhen ?? 'always') === 'always' || fetched?.jsRenderingSuspected === true));
+      if (wanted && (await useAlternate('render', options.render))) {
+        const rendered = extract(html ?? '');
+        if (fetched) page.needsJavaScript = contentNeedsJavaScript(fetched, rendered);
+        fetched = rendered;
       }
     }
     page.fetchClass = out.status >= 300 && out.status < 400 ? 'redirect' : cls;
     if (page.fetchClass === 'ok' && html !== null) {
-      const data = extractPage(html, { url, isInternal, normalize: fetchNorm });
+      const data = fetched ?? extract(html);
       for (const link of [...data.internalLinks, ...data.externalLinks]) link.url = toKey(link.url);
       for (const alt of data.hreflang) alt.href = toKey(alt.href);
       if (data.canonical !== null) data.canonical = toKey(data.canonical);
+      for (const image of data.images) if (image.url !== null) image.url = toKey(image.url);
+      data.scripts = data.scripts.map(toKey);
+      data.stylesheets = data.stylesheets.map(toKey);
       Object.assign(page, data);
     }
     return page;
@@ -468,6 +541,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     row.redirectLoop = out.loop;
     row.status = first?.status ?? 0;
     row.responseTimeMs = out.responseTimeMs;
+    row.loadTimeMs = out.loadTimeMs;
     const chainProblem = out.error?.kind === 'redirect_loop' || out.error?.kind === 'too_many_redirects';
     if (out.error) {
       row.errorKind = out.error.kind;
@@ -529,6 +603,10 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
   };
 
   const externalLinks: ExternalLinkCheck[] = [];
+  const resources: ResourceResult[] = [];
+  let httpProbe: HttpProbe | null = null;
+  let llmsTxtFound: boolean | undefined;
+  let startRobotsFound: boolean | undefined;
   let startRowUrl = startUrl;
   try {
     const startOrigin = new URL(startUrl).origin;
@@ -551,8 +629,74 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     }
 
     await Promise.all(Array.from({ length: concurrency }, worker));
+    await phase('site-files');
+
+    // Site-level files and the plain-HTTP version, on the origin the start URL settled on.
+    // Both are skipped when robots.txt keeps us off the site.
+    const siteOrigin = new URL(startRowUrl).origin;
+    if (!signal?.aborted) startRobotsFound = (await getRobots(siteOrigin)).found;
+    if (!signal?.aborted && (await robotsAllows(`${siteOrigin}/llms.txt`))) {
+      const llms = await fetchUrl(ctx, `${siteOrigin}/llms.txt`, { accept: 'text/plain,text/markdown,*/*;q=0.5', maxBodyBytes: LLMS_TXT_MAX_BYTES });
+      if (llms.error?.kind !== 'aborted') {
+        const type = llms.headers?.get('content-type') ?? '';
+        llmsTxtFound = !llms.error && llms.status >= 200 && llms.status < 300 && !HTML_TYPE.test(type);
+      }
+    }
+    if ((options.probeHttp ?? true) && siteOrigin.startsWith('https://') && !signal?.aborted && (await robotsAllows(`${siteOrigin}/`))) {
+      const probeUrl = `http://${new URL(siteOrigin).host}/`;
+      const out = await fetchUrl(ctx, probeUrl, { wantBody: () => false });
+      const first = out.redirectChain[0];
+      const status = first?.status ?? (out.error ? 0 : out.status);
+      if (out.error?.kind !== 'aborted' && status > 0) {
+        httpProbe = { url: probeUrl, status, finalUrl: out.finalUrl, redirectsToHttps: first !== undefined && out.finalUrl.startsWith('https://') };
+      }
+    }
+
+    // Images, scripts and stylesheets on this site, most used first.
+    if ((options.checkResources ?? true) && !stopped()) {
+      await phase('resources');
+      const found = new Map<string, { type: ResourceType; sources: string[]; count: number }>();
+      const note = (url: string | null, type: ResourceType, source: string): void => {
+        if (!url || !isInternal(url)) return;
+        const entry = found.get(url);
+        if (!entry) return void found.set(url, { type, sources: [source], count: 1 });
+        entry.count++;
+        if (entry.sources.length < 20) entry.sources.push(source);
+      };
+      for (const page of pages) {
+        if (page.fetchClass !== 'ok' || !page.isHtml) continue;
+        for (const url of new Set(page.images.map((i) => i.url))) note(url, 'image', page.url);
+        for (const url of page.scripts) note(url, 'script', page.url);
+        for (const url of page.stylesheets) note(url, 'stylesheet', page.url);
+      }
+      const targets = [...found.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, Math.max(0, options.maxResources ?? 500));
+      await runPool(targets, concurrency, async ([url, entry]) => {
+        if (stopped() || !(await robotsAllows(url))) return;
+        const requestUrl = fetchForms.get(url) ?? url;
+        let out = await fetchUrl(ctx, requestUrl, { method: 'HEAD', accept: '*/*' });
+        // Some servers refuse HEAD; ask again with GET and leave the body unread.
+        if (!out.error && out.status >= 400 && out.status !== 429) out = await fetchUrl(ctx, requestUrl, { accept: '*/*', wantBody: () => false });
+        if (out.error?.kind === 'aborted') return;
+        const status = out.error ? 0 : out.status;
+        const length = Number(out.headers?.get('content-length'));
+        resources.push({
+          url,
+          type: entry.type,
+          status,
+          finalUrl: out.finalUrl,
+          redirected: out.redirectChain.length > 0,
+          contentType: out.headers?.get('content-type') ?? null,
+          sizeBytes: Number.isFinite(length) && length > 0 ? length : null,
+          broken: status >= 400 && ![401, 403, 407, 429].includes(status),
+          errorKind: out.error?.kind ?? null,
+          sources: entry.sources,
+          sourceCount: entry.count,
+        });
+      });
+    }
 
     if (options.checkExternalLinks && !stopped()) {
+      await phase('external-links');
       const sources = new Map<string, string[]>();
       for (const page of pages) {
         for (const link of page.externalLinks) {
@@ -593,8 +737,19 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
         : 'completed';
   const truncated = pending > 0 || stoppedReason === 'aborted';
 
-  for (const page of pages) page.inSitemap = sitemapSet.has(page.url);
-  const issues = [
+  for (const page of pages) {
+    page.inSitemap = sitemapSet.has(page.url);
+    page.sitemaps = [...(sitemapSources.get(page.url) ?? [])];
+  }
+
+  // AI crawler access, answered from each origin's robots.txt (already loaded during the crawl).
+  const rulesByOrigin = new Map<string, RobotsRules>();
+  for (const [origin, rules] of robotsCache) rulesByOrigin.set(origin, await rules);
+  const allowedFor = (url: string, token: string): boolean => rulesByOrigin.get(new URL(url).origin)?.isAllowedFor(url, token) ?? true;
+  const aiDiscoverability = computeAiDiscoverability(pages, startRowUrl, allowedFor, llmsTxtFound === true, thresholds);
+
+  await phase('analysis');
+  const issues = markIndexability([
     ...pages.flatMap((page) => pageIssues(page, thresholds)),
     ...crossPageIssues(pages, {
       startUrl,
@@ -603,12 +758,18 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
       sitemapFound: sitemapDocs.length > 0,
       sitemapCapped,
       sitemapsTooLarge,
+      sitemapsFailed,
       robotsUnavailable: robotsUnavailableOrigins,
+      robotsTxtFound: startRobotsFound,
+      llmsTxtFound,
+      httpProbe,
+      aiDiscoverability,
       rateLimitStopped,
       externalLinks,
+      resources,
       thresholds,
     }),
-  ];
+  ], pages);
 
   const finishedAt = Date.now();
   const summary = summarise(pages, issues, {
@@ -625,7 +786,11 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     sitemaps: sitemapDocs,
     sitemapUrls: sitemapSet.size,
     externalLinksChecked: externalLinks.length,
+    aiDiscoverability,
+    httpProbe,
+    llmsTxtFound: llmsTxtFound === true,
+    resources,
   });
   log('info', `Crawl ${stoppedReason}: ${pages.length} pages, ${issues.length} issues, health ${summary.healthScore}`);
-  return { pages, issues, externalLinks, summary };
+  return { pages, issues, externalLinks, resources, summary };
 }

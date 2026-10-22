@@ -27,10 +27,19 @@ export interface Thresholds {
   descriptionMinLength: number;
   descriptionMaxLength: number;
   thinContentWords: number;
+  /** Time to first byte above this is a slow server response. */
   slowResponseMs: number;
+  /** Time to first byte above this on an indexable page risks AI crawlers giving up. */
+  slowAiResponseMs: number;
+  /** Time to first byte plus download above this is a slow page. */
+  slowPageMs: number;
   /** Pages at this click depth or deeper are reported as deep. */
   deepPageDepth: number;
   largeHtmlBytes: number;
+  /** Images larger than this (from Content-Length) are reported. */
+  largeImageBytes: number;
+  /** URLs longer than this many characters are reported. */
+  urlMaxLength: number;
 }
 
 export interface CrawlOptions {
@@ -91,6 +100,16 @@ export interface CrawlOptions {
   signal?: AbortSignal;
   /** JavaScript rendering hook. Called for HTML pages after the direct fetch; null or a throw falls back to the fetched HTML. */
   render?: (url: string) => Promise<RenderResult | null>;
+  /** `always` (default) renders every HTML page; `suspected` only pages whose fetched HTML looks like an empty app shell. */
+  renderWhen?: 'always' | 'suspected';
+  /** Fetches a page the server blocked (403 or a bot challenge) another way, e.g. through a proxy service. Tried before `render`. */
+  fallback?: (url: string) => Promise<RenderResult | null>;
+  /** Check the status and size of internal images, scripts and stylesheets. Default true. */
+  checkResources?: boolean;
+  /** Cap on distinct resources checked. Default 500. */
+  maxResources?: number;
+  /** Request http:// for an https start URL to see whether it redirects. Default true. */
+  probeHttp?: boolean;
   /** Replaces the built-in transport. Every URL is still DNS-checked before the call, but the connection
    *  is not pinned to the checked address as it is with the built-in transport. */
   fetch?: FetchLike;
@@ -108,8 +127,22 @@ export interface CrawlProgress {
   discovered: number;
 }
 
+/** What the crawl does after the last page: site files, resources, external links, then the checks. */
+export type CrawlPhase = 'site-files' | 'resources' | 'external-links' | 'analysis';
+
+/** Clicks from Google to one URL (Search Console), for the search traffic checks. */
+export interface PageTraffic {
+  url: string;
+  /** Last 28 days. */
+  clicks: number;
+  /** The 28 days before. */
+  previousClicks: number;
+}
+
 export interface CrawlHooks {
   onPage?: (page: PageResult, progress: CrawlProgress) => void | Promise<void>;
+  /** Called as each step after the page crawl starts, so a caller can show progress and keep a heartbeat. */
+  onPhase?: (phase: CrawlPhase) => void | Promise<void>;
   onLog?: (level: 'debug' | 'info' | 'warn', message: string) => void;
 }
 
@@ -145,6 +178,9 @@ export type FetchErrorKind =
   | 'unknown';
 
 export type DiscoverySource = 'start' | 'link' | 'sitemap' | 'redirect' | 'canonical' | 'hreflang';
+
+/** How a page's content was obtained. */
+export type FetchVia = 'direct' | 'render' | 'fallback';
 
 export type IndexabilityReason =
   | 'ok'
@@ -187,6 +223,25 @@ export interface PageImage {
   src: string;
   /** null when the attribute is absent; `""` is a deliberate empty alt. */
   alt: string | null;
+  /** `src` resolved and normalised; null for data: URIs and unparsable values. */
+  url: string | null;
+}
+
+export type ResourceType = 'image' | 'script' | 'stylesheet';
+
+export interface InlinkCounts {
+  /** Distinct crawled pages with an <a href> here. */
+  href: number;
+  /** Of those, pages with at least one followed link here. */
+  dofollow: number;
+  /** Pages whose only links here are nofollow. */
+  nofollow: number;
+  /** Redirects that end here. */
+  redirect: number;
+  /** Other pages naming this URL as their canonical. */
+  canonical: number;
+  /** Other pages naming this URL as an hreflang alternate. */
+  hreflang: number;
 }
 
 export interface StructuredDataBlock {
@@ -225,8 +280,11 @@ export interface PageResult {
   isHtml: boolean;
   /** True when the HTML came from the `render` hook. */
   rendered: boolean;
-  /** Time to response headers of the last attempt, in ms. */
+  via: FetchVia;
+  /** Time to response headers of the last attempt, in ms (time to first byte). */
   responseTimeMs: number | null;
+  /** Time to first byte plus body download, in ms. */
+  loadTimeMs: number | null;
   /** Decoded body bytes read (HTML only). */
   sizeBytes: number | null;
   /** Body exceeded `maxBodyBytes` and was cut. */
@@ -234,15 +292,25 @@ export interface PageResult {
   /** Clicks from the start URL; null when not reachable through crawled links. */
   depth: number | null;
   inSitemap: boolean;
+  /** Sitemap documents that list this URL. */
+  sitemaps: string[];
   discoveredFrom: DiscoverySource;
   indexable: boolean;
   indexabilityReason: IndexabilityReason;
   /** Distinct other crawled pages linking here. Filled in after the crawl. */
   inboundLinkCount: number;
+  /** Incoming links by kind. Filled in after the crawl. */
+  inlinks: InlinkCounts;
+  /** Internal PageRank, 0-100, over followed internal links. Filled in after the crawl. */
+  pageRank: number;
 
   title: string | null;
+  titleCount: number;
   metaDescription: string | null;
+  metaDescriptionCount: number;
   metaRobots: string | null;
+  /** Target of a <meta http-equiv="refresh"> redirect, resolved. */
+  metaRefresh: string | null;
   xRobotsTag: string | null;
   /** First `<link rel="canonical">`, absolute and normalised. */
   canonical: string | null;
@@ -261,6 +329,9 @@ export interface PageResult {
   images: PageImage[];
   imageCount: number;
   imagesMissingAlt: number;
+  /** Normalised script and stylesheet URLs. */
+  scripts: string[];
+  stylesheets: string[];
   openGraph: Record<string, string>;
   twitter: Record<string, string>;
   structuredData: StructuredDataBlock[];
@@ -269,7 +340,10 @@ export interface PageResult {
   /** http:// subresources referenced from an https page. */
   mixedContent: string[];
   securityHeaders: SecurityHeaders;
+  /** The audited HTML is an empty app shell (no rendering, or rendering failed). */
   jsRenderingSuspected: boolean;
+  /** The fetched HTML was an empty shell and the content only appeared after JavaScript rendering. */
+  needsJavaScript: boolean;
 }
 
 export interface Issue {
@@ -278,6 +352,8 @@ export interface Issue {
   url: string;
   detail?: string;
   relatedUrls?: string[];
+  /** For Links and Content issues: whether the page is indexable (see `markIndexability`). */
+  indexable?: boolean;
 }
 
 export interface ExternalLinkCheck {
@@ -289,6 +365,62 @@ export interface ExternalLinkCheck {
   /** Pages linking to it (up to 20). */
   sources: string[];
 }
+
+export interface ResourceResult {
+  url: string;
+  type: ResourceType;
+  /** 0 when there was no response. */
+  status: number;
+  finalUrl: string;
+  redirected: boolean;
+  contentType: string | null;
+  /** From Content-Length, when sent. */
+  sizeBytes: number | null;
+  broken: boolean;
+  errorKind: FetchErrorKind | null;
+  /** Pages using it (up to 20). */
+  sources: string[];
+  /** All pages using it. */
+  sourceCount: number;
+}
+
+export type AiBotPurpose = 'search' | 'user' | 'training';
+
+export interface AiBotAccess {
+  /** robots.txt user-agent token. */
+  token: string;
+  owner: string;
+  purpose: AiBotPurpose;
+  /** robots.txt lets it fetch the start URL. */
+  allowed: boolean;
+  /** Share of indexable pages it may fetch, 0-100. */
+  allowedPct: number;
+}
+
+export interface AiDiscoverability {
+  /** 0-100: the weighted mean of the parts below. */
+  score: number;
+  /** Indexable pages that AI search and user bots may fetch under robots.txt, 0-100. */
+  botAccess: number;
+  /** Indexable pages readable without JavaScript and with a title and description, 0-100. */
+  readability: number;
+  /** Indexable pages answering within the AI crawler threshold, 0-100. */
+  speed: number;
+  llmsTxt: boolean;
+  bots: AiBotAccess[];
+}
+
+export interface HttpProbe {
+  /** The http:// URL requested. */
+  url: string;
+  /** Status of the first response; 0 when there was none. */
+  status: number;
+  /** Where it ended up. */
+  finalUrl: string;
+  redirectsToHttps: boolean;
+}
+
+export type StatusClass = '2xx' | '3xx' | '4xx' | '5xx' | 'none';
 
 export type StopReason = 'completed' | 'max_pages' | 'time_limit' | 'rate_limited' | 'aborted';
 
@@ -321,10 +453,27 @@ export interface CrawlSummary {
   sitemapUrls: number;
   externalLinksChecked: number;
   avgResponseTimeMs: number | null;
+  /** Pages by time to first byte: fast <200, medium 200-300, slow 300-500, tooSlow >500 ms. */
+  ttfbBuckets: { fast: number; medium: number; slow: number; tooSlow: number };
+  /** Rows by status class. */
+  statusClasses: Record<StatusClass, number>;
+  /** Rows by status class per click depth; depths over 9 fold into "9+", unreachable rows into "none". */
+  statusByDepth: Record<string, Record<StatusClass, number>>;
+  /** Fetched rows by simplified content type: html, image, css, js, pdf, other. */
+  contentTypes: Record<string, number>;
+  /** Internal links found, by what became of their target. */
+  linkStatus: { crawled: number; uncrawled: number; robotsBlocked: number };
+  resourcesChecked: number;
+  /** Audited rows with at least one critical issue, and the rest. */
+  urlsWithErrors: number;
+  urlsWithoutErrors: number;
+  aiDiscoverability: AiDiscoverability | null;
+  httpProbe: HttpProbe | null;
+  llmsTxtFound: boolean;
   issuesTotal: number;
   issuesBySeverity: Record<Severity, number>;
   issuesByType: Partial<Record<IssueType, number>>;
-  /** 0-100, see `computeHealthScore`. */
+  /** 0-100: share of audited URLs without a critical issue, see `computeHealthScore`. */
   healthScore: number;
 }
 
@@ -332,5 +481,6 @@ export interface CrawlResult {
   pages: PageResult[];
   issues: Issue[];
   externalLinks: ExternalLinkCheck[];
+  resources: ResourceResult[];
   summary: CrawlSummary;
 }

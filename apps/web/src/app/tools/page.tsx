@@ -26,8 +26,8 @@ const GROUPS: { id: string; title: string; lede: string; slugs: string[] }[] = [
   {
     id: 'website-tools',
     title: 'Website and backlink tools',
-    lede: 'Size up any website: its traffic, authority and links, one page in depth, and the links your competitors have.',
-    slugs: ['seo-audit', 'website-seo-analysis', 'website-traffic-checker', 'website-authority-checker', 'on-page-seo-audit', 'backlink-checker', 'backlink-gap'],
+    lede: 'Size up any website: crawl it for technical issues, see its traffic, authority and links, one page in depth, and the links your competitors have.',
+    slugs: ['seo-audit', 'site-audit', 'website-seo-analysis', 'website-traffic-checker', 'website-authority-checker', 'on-page-seo-audit', 'backlink-checker', 'backlink-gap'],
   },
   {
     id: 'ai-local-tools',

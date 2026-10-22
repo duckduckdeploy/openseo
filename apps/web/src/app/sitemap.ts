@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/open-source-seo-tools', priority: 0.8 },
     { path: '/best-seo-mcp-servers', priority: 0.8 },
     { path: '/pricing', priority: 0.9 },
+    { path: '/bot', priority: 0.3 },
     { path: '/docs', priority: 0.7 },
     ...features.map((feature) => ({ path: `/features/${feature.slug}`, priority: 0.8 })),
     ...docPages.map((doc) => ({ path: `/docs/${doc.slug}`, priority: 0.6 })),

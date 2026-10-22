@@ -28,6 +28,16 @@ export interface ScrapeData {
 
 export type ScrapeJsParams = ScrapeParams;
 
+/** Residential-proxy fetch for sites that block datacenter crawlers. Verified live 2026-10-23: same response as /v1/scrape/js. */
+export interface ScrapeStealthParams {
+  url: string;
+  format?: ScrapeFormat;
+  /** Milliseconds to wait for JS rendering. Default 2000. */
+  waitFor?: number;
+  /** Proxy country, two letters. Default `"us"`. */
+  country?: string;
+}
+
 export interface ScrapeJsData {
   url: string;
   statusCode: number;

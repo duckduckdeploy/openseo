@@ -149,6 +149,8 @@ export function handle(path: string, body: any): unknown {
     }
     case "/v1/scrape/js":
       return { url: body.url, statusCode: 200, content: "<html><head><title>Rendered</title></head><body><h1>Rendered</h1></body></html>", format: "html" };
+    case "/v1/scrape/stealth":
+      return { url: body.url, statusCode: 200, content: `<html lang="en"><head><title>Fetched through residential proxies</title></head><body><h1>Unblocked</h1><a href="/">home</a></body></html>`, format: "html" };
     case "/v1/ai/chat": {
       const prompt = String(body.messages?.at(-1)?.content ?? "");
       if (prompt.includes("Write ") && prompt.includes("questions")) {

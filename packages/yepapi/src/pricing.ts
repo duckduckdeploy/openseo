@@ -92,6 +92,7 @@ export const pricing: Readonly<Record<YepEndpoint, PriceRule>> = {
 
   '/v1/scrape': flat(0.01),
   '/v1/scrape/js': flat(0.02),
+  '/v1/scrape/stealth': flat(0.03),
 };
 
 export interface CostEstimate {

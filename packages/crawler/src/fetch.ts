@@ -199,6 +199,8 @@ export interface FetchOutcome {
   truncated: boolean;
   /** Time to headers of the last hop. */
   responseTimeMs: number | null;
+  /** Time to headers plus reading the body of the last hop; equals responseTimeMs when no body was read. */
+  loadTimeMs: number | null;
   error: { kind: FetchErrorKind; message: string } | null;
 }
 
@@ -281,6 +283,7 @@ export async function fetchUrl(ctx: FetchContext, url: string, request: FetchReq
     body: null,
     truncated: false,
     responseTimeMs: null,
+    loadTimeMs: partial.responseTimeMs ?? null,
     error: null,
     ...partial,
   });
@@ -374,7 +377,8 @@ export async function fetchUrl(ctx: FetchContext, url: string, request: FetchReq
         return outcome({ status: res.status, headers: res.headers, responseTimeMs });
       }
       const { bytes, truncated } = await readCapped(res, request.maxBodyBytes ?? ctx.maxBodyBytes);
-      return outcome({ status: res.status, headers: res.headers, responseTimeMs, body: bytes, truncated });
+      const loadTimeMs = Math.round(performance.now() - started);
+      return outcome({ status: res.status, headers: res.headers, responseTimeMs, loadTimeMs, body: bytes, truncated });
     } catch (err) {
       const kind = classifyError(err, timedOut, ctx.signal?.aborted === true);
       const message = err instanceof Error ? err.message : String(err);

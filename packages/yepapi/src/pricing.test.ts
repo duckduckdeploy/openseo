@@ -111,6 +111,7 @@ describe('estimateCost', () => {
       ['/v1/maps/place', 0.05],
       ['/v1/scrape', 0.01],
       ['/v1/scrape/js', 0.02],
+      ['/v1/scrape/stealth', 0.03],
     ];
     for (const [endpoint, cost] of flat) {
       expect(estimateCost(endpoint)).toMatchObject({ min: cost, max: cost, exact: true });

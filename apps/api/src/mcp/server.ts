@@ -3,7 +3,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { resolveUser } from "../lib/context";
-import { estimateAudit } from "../services/audit";
+import { estimateAudit, MAX_AUDIT_PAGES } from "../services/audit";
 import { issuer, SCOPE } from "../services/oauth";
 import { estimateGrid } from "../services/geogrid";
 import { lookups } from "../services/lookups";
@@ -485,24 +485,28 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   // ── Site audit ──────────────────────────────────────────────────────────
   tool(
     "start_site_audit",
-    "Crawl a site and check it for technical SEO issues. The crawl is free. render_js renders each page with a browser at $0.02 per page; only use it for JavaScript-heavy sites.",
+    "Crawl a site and check it for 100+ technical SEO issues (status codes, redirects, broken links, canonicals, sitemaps, hreflang, structured data, AI crawler access). The crawl is free. Paid help from YepAPI is optional: render_mode \"auto\" renders only pages that are empty without JavaScript and \"always\" renders every page ($0.02 a page); use_fallback fetches pages the site blocks through residential proxies ($0.03 a page). Paid help needs max_cost_usd, which caps the audit's spending. Background job; poll get_site_audit.",
     {
       project_id: projectId,
       start_url: z.string().optional().describe("Defaults to the project's website"),
-      max_pages: z.number().int().min(1).max(5000).optional(),
-      render_js: z.boolean().optional(),
-      max_cost_usd: maxCost.optional().describe("Required when render_js is true"),
+      max_pages: z.number().int().min(1).max(MAX_AUDIT_PAGES).optional().describe("Defaults to the project's audit settings, else 100"),
+      render_mode: z.enum(["off", "auto", "always"]).optional(),
+      render_js: z.boolean().optional().describe("Deprecated: same as render_mode \"always\""),
+      use_fallback: z.boolean().optional(),
+      max_cost_usd: maxCost.optional().describe("Spending cap for rendering and the fallback; required when either is on"),
       dry_run: dryRun,
     },
     async (a) => {
-      const pages = a.max_pages ?? 100;
-      if (a.dry_run) return rest("POST", `/projects/${await resolveProject(a.project_id)}/audits?dryRun=1`, { maxPages: pages, renderJs: a.render_js ?? false });
-      // The same rounded figure the API quotes, so a ceiling equal to the quoted price passes.
-      const worst = estimateAudit(pages, true).max;
-      if (a.render_js && (a.max_cost_usd == null || worst > a.max_cost_usd)) {
-        throw new Error(`Rendering ${pages} pages can cost up to $${worst.toFixed(2)}. Pass max_cost_usd at least that high.`);
+      const renderMode = a.render_mode ?? (a.render_js ? "always" : undefined);
+      const body = { startUrl: a.start_url, maxPages: a.max_pages, renderMode, useFallback: a.use_fallback, maxCostUsd: a.max_cost_usd };
+      const path = `/projects/${await resolveProject(a.project_id)}/audits`;
+      if (a.dry_run) return rest("POST", `${path}?dryRun=1`, body);
+      if (((renderMode && renderMode !== "off") || a.use_fallback) && a.max_cost_usd == null) {
+        const pages = a.max_pages ?? 100;
+        const worst = estimateAudit(pages, renderMode ?? "off", a.use_fallback ?? false).max;
+        throw new Error(`Rendering and the fallback are paid (up to $${worst.toFixed(2)} for ${pages} pages). Pass max_cost_usd to cap what this audit may spend.`);
       }
-      return rest("POST", `/projects/${await resolveProject(a.project_id)}/audits`, { startUrl: a.start_url, maxPages: pages, renderJs: a.render_js ?? false });
+      return rest("POST", path, body);
     },
   );
   tool(
@@ -521,14 +525,63 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   );
   tool(
     "get_audit_issues",
-    "The affected URLs for an audit's issues, optionally one issue type or severity.",
-    { audit_id: z.string().uuid(), type: z.string().optional(), severity: z.enum(["critical", "warning", "info"]).optional(), limit: z.number().int().min(1).max(1000).optional() },
+    "The affected URLs for an audit's issues, optionally one issue type or severity. change filters against the previous audit: new (on a page crawled for the first time), added (appeared on a page crawled both times), removed (fixed) or missing (page no longer crawled).",
+    {
+      audit_id: z.string().uuid(),
+      type: z.string().optional(),
+      severity: z.enum(["critical", "warning", "info"]).optional(),
+      change: z.enum(["new", "added", "removed", "missing"]).optional(),
+      indexable: z.boolean().optional().describe("Links and Content issues are split by page: true for indexable pages, false for non-indexable ones (one severity lower)"),
+      limit: z.number().int().min(1).max(1000).optional(),
+      offset: z.number().int().min(0).optional(),
+    },
     (a) => {
       const query = new URLSearchParams();
       if (a.type) query.set("type", a.type);
       if (a.severity) query.set("severity", a.severity);
+      if (a.change) query.set("change", a.change);
+      if (a.indexable !== undefined) query.set("indexable", String(a.indexable));
       if (a.limit) query.set("limit", String(a.limit));
+      if (a.offset) query.set("offset", String(a.offset));
       return rest("GET", `/audits/${a.audit_id}/issues?${query}`);
+    },
+    true,
+  );
+  tool(
+    "get_audit_fix_brief",
+    "A Markdown brief for fixing a finished audit's issues in code: every issue, worst first, with why it matters, how to fix it, the URL patterns it affects (fix the template once), the most-linked culprits for link issues and sample URLs. Start here when asked to fix a site's technical SEO.",
+    { audit_id: z.string().uuid() },
+    async (a) => {
+      const result = (await rest("GET", `/audits/${a.audit_id}/fix-brief`)) as { markdown?: string };
+      return result.markdown ?? result;
+    },
+    true,
+  );
+  tool(
+    "get_audit_links",
+    "Links found by an audit with each target's status: for example every link to a 4xx page (target_status 4xx), every nofollow internal link, or what links to one URL (target). kind: href, redirect, canonical, hreflang, image, script, stylesheet. Only a project's two latest audits keep their links.",
+    {
+      audit_id: z.string().uuid(),
+      source: z.string().optional(),
+      target: z.string().optional(),
+      kind: z.enum(["href", "redirect", "canonical", "hreflang", "image", "script", "stylesheet"]).optional(),
+      target_status: z.enum(["2xx", "3xx", "4xx", "5xx", "uncrawled"]).optional(),
+      internal: z.boolean().optional(),
+      nofollow: z.boolean().optional(),
+      limit: z.number().int().min(1).max(1000).optional(),
+      offset: z.number().int().min(0).optional(),
+    },
+    (a) => {
+      const query = new URLSearchParams();
+      if (a.source) query.set("source", a.source);
+      if (a.target) query.set("target", a.target);
+      if (a.kind) query.set("kind", a.kind);
+      if (a.target_status) query.set("targetStatus", a.target_status);
+      if (a.internal !== undefined) query.set("internal", String(a.internal));
+      if (a.nofollow !== undefined) query.set("nofollow", String(a.nofollow));
+      if (a.limit) query.set("limit", String(a.limit));
+      if (a.offset) query.set("offset", String(a.offset));
+      return rest("GET", `/audits/${a.audit_id}/links?${query}`);
     },
     true,
   );

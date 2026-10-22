@@ -215,7 +215,31 @@ const PROJECT_VIEWS = [
   },
   {
     url: (ids) => ids.audit && `/p/${ids.project}/audit/${ids.audit}`,
-    shots: { 'site-audit': 'viewport', 'site-audit-issues': `document.querySelector("[role=tabpanel]")` },
+    shots: { 'site-audit': 'viewport' },
+  },
+  {
+    url: (ids) => ids.audit && `/p/${ids.project}/audit/${ids.audit}?tab=issues`,
+    cap: 1100,
+    shots: { 'site-audit-issues': `document.querySelector("[role=tabpanel] table")` },
+  },
+  // The Site Audit tool, from the latest one-off audit of the project's site (run one at /tools/site-audit first).
+  {
+    url: (ids) => ids.toolAudit && `/tools/site-audit/${ids.toolAudit}`,
+    shots: {
+      'site-audit-tool': 'viewport',
+      'site-audit-tool-top-issues': `document.querySelector('a[href*="fix-brief"]').closest("section")`,
+      'site-audit-tool-status': `heading("h3", "Crawl status of links found").closest(".grid")`,
+    },
+  },
+  {
+    url: (ids) => ids.toolAudit && `/tools/site-audit/${ids.toolAudit}?tab=pages`,
+    cap: 820,
+    shots: { 'site-audit-tool-pages': `document.querySelector("[role=tabpanel]")` },
+  },
+  {
+    url: (ids) => ids.toolAudit && `/tools/site-audit/${ids.toolAudit}?tab=exports`,
+    cap: 900,
+    shots: { 'site-audit-tool-exports': `document.querySelector("[role=tabpanel]")` },
   },
   {
     url: (ids) => `/p/${ids.project}/ai`,
@@ -237,19 +261,21 @@ const PROJECT_VIEWS = [
   },
 ];
 
-/** IDs of the demo project and its latest tracker, finished audit and grid, or null without one. */
+/** IDs of the demo project and its latest tracker, finished audits of its site (project and tool) and grid, or null without one. */
 async function projectIds(cookies) {
   const domain = process.env.SHOT_PROJECT ?? 'upliftdesk.com';
   const headers = { cookie: cookies.map((c) => `${c.name}=${c.value}`).join('; ') };
   const get = (path) => fetch(`${APP}/api${path}`, { headers }).then((r) => (r.ok ? r.json() : { data: [] })).then((r) => r.data ?? []);
   const project = (await get('/projects')).find((p) => p.domain === domain);
   if (!project) return null;
-  const [trackers, audits, grids] = await Promise.all([get(`/projects/${project.id}/trackers`), get(`/projects/${project.id}/audits`), get(`/projects/${project.id}/geo-grids`)]);
+  const [trackers, audits, grids, toolAudits] = await Promise.all([get(`/projects/${project.id}/trackers`), get(`/projects/${project.id}/audits`), get(`/projects/${project.id}/geo-grids`), get('/tools/site-audits')]);
   const grid = grids.find((g) => g.status === 'completed');
+  const ofSite = (a) => a.status === 'completed' && new URL(a.startUrl).hostname.replace(/^www\./, '') === domain.replace(/^www\./, '');
   return {
     project: project.id,
     tracker: trackers[0]?.id,
-    audit: audits.find((a) => a.status === 'completed')?.id,
+    audit: audits.find(ofSite)?.id,
+    toolAudit: toolAudits.find(ofSite)?.id,
     business: grid && { id: grid.placeId, name: grid.placeName, address: null, latitude: grid.centerLat, longitude: grid.centerLng },
   };
 }

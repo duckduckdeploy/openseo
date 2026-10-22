@@ -30,16 +30,20 @@ export default function AuditChecksPage() {
       <h2 id="score">How the health score is worked out</h2>
       <ol>
         <li>
-          Every page the crawler tried gets a penalty: 25 points per critical issue, 8 per warning and 1 per notice on
-          that page, capped at 100. Pages blocked by <code>robots.txt</code> are left out, since the crawler never
-          fetched them.
+          It counts every URL the crawler tried, except those blocked by <code>robots.txt</code>, since the crawler
+          never fetched them.
         </li>
         <li>
-          The score is 100 minus the average penalty, rounded. A site where every page is clean scores 100; one where
-          every page has four critical issues scores 0.
+          The score is the share of those URLs without an error (a critical issue), rounded. Warnings and notices do
+          not lower it. One broken link in the footer puts an error on every page, so it can take the score to 0.
         </li>
         <li>If no page answered with a success status, the score is 0.</li>
       </ol>
+      <p>
+        Links and Content issues are reported twice, once for indexable pages and once for pages that are not
+        (noindex, canonicalised to another URL or not returning 200). On a non-indexable page they count one
+        severity lower: a broken link on a noindex page is a warning, not an error.
+      </p>
       <p>
         Issues that apply to the whole site, such as a missing sitemap or missing security headers, are reported once,
         on the start page or the first page of each origin. Checks that compare pages with each other (duplicates,

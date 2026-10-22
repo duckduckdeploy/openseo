@@ -13,8 +13,11 @@ export interface ExtractContext {
 
 export interface ExtractedPage {
   title: string | null;
+  titleCount: number;
   metaDescription: string | null;
+  metaDescriptionCount: number;
   metaRobots: string | null;
+  metaRefresh: string | null;
   canonical: string | null;
   canonicalCount: number;
   h1s: string[];
@@ -28,6 +31,8 @@ export interface ExtractedPage {
   images: PageImage[];
   imageCount: number;
   imagesMissingAlt: number;
+  scripts: string[];
+  stylesheets: string[];
   openGraph: Record<string, string>;
   twitter: Record<string, string>;
   structuredData: StructuredDataBlock[];
@@ -39,6 +44,7 @@ export interface ExtractedPage {
 
 const MAX_LINKS = 2000;
 const MAX_IMAGES = 1000;
+const MAX_ASSETS = 200;
 const MAX_HEADINGS = 300;
 const MAX_MIXED = 50;
 const SKIPPED_TEXT_TAGS = new Set(['script', 'style', 'noscript', 'template', 'svg', 'iframe', 'head']);
@@ -159,12 +165,13 @@ export function extractPage(html: string, ctx: ExtractContext): ExtractedPage {
   }
   const resolve = (ref: string): string | null => normalizeUrl(ref, base, ctx.normalize);
 
-  const titleEl = $('title')
-    .filter((_, el) => $(el).closest('svg').length === 0)
-    .first();
+  const titleEls = $('title').filter((_, el) => $(el).closest('svg').length === 0);
+  const titleEl = titleEls.first();
   const title = titleEl.length > 0 ? collapse(titleEl.text()) || null : null;
 
   let metaDescription: string | null = null;
+  let metaDescriptionCount = 0;
+  let metaRefresh: string | null = null;
   let viewport: string | null = null;
   const robotsValues: string[] = [];
   const openGraph: Record<string, string> = {};
@@ -174,8 +181,15 @@ export function extractPage(html: string, ctx: ExtractContext): ExtractedPage {
     const name = (m.attr('name') ?? '').toLowerCase().trim();
     const property = (m.attr('property') ?? '').toLowerCase().trim();
     const content = collapse(m.attr('content') ?? '');
-    if (name === 'description' && metaDescription === null) metaDescription = content || null;
-    else if (name === 'robots' || name === 'googlebot') {
+    if ((m.attr('http-equiv') ?? '').toLowerCase().trim() === 'refresh' && metaRefresh === null) {
+      // content="5; url=/next" — only a refresh that names a URL is a redirect.
+      const target = /url\s*=\s*['"]?([^'"]+)/i.exec(content)?.[1];
+      if (target) metaRefresh = resolve(target.trim());
+    }
+    if (name === 'description') {
+      metaDescriptionCount++;
+      if (metaDescription === null) metaDescription = content || null;
+    } else if (name === 'robots' || name === 'googlebot') {
       if (content) robotsValues.push(content.toLowerCase());
     } else if (name === 'viewport' && viewport === null) viewport = content || null;
     const key = property || name;
@@ -211,18 +225,31 @@ export function extractPage(html: string, ctx: ExtractContext): ExtractedPage {
 
   const internalLinks: PageLink[] = [];
   const externalLinks: PageLink[] = [];
-  const seenLinks = new Set<string>();
+  // One entry per target: a followed link wins over a nofollow one, and the first non-empty anchor is kept.
+  const seenLinks = new Map<string, PageLink>();
   $('a[href]').each((_, el) => {
-    if (seenLinks.size >= MAX_LINKS) return false;
     const a = $(el);
     const href = (a.attr('href') ?? '').trim();
     if (!href || href.startsWith('#')) return;
     const abs = resolve(href);
-    if (!abs || seenLinks.has(abs)) return;
-    seenLinks.add(abs);
+    if (!abs) return;
     const rel = (a.attr('rel') ?? '').toLowerCase().trim();
-    const anchor = (collapse(a.text()) || collapse(a.find('img[alt]').first().attr('alt') ?? '')).slice(0, 200);
-    const link: PageLink = { url: abs, anchor, rel, nofollow: rel.split(/\s+/).includes('nofollow') };
+    const anchor = (
+      collapse(a.text()) ||
+      collapse(a.find('img[alt]').first().attr('alt') ?? '') ||
+      collapse(a.attr('aria-label') ?? '') ||
+      collapse(a.attr('title') ?? '')
+    ).slice(0, 200);
+    const nofollow = rel.split(/\s+/).includes('nofollow');
+    const seen = seenLinks.get(abs);
+    if (seen) {
+      if (seen.nofollow && !nofollow) Object.assign(seen, { nofollow: false, rel });
+      if (!seen.anchor && anchor) seen.anchor = anchor;
+      return;
+    }
+    if (seenLinks.size >= MAX_LINKS) return false;
+    const link: PageLink = { url: abs, anchor, rel, nofollow };
+    seenLinks.set(abs, link);
     (ctx.isInternal(abs) ? internalLinks : externalLinks).push(link);
     return;
   });
@@ -236,9 +263,24 @@ export function extractPage(html: string, ctx: ExtractContext): ExtractedPage {
     imageCount++;
     if (alt === undefined) imagesMissingAlt++;
     if (images.length < MAX_IMAGES) {
-      images.push({ src: (img.attr('src') ?? img.attr('data-src') ?? '').trim(), alt: alt ?? null });
+      const src = (img.attr('src') ?? img.attr('data-src') ?? '').trim();
+      images.push({ src, alt: alt ?? null, url: src && !/^data:/i.test(src) ? resolve(src) : null });
     }
   });
+
+  const collect = (selector: string, attr: string): string[] => {
+    const out = new Set<string>();
+    $(selector).each((_, el) => {
+      if (out.size >= MAX_ASSETS) return false;
+      const value = ($(el).attr(attr) ?? '').trim();
+      const abs = value ? resolve(value) : null;
+      if (abs) out.add(abs);
+      return;
+    });
+    return [...out];
+  };
+  const scripts = collect('script[src]', 'src');
+  const stylesheets = collect('link[rel~="stylesheet"][href]', 'href');
 
   const mixedContent: string[] = [];
   if (pageIsHttps) {
@@ -277,8 +319,11 @@ export function extractPage(html: string, ctx: ExtractContext): ExtractedPage {
 
   return {
     title,
+    titleCount: titleEls.length,
     metaDescription,
+    metaDescriptionCount,
     metaRobots: robotsValues.length > 0 ? robotsValues.join(', ') : null,
+    metaRefresh,
     canonical: canonicals[0] ?? null,
     canonicalCount: canonicals.length,
     h1s,
@@ -292,6 +337,8 @@ export function extractPage(html: string, ctx: ExtractContext): ExtractedPage {
     images,
     imageCount,
     imagesMissingAlt,
+    scripts,
+    stylesheets,
     openGraph,
     twitter,
     structuredData,

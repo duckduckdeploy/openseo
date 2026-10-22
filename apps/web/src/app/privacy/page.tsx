@@ -24,7 +24,10 @@ export default function PrivacyPage() {
         <li>The work you create in the app, such as saved keyword lists, tracked keywords and the results of actions you run.</li>
         <li>
           If you connect Google Search Console or Google Analytics: which Google account and property, its email
-          address, and read-only access tokens, stored encrypted. The data Google returns is not stored.
+          address, and read-only access tokens, stored encrypted. Reports are fetched from Google when you open
+          them and are not stored, with one exception: a site audit of a project with Search Console connected stores
+          each audited page's clicks for the last two 28-day periods, to flag pages that get search traffic but
+          redirect, fail or are noindex. They are deleted with the audit.
         </li>
       </ul>
 

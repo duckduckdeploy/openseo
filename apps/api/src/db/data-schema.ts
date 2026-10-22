@@ -3,7 +3,8 @@
  * billing (core-schema.ts). Users and Google accounts live in the core database, so the columns
  * that point at them (userId, googleAccountId) carry no foreign key, so their rows here are
  * removed in code: removing a Google account deletes its connections (services/google.ts), and
- * anything that deletes a user must delete the user's projects and cache rows here too.
+ * anything that deletes a user must delete the user's projects, tool audits (audits with no project)
+ * and cache rows here too.
  */
 import { relations, sql } from "drizzle-orm";
 import {
@@ -304,21 +305,41 @@ export const aiAnswers = pgTable(
 
 // ── Site audit ──────────────────────────────────────────────────────────────
 
+/** off: never render; auto: render only pages whose HTML is an empty app shell; always: render every HTML page. */
+export type RenderMode = "off" | "auto" | "always";
+export type AuditTrigger = "manual" | "schedule" | "api" | "tool";
+/** Crawl options recorded with each audit. Patterns are globs (see packages/crawler UrlPattern). */
+export type AuditOptions = { include?: string[]; exclude?: string[]; checkExternalLinks?: boolean };
+
 export const audits = pgTable(
   "audits",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    projectId: uuid("project_id")
-      .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+    // Null for one-off audits run from the Site Audit tool, which belong to no project.
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    // Owner (core database, no foreign key). Set for every audit, so tool audits can be found and limited.
+    userId: text("user_id").notNull(),
+    trigger: text("trigger").$type<AuditTrigger>().notNull().default("manual"),
     startUrl: text("start_url").notNull(),
     maxPages: integer("max_pages").notNull(),
+    // Kept in step with renderMode === "always" for older readers.
     renderJs: boolean("render_js").notNull().default(false),
+    renderMode: text("render_mode").$type<RenderMode>().notNull().default("off"),
+    // Fetch pages the site blocks through YepAPI's residential proxies.
+    useFallback: boolean("use_fallback").notNull().default(false),
+    // Rendering and fallback stop once this much has been spent; the crawl itself carries on.
+    maxCostUsd: doublePrecision("max_cost_usd"),
+    options: jsonb("options").$type<AuditOptions>().notNull().default({}),
     status: text("status").$type<RunStatus>().notNull().default("queued"),
     pagesCrawled: integer("pages_crawled").notNull().default(0),
     healthScore: integer("health_score"),
+    aiScore: integer("ai_score"),
     summary: jsonb("summary").$type<Record<string, unknown>>(),
+    // The project's previous completed audit of the same site, which this one is compared with.
+    previousAuditId: uuid("previous_audit_id"),
     costUsd: doublePrecision("cost_usd").notNull().default(0),
+    // While running, after the last page: the step it is on (site-files, resources, external-links, analysis).
+    phase: text("phase"),
     error: text("error"),
     createdAt: createdAt(),
     // Touched on every bit of progress; cleanup fails runs whose heartbeat has gone quiet.
@@ -326,8 +347,29 @@ export const audits = pgTable(
     startedAt: timestamp("started_at", { withTimezone: true }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
   },
-  (t) => [index("audits_project_idx").on(t.projectId, t.createdAt)],
+  (t) => [index("audits_project_idx").on(t.projectId, t.createdAt), index("audits_user_idx").on(t.userId, t.createdAt)],
 );
+
+/** A project's audit setup: what to crawl and how often. */
+export const auditSettings = pgTable("audit_settings", {
+  projectId: uuid("project_id")
+    .primaryKey()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  // Null: the project's website.
+  startUrl: text("start_url"),
+  maxPages: integer("max_pages").notNull().default(500),
+  renderMode: text("render_mode").$type<RenderMode>().notNull().default("auto"),
+  useFallback: boolean("use_fallback").notNull().default(true),
+  maxCostUsd: doublePrecision("max_cost_usd").default(1),
+  // Glob patterns (see packages/crawler UrlPattern) for URLs to skip or to keep to.
+  exclude: text("exclude").array().notNull().default(sql`'{}'::text[]`),
+  include: text("include").array().notNull().default(sql`'{}'::text[]`),
+  checkExternalLinks: boolean("check_external_links").notNull().default(true),
+  schedule: text("schedule").$type<Schedule>().notNull().default("weekly"),
+  nextRunAt: timestamp("next_run_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
 
 export const auditPages = pgTable(
   "audit_pages",
@@ -342,11 +384,64 @@ export const auditPages = pgTable(
     wordCount: integer("word_count"),
     depth: integer("depth"),
     responseMs: integer("response_ms"),
+    // Time to first byte plus downloading the body.
+    loadMs: integer("load_ms"),
+    contentType: text("content_type"),
     indexable: boolean("indexable"),
+    // Internal PageRank, 0-100.
+    pageRank: integer("page_rank"),
+    // Distinct crawled pages linking here.
+    inlinks: integer("inlinks"),
+    inSitemap: boolean("in_sitemap"),
+    // Clicks from Google in the 28 days before the audit, from the project's Search Console; null without it.
+    clicks: integer("clicks"),
     issueCount: integer("issue_count").notNull().default(0),
     data: jsonb("data").$type<Record<string, unknown>>().notNull(),
   },
-  (t) => [index("audit_pages_audit_idx").on(t.auditId)],
+  (t) => [index("audit_pages_audit_idx").on(t.auditId, t.url)],
+);
+
+export type AuditLinkKind = "href" | "redirect" | "canonical" | "hreflang" | "image" | "script" | "stylesheet";
+
+/**
+ * Every link the crawl found: anchors, redirects, canonicals, hreflang alternates and the images,
+ * scripts and stylesheets pages load. Large, so only a project's latest audits keep theirs (see
+ * LINK_RETENTION in services/audit.ts).
+ */
+export const auditLinks = pgTable(
+  "audit_links",
+  {
+    auditId: uuid("audit_id")
+      .notNull()
+      .references(() => audits.id, { onDelete: "cascade" }),
+    source: text("source").notNull(),
+    target: text("target").notNull(),
+    kind: text("kind").$type<AuditLinkKind>().notNull(),
+    anchor: text("anchor"),
+    nofollow: boolean("nofollow").notNull().default(false),
+    internal: boolean("internal").notNull(),
+  },
+  // The source index doubles as the keyset order exports page through.
+  (t) => [index("audit_links_target_idx").on(t.auditId, t.target), index("audit_links_source_idx").on(t.auditId, t.source, t.target)],
+);
+
+/** Images, scripts and stylesheets the crawl checked, and the external link targets. */
+export const auditResources = pgTable(
+  "audit_resources",
+  {
+    auditId: uuid("audit_id")
+      .notNull()
+      .references(() => audits.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    type: text("type").$type<"image" | "script" | "stylesheet" | "external">().notNull(),
+    status: integer("status").notNull(),
+    contentType: text("content_type"),
+    sizeBytes: integer("size_bytes"),
+    broken: boolean("broken").notNull(),
+    redirected: boolean("redirected").notNull().default(false),
+    sourceCount: integer("source_count").notNull().default(0),
+  },
+  (t) => [index("audit_resources_audit_idx").on(t.auditId, t.type)],
 );
 
 export const auditIssues = pgTable(
@@ -361,6 +456,10 @@ export const auditIssues = pgTable(
     url: text("url").notNull(),
     detail: text("detail"),
     relatedUrls: jsonb("related_urls").$type<string[]>(),
+    // Against the previous audit: "new" on a URL crawled for the first time, "added" on a URL crawled both times that did not have it.
+    change: text("change").$type<"new" | "added">(),
+    // Links and Content issues are reported separately for indexable and non-indexable pages; null for the rest.
+    indexable: boolean("indexable"),
   },
   (t) => [index("audit_issues_audit_idx").on(t.auditId, t.type)],
 );

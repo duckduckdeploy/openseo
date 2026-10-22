@@ -1,7 +1,7 @@
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { DEFAULT_THRESHOLDS, crossPageIssues, hasNoindex } from './analyse';
+import { DEFAULT_THRESHOLDS, crossPageIssues, hasNoindex, makeIssue, markIndexability, trafficByPage, trafficIssues } from './analyse';
 import { ISSUE_CATALOG } from './catalog';
 import type { IssueType } from './catalog';
 import { crawlSite } from './crawl';
@@ -27,7 +27,8 @@ function html(spec: PageSpec): string {
 ${spec.title === undefined ? '' : `<title>${spec.title}</title>`}
 ${spec.description === undefined ? '' : `<meta name="description" content="${spec.description}">`}
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta property="og:title" content="x"><meta property="og:image" content="/og.png">
+<meta property="og:title" content="x"><meta property="og:image" content="/og.png"><meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 ${spec.head ?? ''}</head><body>${spec.body}</body></html>`;
 }
 
@@ -306,7 +307,14 @@ describe('crawlSite on the fixture site', () => {
     expect(home.responseTimeMs).not.toBeNull();
     expect(home.sizeBytes).toBeGreaterThan(1000);
     expect(page('/about')).toMatchObject({ depth: 1, inboundLinkCount: 1, headings: [{ level: 1, text: 'About' }, { level: 2, text: 'Team' }] });
-    expect(typesFor('/about')).toEqual([]);
+    // Linked from the home page only (the /old redirect is not a link), and the fixture has no og:url.
+    expect(page('/about').inlinks).toEqual({ href: 1, dofollow: 1, nofollow: 0, redirect: 1, canonical: 0, hreflang: 0 });
+    expect(typesFor('/about').sort()).toEqual(['missing-open-graph', 'single-dofollow-inlink']);
+    expect(issue('missing-open-graph', '/about')?.detail).toBe('Missing og:url');
+    expect(home.loadTimeMs).toBeGreaterThanOrEqual(home.responseTimeMs ?? 0);
+    expect(home.pageRank).toBe(100);
+    expect(page('/level3').pageRank).toBeLessThan(home.pageRank);
+    expect(home.sitemaps).toEqual([`${base}/sitemap-pages.xml`]);
   });
 
   it('strips tracking parameters and fragments so /about is fetched once', () => {
@@ -326,20 +334,21 @@ describe('crawlSite on the fixture site', () => {
     expect(page('/loop-a')).toMatchObject({ fetchClass: 'redirect', redirectLoop: true, errorKind: 'redirect_loop' });
     expect(typesFor('/loop-a')).toEqual(['redirect-loop']);
     expect(issue('internal-link-to-redirect', '/')?.relatedUrls).toEqual([`${base}/old`, `${base}/loop-a`]);
-    expect(issue('non-indexable-in-sitemap', '/old')?.detail).toContain('redirect');
+    expect(issue('redirect-in-sitemap', '/old')?.detail).toBe(`Redirects to ${base}/about`);
+    expect(issue('redirect-3xx', '/old')?.detail).toBe(`301 → 302 → ${base}/about (200)`);
+    expect(issue('temporary-redirect', '/old')?.detail).toBe(`302 to ${base}/about`);
+    expect(issue('broken-redirect', '/old')).toBeUndefined();
   });
 
   it('reports broken pages and the links pointing at them', () => {
     expect(page('/missing')).toMatchObject({ status: 404, fetchClass: 'client_error' });
-    expect(typesFor('/missing')).toEqual(['broken-page']);
+    expect(typesFor('/missing')).toEqual(['page-404', 'broken-page']);
     expect(typesFor('/server-error')).toEqual(['server-error']);
+    // One issue per linking page, naming every broken target.
     const broken = result.issues.filter((i) => i.type === 'broken-internal-link');
-    expect(broken.map((i) => [i.url, i.relatedUrls?.[0]]).sort()).toEqual(
-      [
-        [`${base}/`, `${base}/missing`],
-        [`${base}/`, `${base}/server-error`],
-      ].sort(),
-    );
+    expect(broken.map((i) => i.url)).toEqual([`${base}/`]);
+    expect(broken[0]?.relatedUrls).toEqual([`${base}/missing`, `${base}/server-error`]);
+    expect(broken[0]?.detail).toBe('2 links to broken pages (HTTP 404, 500)');
     expect(broken[0]?.severity).toBe('critical');
   });
 
@@ -356,7 +365,8 @@ describe('crawlSite on the fixture site', () => {
   });
 
   it('finds duplicate titles, descriptions and content', () => {
-    for (const type of ['duplicate-title', 'duplicate-meta-description', 'duplicate-content'] as const) {
+    // Neither copy has a canonical, so the content duplicate is the critical kind.
+    for (const type of ['duplicate-title', 'duplicate-meta-description', 'duplicate-without-canonical'] as const) {
       expect(issue(type, '/dup-a')?.relatedUrls).toEqual([`${base}/dup-b`]);
       expect(issue(type, '/dup-b')?.relatedUrls).toEqual([`${base}/dup-a`]);
       expect(result.summary.issuesByType[type]).toBe(2);
@@ -365,7 +375,8 @@ describe('crawlSite on the fixture site', () => {
 
   it('handles noindex, sitemap consistency and orphans', () => {
     expect(page('/noindex')).toMatchObject({ indexable: false, indexabilityReason: 'noindex-meta', metaRobots: 'noindex, follow' });
-    expect(typesFor('/noindex')).toEqual(expect.arrayContaining(['noindex-page', 'non-indexable-in-sitemap']));
+    expect(typesFor('/noindex')).toEqual(expect.arrayContaining(['noindex-page', 'noindex-follow-page', 'noindex-in-sitemap']));
+    expect(typesFor('/noindex')).not.toContain('nofollow-page');
     expect(typesFor('/noindex')).not.toContain('thin-content');
     expect(page('/orphan')).toMatchObject({ inSitemap: true, depth: null, inboundLinkCount: 0, discoveredFrom: 'sitemap' });
     expect(result.issues.filter((i) => i.type === 'orphan-page').map((i) => i.url)).toEqual([`${base}/orphan`]);
@@ -490,11 +501,48 @@ describe('crawlSite options', () => {
       }),
     );
     const shell = result.pages.find((p) => p.url.endsWith('/shell'));
-    expect(shell).toMatchObject({ rendered: true, jsRenderingSuspected: false, title: 'Rendered application shell', h1s: ['Rendered'] });
-    expect(result.pages.find((p) => p.url.endsWith('/about'))).toMatchObject({ rendered: false, title: 'About the fixture site' });
+    expect(shell).toMatchObject({ rendered: true, via: 'render', jsRenderingSuspected: false, needsJavaScript: true, title: 'Rendered application shell', h1s: ['Rendered'] });
+    expect(result.pages.find((p) => p.url.endsWith('/about'))).toMatchObject({ rendered: false, via: 'direct', needsJavaScript: false, title: 'About the fixture site' });
     expect(result.pages.find((p) => p.url.endsWith('/fr'))).toMatchObject({ rendered: false, lang: 'fr' });
     expect(rendered.sort()).toEqual([`${base}/about`, `${base}/fr`, `${base}/shell`]);
-    expect(result.summary.issuesByType['javascript-rendering-suspected']).toBeUndefined();
+    // The shell's content exists only after rendering, which AI crawlers and other non-rendering bots never do.
+    expect(result.issues.filter((i) => i.type === 'javascript-rendering-suspected').map((i) => [i.url, i.detail])).toEqual([
+      [`${base}/shell`, 'The content only appears after JavaScript runs'],
+    ]);
+  });
+
+  it('renders only app shells when renderWhen is "suspected"', async () => {
+    const rendered: string[] = [];
+    await crawlSite(
+      options({
+        startUrl: `${base}/shell`,
+        include: ['/about'],
+        useSitemaps: false,
+        renderWhen: 'suspected',
+        render: async (url) => {
+          rendered.push(url);
+          return { html: html({ title: 'Rendered application shell', body: '<h1>Rendered</h1><a href="/about">about</a>' }) };
+        },
+      }),
+    );
+    expect(rendered).toEqual([`${base}/shell`]);
+  });
+
+  it('gets past a blocked page with the fallback and keeps the content', async () => {
+    const tried: string[] = [];
+    const result = await crawlSite(
+      options({
+        startUrl: `${base}/forbidden`,
+        useSitemaps: false,
+        fallback: async (url) => {
+          tried.push(url);
+          return { html: html({ title: 'Fetched through the fallback', description: desc('fallback'), body: `<h1>Unblocked</h1><p>${WORDS}</p>` }), status: 200 };
+        },
+      }),
+    );
+    expect(tried).toEqual([`${base}/forbidden`]);
+    expect(result.pages[0]).toMatchObject({ fetchClass: 'ok', status: 200, via: 'fallback', title: 'Fetched through the fallback', h1s: ['Unblocked'] });
+    expect(result.issues.map((i) => i.type)).not.toContain('blocked-page');
   });
 
   it('classifies a timeout honestly', async () => {
@@ -657,6 +705,217 @@ describe('crawl limits and edge cases', () => {
   });
 });
 
+describe('site-level, resource and graph checks', () => {
+  const site = (routes: Record<string, (method: string) => Response>) => {
+    const requested: string[] = [];
+    const fetch: FetchLike = async (url, init) => {
+      requested.push(`${init.method} ${url}`);
+      const u = new URL(url);
+      const handler = routes[`${u.protocol}//${u.host}${u.pathname}`] ?? routes[u.pathname];
+      return handler ? handler(init.method) : new Response('not found', { status: 404, headers: { 'content-type': 'text/html' } });
+    };
+    return { requested, fetch, resolveHost: async () => ['93.184.216.34'] };
+  };
+  const htmlRoute = (spec: PageSpec, headers: Record<string, string> = {}) => () =>
+    new Response(html(spec), { headers: { 'content-type': 'text/html', ...headers } });
+  const text = (body: string, status = 200) => () => new Response(body, { status, headers: { 'content-type': 'text/plain' } });
+  const xmlRoute = (body: string) => () => new Response(`<?xml version="1.0"?>${body}`, { headers: { 'content-type': 'application/xml' } });
+  const urlset = (paths: string[]) =>
+    xmlRoute(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((p) => `<url><loc>https://example.com${p}</loc></url>`).join('')}</urlset>`);
+  const body = (inner: string) => `<h1>Heading</h1><p>${WORDS}</p>${inner}`;
+
+  let result: CrawlResult;
+  let requested: string[];
+  const issue = (type: IssueType, path: string) => result.issues.find((i) => i.type === type && i.url === `https://example.com${path}`);
+  const types = (path: string) => result.issues.filter((i) => i.url === `https://example.com${path}`).map((i) => i.type);
+
+  beforeAll(async () => {
+    const fake = site({
+      // The plain-HTTP home page answers instead of redirecting.
+      'http://example.com/': htmlRoute({ title: 'Plain HTTP copy of the site', body: body('') }),
+      '/robots.txt': text(
+        'User-agent: *\nAllow: /\n\nUser-agent: GPTBot\nDisallow: /\n\nUser-agent: PerplexityBot\nDisallow: /blog/\n\n' +
+          'Sitemap: https://example.com/sitemap-a.xml\nSitemap: https://example.com/sitemap-b.xml\nSitemap: https://example.com/sitemap-gone.xml\n',
+      ),
+      '/sitemap-a.xml': urlset(['/', '/blog/post', '/moved', '/gone-redirect']),
+      '/sitemap-b.xml': urlset(['/blog/post', '/canonical-only']),
+      '/': htmlRoute({
+        title: 'Home page of the example site',
+        description: desc('home'),
+        head: '<meta property="og:url" content="https://example.com/">',
+        body: body(
+          '<a href="/blog/post">post</a><a href="/refresh">refresh</a><a href="/twice">twice</a><a href="/variant">variant</a>' +
+            '<a href="/Upper-Case" rel="nofollow">upper</a><a href="/secure-downgrade">downgrade</a><a href="/blog/post" rel="nofollow">again</a>' +
+            '<a href="/moved"><img src="/icon.svg"></a><img src="/logo.png" alt="Logo"><img src="/missing.png" alt="x"><img src="/huge.jpg" alt="big">' +
+            '<script src="/app.js"></script><link rel="stylesheet" href="/gone.css">',
+        ),
+      }),
+      '/blog/post': htmlRoute({ title: 'A blog post on the example site', description: desc('post'), head: '<meta property="og:url" content="https://example.com/elsewhere">', body: body('<a href="/">home</a>') }),
+      '/refresh': htmlRoute({ title: 'Page that refreshes elsewhere', description: desc('refresh'), head: '<meta http-equiv="refresh" content="0; url=/blog/post">', body: body('<a href="/">home</a>') }),
+      '/twice': () =>
+        new Response(
+          `<!doctype html><html lang="en"><head><title>First title of this page</title><title>Second title</title><meta name="description" content="${desc('a')}"><meta name="description" content="${desc('b')}"><meta name="robots" content="index, nofollow"></head><body>${body('<a href="/">home</a>')}</body></html>`,
+          { headers: { 'content-type': 'text/html' } },
+        ),
+      '/variant': htmlRoute({ title: 'A variant that names a canonical', description: desc('variant'), head: '<link rel="canonical" href="/canonical-only">', body: body('<a href="/">home</a>') }),
+      '/canonical-only': htmlRoute({ title: 'The canonical nobody links to', description: desc('canonical'), body: body('<a href="/">home</a>') }),
+      '/Upper-Case': htmlRoute({ title: 'A page with uppercase letters', description: desc('upper'), body: body('<a href="/">home</a>') }),
+      '/secure-downgrade': () => new Response(null, { status: 301, headers: { location: 'http://example.com/plain' } }),
+      'http://example.com/plain': htmlRoute({ title: 'Plain page served over HTTP', description: desc('plain'), body: body('') }),
+      '/moved': () => new Response(null, { status: 308, headers: { location: '/blog/post' } }),
+      '/gone-redirect': () => new Response(null, { status: 301, headers: { location: '/really-gone' } }),
+      '/really-gone': () => new Response('gone', { status: 410, headers: { 'content-type': 'text/html' } }),
+      '/logo.png': () => new Response(null, { headers: { 'content-type': 'image/png', 'content-length': '2048' } }),
+      '/icon.svg': () => new Response(null, { headers: { 'content-type': 'image/svg+xml', 'content-length': '300' } }),
+      '/huge.jpg': () => new Response(null, { headers: { 'content-type': 'image/jpeg', 'content-length': String(400 * 1024) } }),
+      '/app.js': () => new Response(null, { headers: { 'content-type': 'text/javascript' } }),
+      // Refuses HEAD, so the check has to fall back to GET.
+      '/missing.png': (method) => new Response(null, { status: method === 'HEAD' ? 405 : 404 }),
+    });
+    requested = fake.requested;
+    result = await crawlSite({ startUrl: 'https://example.com/', fetch: fake.fetch, resolveHost: fake.resolveHost, delayMs: 0, concurrency: 2 });
+  });
+
+  it('probes the plain-HTTP site and reads llms.txt', () => {
+    expect(result.summary.httpProbe).toEqual({ url: 'http://example.com/', status: 200, finalUrl: 'http://example.com/', redirectsToHttps: false });
+    expect(issue('http-not-redirected-to-https', '/')?.severity).toBe('critical');
+    expect(result.summary.llmsTxtFound).toBe(false);
+    expect(issue('llms-txt-missing', '/')).toBeDefined();
+    expect(issue('robots-txt-missing', '/')).toBeUndefined();
+  });
+
+  it('reports AI crawler access from robots.txt', () => {
+    const ai = result.summary.aiDiscoverability;
+    expect(ai).not.toBeNull();
+    const bot = (token: string) => ai?.bots.find((b) => b.token === token);
+    expect(bot('GPTBot')).toMatchObject({ purpose: 'training', allowed: false, allowedPct: 0 });
+    expect(bot('PerplexityBot')).toMatchObject({ purpose: 'search', allowed: true });
+    expect(bot('PerplexityBot')?.allowedPct).toBeLessThan(100);
+    expect(bot('OAI-SearchBot')).toMatchObject({ allowed: true, allowedPct: 100 });
+    expect(issue('ai-search-bots-blocked', '/')?.detail).toContain('PerplexityBot');
+    expect(issue('ai-training-bots-blocked', '/')?.detail).toContain('GPTBot');
+    expect(ai?.score).toBeGreaterThan(0);
+    expect(ai?.score).toBeLessThan(100);
+  });
+
+  it('checks images, scripts and stylesheets once each', () => {
+    const resource = (path: string) => result.resources.find((r) => r.url === `https://example.com${path}`);
+    expect(resource('/logo.png')).toMatchObject({ type: 'image', status: 200, sizeBytes: 2048, broken: false });
+    expect(resource('/missing.png')).toMatchObject({ status: 404, broken: true });
+    expect(resource('/gone.css')).toMatchObject({ type: 'stylesheet', broken: true });
+    expect(resource('/app.js')).toMatchObject({ type: 'script', broken: false });
+    expect(requested.filter((r) => r.endsWith('/logo.png'))).toEqual(['HEAD https://example.com/logo.png']);
+    expect(requested.filter((r) => r.endsWith('/missing.png'))).toEqual(['HEAD https://example.com/missing.png', 'GET https://example.com/missing.png']);
+    expect(issue('broken-image', '/')?.relatedUrls).toEqual(['https://example.com/missing.png']);
+    expect(issue('image-too-large', '/')?.relatedUrls).toEqual(['https://example.com/huge.jpg']);
+    expect(issue('broken-css', '/')?.relatedUrls).toEqual(['https://example.com/gone.css']);
+    expect(issue('broken-js', '/')).toBeUndefined();
+    expect(result.summary.resourcesChecked).toBe(result.resources.length);
+  });
+
+  it('classifies redirects', () => {
+    expect(types('/secure-downgrade')).toEqual(expect.arrayContaining(['redirect-3xx', 'https-to-http-redirect']));
+    expect(issue('broken-redirect', '/gone-redirect')?.detail).toBe('Ends at https://example.com/really-gone (HTTP 410)');
+    expect(types('/moved')).toEqual(expect.arrayContaining(['redirect-3xx', 'redirect-in-sitemap']));
+    expect(types('/moved')).not.toContain('temporary-redirect');
+    expect(issue('redirect-no-incoming-links', '/gone-redirect')).toBeDefined();
+    expect(issue('redirect-no-incoming-links', '/moved')).toBeUndefined();
+  });
+
+  it('checks head tags, URLs and links', () => {
+    expect(issue('meta-refresh-redirect', '/refresh')?.relatedUrls).toEqual(['https://example.com/blog/post']);
+    expect(types('/twice')).toEqual(expect.arrayContaining(['multiple-titles', 'multiple-meta-descriptions', 'nofollow-page']));
+    expect(issue('open-graph-url-mismatch', '/blog/post')?.detail).toContain('https://example.com/elsewhere');
+    expect(issue('open-graph-url-mismatch', '/')).toBeUndefined();
+    expect(types('/Upper-Case')).toContain('url-uppercase');
+    // /blog/post is also linked normally, so only /Upper-Case counts as a nofollow link.
+    expect(issue('nofollow-internal-links', '/')?.relatedUrls).toEqual(['https://example.com/Upper-Case']);
+    const upper = result.pages.find((p) => p.url === 'https://example.com/Upper-Case');
+    expect(upper?.inlinks).toMatchObject({ href: 1, dofollow: 0, nofollow: 1 });
+    // The icon link wraps an image without alt, so it has no anchor text at all.
+    expect(issue('links-without-anchor', '/')?.relatedUrls).toEqual(['https://example.com/moved']);
+    expect(issue('canonical-no-incoming-links', '/canonical-only')?.severity).toBe('critical');
+  });
+
+  it('tracks which sitemaps list each URL', () => {
+    const post = result.pages.find((p) => p.url === 'https://example.com/blog/post');
+    expect(post?.sitemaps).toEqual(['https://example.com/sitemap-a.xml', 'https://example.com/sitemap-b.xml']);
+    expect(issue('page-in-multiple-sitemaps', '/blog/post')).toBeDefined();
+    expect(issue('sitemap-unreachable', '/')?.relatedUrls).toEqual(['https://example.com/sitemap-gone.xml']);
+    // The /sitemap.xml guess does not exist, but nothing names it, so it is not reported.
+    expect(result.issues.filter((i) => i.type === 'sitemap-unreachable')).toHaveLength(1);
+  });
+
+  it('summarises the crawl for the overview charts', () => {
+    const s = result.summary;
+    expect(s.statusClasses['3xx']).toBe(3);
+    expect(s.statusClasses['4xx']).toBe(1);
+    expect(s.ttfbBuckets.fast + s.ttfbBuckets.medium + s.ttfbBuckets.slow + s.ttfbBuckets.tooSlow).toBe(s.htmlPages);
+    expect(Object.values(s.statusByDepth).reduce((sum, row) => sum + Object.values(row).reduce((a, b) => a + b, 0), 0)).toBe(s.pagesTotal - s.pagesRobotsBlocked);
+    // Error pages served as HTML count as HTML too, including the missing stylesheet's 404 page.
+    const htmlRows = result.pages.filter((p) => p.fetchClass !== 'redirect' && p.contentType === 'text/html').length;
+    expect(s.contentTypes.html).toBe(htmlRows + result.resources.filter((r) => r.contentType === 'text/html').length);
+    expect(s.contentTypes.image).toBeGreaterThan(0);
+    expect(s.linkStatus.crawled).toBeGreaterThan(0);
+    expect(s.urlsWithErrors + s.urlsWithoutErrors).toBe(s.pagesTotal - s.pagesRobotsBlocked);
+    // Health is the share of URLs without a critical issue.
+    expect(s.healthScore).toBe(Math.round((100 * s.urlsWithoutErrors) / (s.urlsWithErrors + s.urlsWithoutErrors)));
+  });
+});
+
+describe('markIndexability', () => {
+  it('splits Links and Content issues by the page and lowers them on non-indexable pages', () => {
+    const pages = [
+      { url: 'https://a.test/', indexable: true },
+      { url: 'https://a.test/hidden', indexable: false },
+    ];
+    const issues = markIndexability(
+      [
+        makeIssue('broken-internal-link', 'https://a.test/'),
+        makeIssue('broken-internal-link', 'https://a.test/hidden'),
+        makeIssue('meta-description-too-short', 'https://a.test/hidden'),
+        makeIssue('noindex-page', 'https://a.test/hidden'),
+        makeIssue('broken-internal-link', 'https://a.test/not-crawled'),
+      ],
+      pages,
+    );
+    expect(issues.map((i) => [i.severity, i.indexable])).toEqual([
+      ['critical', true],
+      ['warning', false],
+      ['info', false],
+      ['warning', undefined],
+      ['critical', undefined],
+    ]);
+  });
+});
+
+describe('trafficIssues', () => {
+  it('flags pages Google sends visitors to that redirect, fail, are noindex or non-canonical, and traffic drops', () => {
+    const page = (url: string, extra: Partial<PageResult>) => ({ url, status: 200, fetchClass: 'ok', indexabilityReason: 'ok', finalUrl: url, canonical: null, headerCanonical: null, ...extra }) as PageResult;
+    const pages = [
+      page('https://a.test/old', { status: 301, fetchClass: 'redirect', finalUrl: 'https://a.test/new' }),
+      page('https://a.test/gone', { status: 404, fetchClass: 'client_error' }),
+      page('https://a.test/hidden', { indexabilityReason: 'noindex-meta' }),
+      page('https://a.test/copy', { indexabilityReason: 'canonicalised', canonical: 'https://a.test/' }),
+      page('https://a.test/', {}),
+    ];
+    const traffic = trafficByPage([
+      { url: 'https://a.test/old?utm_source=x', clicks: 4, previousClicks: 0 },
+      { url: 'https://a.test/gone', clicks: 2, previousClicks: 1 },
+      { url: 'https://a.test/hidden', clicks: 1, previousClicks: 0 },
+      { url: 'https://a.test/copy', clicks: 3, previousClicks: 0 },
+      { url: 'https://a.test/', clicks: 40, previousClicks: 100 },
+    ]);
+    expect(trafficIssues(pages, traffic).map((i) => [i.type, i.url])).toEqual([
+      ['redirect-receives-traffic', 'https://a.test/old'],
+      ['broken-page-receives-traffic', 'https://a.test/gone'],
+      ['noindex-page-receives-traffic', 'https://a.test/hidden'],
+      ['non-canonical-receives-traffic', 'https://a.test/copy'],
+      ['organic-traffic-dropped', 'https://a.test/'],
+    ]);
+  });
+});
+
 describe('robots directives', () => {
   it('matches whole noindex/none directives only', () => {
     expect(hasNoindex('noindex, follow')).toBe(true);
@@ -712,6 +971,7 @@ describe('sitemap discovery limits', () => {
       isHtml: true,
       indexable: true,
       inSitemap: false,
+      sitemaps: [],
       depth: 0,
       redirectChain: [],
       securityHeaders: { strictTransportSecurity: 'x', contentSecurityPolicy: 'x', xContentTypeOptions: 'x', xFrameOptions: 'x', referrerPolicy: 'x', permissionsPolicy: null },
