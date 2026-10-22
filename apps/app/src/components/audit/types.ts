@@ -33,6 +33,7 @@ export type Summary = {
   contentTypes?: Record<string, number>;
   linkStatus?: { crawled: number; uncrawled: number; robotsBlocked: number };
   resourcesChecked?: number;
+  pace?: { start: number; peak: number; final: number; slowdowns: number };
   urlsWithErrors?: number;
   urlsWithoutErrors?: number;
   httpProbe?: { url: string; status: number; finalUrl: string; redirectsToHttps: boolean } | null;

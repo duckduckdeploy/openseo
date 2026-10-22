@@ -340,6 +340,8 @@ export const audits = pgTable(
     costUsd: doublePrecision("cost_usd").notNull().default(0),
     // While running, after the last page: the step it is on (site-files, resources, external-links, analysis).
     phase: text("phase"),
+    // Times it was put back in the queue after its worker stopped (see resumeInterruptedAudits).
+    attempts: integer("attempts").notNull().default(0),
     error: text("error"),
     createdAt: createdAt(),
     // Touched on every bit of progress; cleanup fails runs whose heartbeat has gone quiet.

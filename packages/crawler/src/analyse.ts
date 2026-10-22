@@ -323,7 +323,8 @@ function redirectIssues(page: PageResult, add: (type: IssueType, detail?: string
     return;
   }
   const codes = hops.map((h) => h.status).join(' → ');
-  add('redirect-3xx', `${codes} → ${page.finalUrl}${page.finalStatus ? ` (${page.finalStatus})` : ''}`, [page.finalUrl]);
+  const hopTime = hops.reduce((sum, h) => sum + (h.timeMs ?? 0), 0);
+  add('redirect-3xx', `${codes} → ${page.finalUrl}${page.finalStatus ? ` (${page.finalStatus})` : ''}${hopTime > 0 ? `, ${hopTime} ms in redirects` : ''}`, [page.finalUrl]);
   if (hops.length >= 2) {
     const suffix = page.errorKind === 'too_many_redirects' ? ' (gave up)' : '';
     add('redirect-chain', `${hops.length} redirects before ${page.finalUrl}${suffix}`, [...urls, page.finalUrl]);
@@ -339,8 +340,29 @@ function redirectIssues(page: PageResult, add: (type: IssueType, detail?: string
   }
   if (page.finalStatus !== null && page.finalStatus >= 400) {
     add('broken-redirect', `Ends at ${page.finalUrl} (HTTP ${page.finalStatus})`, [page.finalUrl]);
+  } else if (page.errorKind && page.errorKind !== 'too_many_redirects') {
+    add('broken-redirect', `Ends at ${page.finalUrl} with no response (${page.errorKind})`, [page.finalUrl]);
+  }
+  if (!page.errorKind && first) {
+    const from = new URL(first.url);
+    const to = new URL(page.finalUrl);
+    if (stripWww(from.hostname) !== stripWww(to.hostname)) {
+      add('redirect-to-external', `Leaves the site for ${to.hostname}`, [page.finalUrl]);
+    } else if (to.pathname === '/' && to.search === '' && !HOME_ALIASES.test(from.pathname) && (page.finalStatus === null || page.finalStatus < 400)) {
+      add('redirect-to-homepage', `${from.pathname} redirects to the home page`, [page.finalUrl]);
+    }
   }
 }
+
+/** Why a page is not indexable, in words for issue details. */
+const INDEXABILITY_WORDS: Partial<Record<IndexabilityReason, string>> = {
+  'noindex-meta': 'noindex (meta robots)',
+  'noindex-header': 'noindex (X-Robots-Tag)',
+  canonicalised: 'canonicalised to another URL',
+};
+
+/** Paths that are the home page under another name (index.html, /home, a language root such as /en/), so redirecting them home is right. */
+const HOME_ALIASES = /^[/](?:(?:index|default|home)(?:[.][a-z]+)?[/]?|[a-z]{2}(?:[-_][a-z]{2})?[/]?)?$/i;
 
 export interface CrawlFacts {
   startUrl: string;
@@ -463,6 +485,12 @@ export function crossPageIssues(pages: PageResult[], facts: CrawlFacts): Issue[]
   for (const page of pages) {
     if (page.fetchClass === 'redirect' && facts.complete && page.inlinks.href === 0 && page.discoveredFrom !== 'start') {
       issues.push(makeIssue('redirect-no-incoming-links', page.url, `Found through ${page.discoveredFrom}`, [page.finalUrl]));
+    }
+    if (page.fetchClass === 'redirect' && !page.redirectLoop) {
+      const target = byUrl.get(page.finalUrl);
+      if (target && isOkHtml(target) && !target.indexable) {
+        issues.push(makeIssue('redirect-to-non-indexable', page.url, `Ends at a page that is ${INDEXABILITY_WORDS[target.indexabilityReason] ?? target.indexabilityReason}`, [page.finalUrl]));
+      }
     }
     if (!isOkHtml(page)) continue;
 
@@ -714,7 +742,7 @@ export type SummaryMeta = Pick<
   | 'sitemapUrls'
   | 'externalLinksChecked'
 > &
-  Partial<Pick<CrawlSummary, 'aiDiscoverability' | 'httpProbe' | 'llmsTxtFound'>> & { resources?: ResourceResult[] };
+  Partial<Pick<CrawlSummary, 'aiDiscoverability' | 'httpProbe' | 'llmsTxtFound' | 'pace'>> & { resources?: ResourceResult[] };
 
 export function summarise(pages: PageResult[], issues: Issue[], meta: SummaryMeta): CrawlSummary {
   const { resources = [], ...rest } = meta;

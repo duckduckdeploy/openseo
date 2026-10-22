@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { strFromU8, unzipSync } from "fflate";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { dataDb, schema } from "../src/db";
-import { processAudit } from "../src/services/audit";
+import { processAudit, resumeInterruptedAudits } from "../src/services/audit";
 import { APP_ORIGIN, getApp, readyUser } from "./client";
 import { harness } from "./harness";
 
@@ -226,6 +226,33 @@ describe("the Site Audit tool", () => {
     const other = await readyUser();
     expect(await other.api.ok("GET", "/tools/site-audits")).toEqual([]);
     expect((await other.api.get(`/audits/${audit.id}`)).status).toBe(404);
+  });
+
+  it("restarts an audit whose worker stopped, then gives up after two restarts", async () => {
+    const { api } = await readyUser();
+    const audit = await api.ok("POST", "/tools/site-audits", { startUrl: `${base}/`, maxPages: 20 });
+    const stall = (attempts: number) =>
+      dataDb
+        .update(schema.audits)
+        .set({ status: "running", attempts, costUsd: 0.06, heartbeatAt: new Date(Date.now() - 5 * 60_000) })
+        .where(eq(schema.audits.id, audit.id));
+    const row = async () => (await dataDb.select().from(schema.audits).where(eq(schema.audits.id, audit.id)))[0]!;
+
+    // A live audit is left alone.
+    await dataDb.update(schema.audits).set({ status: "running", heartbeatAt: new Date() }).where(eq(schema.audits.id, audit.id));
+    expect(await resumeInterruptedAudits()).toBe(0);
+
+    await stall(0);
+    harness.enqueued.length = 0;
+    expect(await resumeInterruptedAudits()).toBe(1);
+    expect(await row()).toMatchObject({ status: "queued", attempts: 1, heartbeatAt: null, costUsd: 0.06 });
+    expect(harness.enqueued).toEqual([{ name: "audit.run", data: { auditId: audit.id } }]);
+    await processAudit(audit.id, crawlLocally());
+    expect((await row()).status).toBe("completed");
+
+    await stall(2);
+    expect(await resumeInterruptedAudits()).toBe(0);
+    expect(await row()).toMatchObject({ status: "failed", error: "Interrupted more than once; start it again" });
   });
 });
 

@@ -38,10 +38,12 @@ export default function SiteAuditTutorial() {
         </Step>
         <Step title="Let it crawl">
           <p>
-            The crawler is polite: two requests at a time, at least half a second apart, and it follows{' '}
-            <code>robots.txt</code>, including its Crawl-delay (up to 10 seconds). It finds pages through links and
-            through your XML sitemaps, and records the exact status code of every URL and every redirect hop. You can
-            leave the page while it runs.
+            The crawler starts with two requests at a time and adds more while your site answers quickly, up to six
+            at a time and four a second. It slows down as soon as the site does. It follows <code>robots.txt</code>,
+            including its Crawl-delay (up to 10 seconds), finds pages through links and your XML sitemaps, and records
+            the exact status code of every URL and every redirect hop. Links with a query string (filters, sorts,
+            tracking) are crawled after the rest, so a page limit is spent on distinct pages first. You can leave the
+            page while it runs.
           </p>
         </Step>
         <Step title="Only if your site needs it: render JavaScript or get past blocks">
@@ -147,7 +149,7 @@ export default function SiteAuditTutorial() {
           links behind it.
         </li>
         <li>
-          <strong>Bulk export</strong>: every crawled URL, every link, links to broken pages or redirects, uncrawled links, images without alt text, resources or external links, each as one CSV.
+          <strong>Bulk export</strong>: every crawled URL, every link, every redirect with its chain hop by hop, links to broken pages or redirects, uncrawled links, images without alt text, resources or external links, each as one CSV.
         </li>
       </ul>
       <Screenshot name="site-audit-tool-exports" alt="Exports of a site audit: the AI fix brief, the zip of every issue and bulk exports" caption="Hand the fix brief to your coding agent, or the CSVs to your team." />

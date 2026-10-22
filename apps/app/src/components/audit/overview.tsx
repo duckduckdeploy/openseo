@@ -307,6 +307,12 @@ export function Overview({ audit, history, onOpenIssue }: { audit: Audit; histor
             rows={[
               ["Ended", STOP_REASON[s.stoppedReason ?? ""] ?? "—"],
               ["Took", ms(s.durationMs)],
+              [
+                "Speed",
+                s.pace && s.durationMs
+                  ? `${num(Math.round(((s.pagesTotal ?? 0) * 60_000) / s.durationMs))} pages a minute, up to ${s.pace.peak} at once${s.pace.slowdowns ? `, slowed ${s.pace.slowdowns}× when the site struggled` : ""}`
+                  : "—",
+              ],
               ["robots.txt", s.robotsTxtFound == null ? "—" : s.robotsTxtFound ? "Found" : "Not found"],
               [
                 "Sitemaps",

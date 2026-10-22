@@ -52,8 +52,13 @@ export interface CrawlOptions {
   maxDurationMs?: number;
   /** Maximum click depth for link-discovered URLs. Sitemap-only URLs are not depth-limited. */
   maxDepth?: number;
-  /** Parallel workers. Default 2. */
+  /** Pages fetched at once at the start. Default 2. */
   concurrency?: number;
+  /**
+   * The most pages fetched at once. Between `concurrency` and this, the crawl adds one after every 10
+   * healthy responses and halves on a 429, 5xx, timeout or slowdown (see Pace). Default: `concurrency` (fixed).
+   */
+  maxConcurrency?: number;
   /** Minimum gap between request starts per host. Default 500. Raised to robots.txt Crawl-delay (capped at 10 s). */
   delayMs?: number;
   /** Default `OpenSEOBot/0.1`. */
@@ -199,6 +204,8 @@ export interface RedirectHop {
   status: number;
   /** Resolved absolute target. */
   location: string;
+  /** Time to this hop's response headers. */
+  timeMs?: number;
 }
 
 export interface Heading {
@@ -464,6 +471,8 @@ export interface CrawlSummary {
   /** Internal links found, by what became of their target. */
   linkStatus: { crawled: number; uncrawled: number; robotsBlocked: number };
   resourcesChecked: number;
+  /** Pages fetched at once: at the start, the most reached, at the end, and how often it was cut. */
+  pace?: { start: number; peak: number; final: number; slowdowns: number };
   /** Audited rows with at least one critical issue, and the rest. */
   urlsWithErrors: number;
   urlsWithoutErrors: number;

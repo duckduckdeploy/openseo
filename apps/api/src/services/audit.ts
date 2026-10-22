@@ -2,13 +2,14 @@ import { env } from "../env";
 import { computeHealthScore, crawlSite, trafficByPage, trafficIssues } from "@openseo/crawler";
 import type { CrawlOptions, Issue, PageResult, PageTraffic } from "@openseo/crawler";
 import type { YepApi } from "@openseo/yepapi";
-import { and, desc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, notInArray, sql } from "drizzle-orm";
 import { dataDb, schema } from "../db";
 import type { AuditLinkKind, AuditOptions, AuditTrigger, RenderMode } from "../db/data-schema";
 import { AppError, notFound, runInProgress } from "../lib/errors";
 import { errorMessage, getYep, isFatalForRun } from "../lib/yep";
 import { compareWithPrevious, findPreviousAudit, groupKey, hostKey } from "./audit-history";
 import { auditTraffic } from "./google";
+import { dispatch } from "../jobs/dispatch";
 
 export const MAX_AUDIT_PAGES = env.AUDIT_MAX_PAGES;
 export const MAX_TOOL_PAGES = env.AUDIT_TOOL_MAX_PAGES;
@@ -215,6 +216,32 @@ export async function failAudit(auditId: string, message: string) {
     .where(and(eq(schema.audits.id, auditId), inArray(schema.audits.status, ["queued", "running"])));
 }
 
+/** How often a running audit touches its heartbeat, and how long a silent one is given before it is restarted. */
+const HEARTBEAT_MS = 30_000;
+const STALE_AFTER = sql`interval '2 minutes'`;
+/** Restarts after an interruption before the audit is failed instead. */
+const MAX_RESTARTS = 2;
+
+/**
+ * Audits whose heartbeat stopped because their worker was restarted (a deploy) or crashed. Each goes
+ * back to the queue and starts over: the crawl is free, and paid rendering keeps counting against
+ * the same cap. After MAX_RESTARTS it fails instead. Returns how many were restarted.
+ */
+export async function resumeInterruptedAudits(): Promise<number> {
+  const stale = and(eq(schema.audits.status, "running"), lt(sql`coalesce(${schema.audits.heartbeatAt}, ${schema.audits.createdAt})`, sql`now() - ${STALE_AFTER}`));
+  await dataDb
+    .update(schema.audits)
+    .set({ status: "failed", error: "Interrupted more than once; start it again", finishedAt: new Date() })
+    .where(and(stale, gte(schema.audits.attempts, MAX_RESTARTS)));
+  const requeued = await dataDb
+    .update(schema.audits)
+    .set({ status: "queued", attempts: sql`${schema.audits.attempts} + 1`, phase: null, pagesCrawled: 0, heartbeatAt: null, startedAt: null })
+    .where(stale)
+    .returning({ id: schema.audits.id });
+  for (const { id } of requeued) await dispatch("audit.run", { auditId: id }, (message) => failAudit(id, message)).catch(() => {});
+  return requeued.length;
+}
+
 /**
  * Runs a queued audit: crawls, compares with the previous audit and stores everything in one
  * transaction. `overrides` reach the crawler unchanged; tests use them to crawl a local site.
@@ -241,110 +268,138 @@ export async function processAudit(auditId: string, overrides: Partial<CrawlOpti
   let processed = 0;
   let cancelled = false;
 
-  // Paid help from YepAPI: rendering, and the fallback for pages the site blocks. Without a key, or
-  // once the audit's cap or the account's budget is spent, the crawl carries on without it and the
-  // summary says why.
-  const paid: PaidUse = { spent: 0, rendered: 0, unblocked: 0, budgetReached: false, unavailable: null };
-  let yep: YepApi | null = null;
-  if (audit.renderMode !== "off" || audit.useFallback) {
-    try {
-      yep = await getYep({ userId: audit.userId, projectId: audit.projectId, feature: "site_audit" });
-    } catch (error) {
-      paid.unavailable = errorMessage(error);
-    }
-  }
-  const affordable = (price: number): boolean => {
-    if (paid.unavailable) return false;
-    if (audit.maxCostUsd !== null && paid.spent + price > audit.maxCostUsd + 1e-9) {
-      paid.budgetReached = true;
-      return false;
-    }
-    return true;
-  };
-  const paidCall = async (price: number, call: () => Promise<{ costUsd: number; data: { content?: string; statusCode?: number } }>) => {
-    if (!affordable(price)) return null;
-    try {
-      const res = await call();
-      paid.spent += res.costUsd;
-      return res.data.content ? { html: res.data.content, status: res.data.statusCode } : null;
-    } catch (error) {
-      // Out of credits, a bad key or the monthly budget: every later call would fail the same way.
-      if (isFatalForRun(error)) paid.unavailable = errorMessage(error);
-      throw error;
-    }
-  };
-  const client = yep;
-  const render =
-    client && audit.renderMode !== "off"
-      ? async (url: string) => {
-          const page = await paidCall(RENDER_PRICE, () => client.scrape.js({ url, format: "html" }));
-          if (page) paid.rendered++;
-          return page;
+  // A steady heartbeat while the audit runs, through the checks after the last page and the storing
+  // too, so one that stops beating was interrupted (see resumeInterruptedAudits). It also notices a
+  // cancel between pages.
+  const heartbeat = setInterval(() => {
+    void dataDb
+      .update(schema.audits)
+      .set({ heartbeatAt: new Date() })
+      .where(and(eq(schema.audits.id, auditId), eq(schema.audits.status, "running")))
+      .returning({ id: schema.audits.id })
+      .then((rows) => {
+        if (rows.length === 0 && !controller.signal.aborted) {
+          cancelled = true;
+          controller.abort();
         }
-      : undefined;
-  const fallback =
-    client && audit.useFallback
-      ? async (url: string) => {
-          const page = await paidCall(FALLBACK_PRICE, () => client.scrape.stealth({ url, format: "html" }));
-          if (page) paid.unblocked++;
-          return page;
-        }
-      : undefined;
+      })
+      .catch(() => {});
+  }, HEARTBEAT_MS);
+  heartbeat.unref();
 
-  const options = audit.options ?? {};
-  let result: CrawlResult;
   try {
-    result = await crawlSite(
-      {
-        startUrl: audit.startUrl,
-        maxPages: audit.maxPages,
-        maxDurationMs: MAX_DURATION_MS,
-        concurrency: 2,
-        delayMs: 500,
-        userAgent: "OpenSEOBot/0.1 (+https://openseo.gg/bot)",
-        signal: controller.signal,
-        render,
-        renderWhen: audit.renderMode === "always" ? "always" : "suspected",
-        fallback,
-        include: options.include?.length ? options.include : undefined,
-        exclude: options.exclude?.length ? options.exclude : undefined,
-        checkExternalLinks: options.checkExternalLinks ?? true,
-        maxExternalLinks: MAX_EXTERNAL_LINKS,
-        maxResources: MAX_RESOURCES,
-        ...overrides,
-      },
-      {
-        onPage: async (_page, progress) => {
-          processed = progress.pagesProcessed;
-          if (processed % 10 !== 0) return;
-          const [current] = await dataDb
-            .update(schema.audits)
-            .set({ pagesCrawled: processed, costUsd: paid.spent, heartbeatAt: new Date() })
-            .where(eq(schema.audits.id, auditId))
-            .returning({ status: schema.audits.status });
-          if (current?.status !== "running") {
-            cancelled = true;
-            controller.abort();
+
+    // Paid help from YepAPI: rendering, and the fallback for pages the site blocks. Without a key, or
+    // once the audit's cap or the account's budget is spent, the crawl carries on without it and the
+    // summary says why.
+    // A restarted audit keeps counting what it already spent against its cap.
+    const paid: PaidUse = { spent: audit.costUsd, rendered: 0, unblocked: 0, budgetReached: false, unavailable: null };
+    let yep: YepApi | null = null;
+    if (audit.renderMode !== "off" || audit.useFallback) {
+      try {
+        yep = await getYep({ userId: audit.userId, projectId: audit.projectId, feature: "site_audit" });
+      } catch (error) {
+        paid.unavailable = errorMessage(error);
+      }
+    }
+    const affordable = (price: number): boolean => {
+      if (paid.unavailable) return false;
+      if (audit.maxCostUsd !== null && paid.spent + price > audit.maxCostUsd + 1e-9) {
+        paid.budgetReached = true;
+        return false;
+      }
+      return true;
+    };
+    const paidCall = async (price: number, call: () => Promise<{ costUsd: number; data: { content?: string; statusCode?: number } }>) => {
+      if (!affordable(price)) return null;
+      try {
+        const res = await call();
+        paid.spent += res.costUsd;
+        return res.data.content ? { html: res.data.content, status: res.data.statusCode } : null;
+      } catch (error) {
+        // Out of credits, a bad key or the monthly budget: every later call would fail the same way.
+        if (isFatalForRun(error)) paid.unavailable = errorMessage(error);
+        throw error;
+      }
+    };
+    const client = yep;
+    const render =
+      client && audit.renderMode !== "off"
+        ? async (url: string) => {
+            const page = await paidCall(RENDER_PRICE, () => client.scrape.js({ url, format: "html" }));
+            if (page) paid.rendered++;
+            return page;
           }
-        },
-        onPhase: async (phase) => {
-          await dataDb.update(schema.audits).set({ phase, pagesCrawled: processed, heartbeatAt: new Date() }).where(eq(schema.audits.id, auditId));
-        },
-      },
-    );
-  } catch (error) {
-    // crawlSite rejects only for an unusable start URL (malformed, or a private/internal address).
-    await failAudit(auditId, error instanceof Error ? error.message : "Audit failed");
-    return;
-  }
+        : undefined;
+    const fallback =
+      client && audit.useFallback
+        ? async (url: string) => {
+            const page = await paidCall(FALLBACK_PRICE, () => client.scrape.stealth({ url, format: "html" }));
+            if (page) paid.unblocked++;
+            return page;
+          }
+        : undefined;
 
-  try {
-    await storeAudit(audit, result, cancelled, paid);
-  } catch (error) {
-    await failAudit(auditId, `The crawl finished but its results could not be stored: ${errorMessage(error)}`);
-    return;
+    const options = audit.options ?? {};
+    let result: CrawlResult;
+    try {
+      result = await crawlSite(
+        {
+          startUrl: audit.startUrl,
+          maxPages: audit.maxPages,
+          maxDurationMs: MAX_DURATION_MS,
+          // Starts at two pages at once and adds more while the site answers quickly (up to six), with
+          // request starts to one host at least 250 ms apart: at most four a second.
+          concurrency: 2,
+          maxConcurrency: 6,
+          delayMs: 250,
+          userAgent: "OpenSEOBot/0.1 (+https://openseo.gg/bot)",
+          signal: controller.signal,
+          render,
+          renderWhen: audit.renderMode === "always" ? "always" : "suspected",
+          fallback,
+          include: options.include?.length ? options.include : undefined,
+          exclude: options.exclude?.length ? options.exclude : undefined,
+          checkExternalLinks: options.checkExternalLinks ?? true,
+          maxExternalLinks: MAX_EXTERNAL_LINKS,
+          maxResources: MAX_RESOURCES,
+          ...overrides,
+        },
+        {
+          onPage: async (_page, progress) => {
+            processed = progress.pagesProcessed;
+            if (processed % 10 !== 0) return;
+            const [current] = await dataDb
+              .update(schema.audits)
+              .set({ pagesCrawled: processed, costUsd: paid.spent, heartbeatAt: new Date() })
+              .where(eq(schema.audits.id, auditId))
+              .returning({ status: schema.audits.status });
+            if (current?.status !== "running") {
+              cancelled = true;
+              controller.abort();
+            }
+          },
+          onPhase: async (phase) => {
+            await dataDb.update(schema.audits).set({ phase, pagesCrawled: processed, heartbeatAt: new Date() }).where(eq(schema.audits.id, auditId));
+          },
+        },
+      );
+    } catch (error) {
+      // crawlSite rejects only for an unusable start URL (malformed, or a private/internal address).
+      await failAudit(auditId, error instanceof Error ? error.message : "Audit failed");
+      return;
+    }
+
+    try {
+      await storeAudit(audit, result, cancelled, paid);
+    } catch (error) {
+      await failAudit(auditId, `The crawl finished but its results could not be stored: ${errorMessage(error)}`);
+      return;
+    }
+    await pruneOldAudits(audit).catch(() => {});
+  } finally {
+    clearInterval(heartbeat);
   }
-  await pruneOldAudits(audit).catch(() => {});
 }
 
 async function storeAudit(audit: Audit, result: CrawlResult, cancelled: boolean, paid: PaidUse) {

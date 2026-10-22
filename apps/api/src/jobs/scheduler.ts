@@ -4,7 +4,7 @@ import { nextRunAfter } from "../lib/pool";
 import { AppError, isRunInProgress } from "../lib/errors";
 import { failAiRun, startAiRun } from "../services/ai";
 import { cleanupOAuth } from "../services/oauth";
-import { buildAuditRequest, failAudit, startAudit } from "../services/audit";
+import { buildAuditRequest, failAudit, resumeInterruptedAudits, startAudit } from "../services/audit";
 import { failRankRun, startRankRun } from "../services/rank";
 import { dispatch } from "./dispatch";
 import { defineJob } from "./queue";
@@ -21,6 +21,13 @@ const retrySoon = (error: unknown) => isRunInProgress(error) || (error instanceo
 // Manual runs leave the schedule alone.
 defineJob("scheduler.tick", 1, async (_data, log) => {
   const now = new Date();
+
+  // Audits cut off by a restart or crash start over (see resumeInterruptedAudits).
+  const resumed = await resumeInterruptedAudits().catch((error) => {
+    log.error({ err: error }, "resuming interrupted audits failed");
+    return 0;
+  });
+  if (resumed > 0) log.info({ resumed }, "interrupted audits restarted");
 
   const dueTrackers = await dataDb
     .select()

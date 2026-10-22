@@ -348,7 +348,7 @@ export async function fetchUrl(ctx: FetchContext, url: string, request: FetchReq
             error: { kind: 'unknown', message: `Invalid redirect target: ${location}` },
           });
         }
-        chain.push({ url: current, status: res.status, location: next });
+        chain.push({ url: current, status: res.status, location: next, timeMs: responseTimeMs });
         if (visited.has(next)) {
           current = next;
           return outcome({

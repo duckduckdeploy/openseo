@@ -346,6 +346,7 @@ export const BULK_EXPORTS = {
   "images-without-alt": { title: "Image references without alt text", description: "Every image used without an alt attribute." },
   "links-to-robots-blocked": { title: "Links to URLs blocked by robots.txt", description: "Links to URLs the crawler could not fetch because of robots.txt." },
   "links-to-4xx": { title: "Links to 4xx (client error) URLs", description: "Links to URLs answering with a client error." },
+  "redirect-chains": { title: "Redirects", description: "Every redirecting URL with its chain hop by hop, response times, where it ends and whether that page is indexable." },
   "links-to-redirects": { title: "Links to redirects", description: "Links to URLs that redirect, with where they end up." },
   resources: { title: "Images, scripts and stylesheets", description: "Every resource checked, with status and size." },
   "external-links": { title: "External links", description: "Links to other sites, with each target's status when it was checked." },
@@ -395,6 +396,68 @@ async function* pagesCsv(auditId: string): AsyncGenerator<string> {
   }
 }
 
+/** Every redirecting URL with its whole chain, hop by hop, and where it ends. */
+async function* redirectsCsv(auditId: string): AsyncGenerator<string> {
+  yield BOM +
+    csvLine([
+      "URL",
+      "HTTP status code",
+      "No. of redirects",
+      "Redirect chain URLs",
+      "Redirect chain codes",
+      "Hop response times (ms)",
+      "Total redirect time (ms)",
+      "Has temporary redirect",
+      "Is loop",
+      "Final URL",
+      "Final HTTP status code",
+      "Final URL is indexable",
+      "Error",
+      "No. of inlinks",
+      "Organic traffic",
+      "Is in sitemap",
+    ]);
+  const P = schema.auditPages;
+  let after: string | null = null;
+  for (;;) {
+    const rows = await dataDb
+      .select({ page: P, finalIndexable: targetPage.indexable })
+      .from(P)
+      .leftJoin(targetPage, and(eq(targetPage.auditId, auditId), eq(targetPage.url, sql`${P.data}->>'finalUrl'`)))
+      .where(and(eq(P.auditId, auditId), gte(P.status, 300), lt(P.status, 400), after ? gt(P.url, after) : undefined))
+      .orderBy(asc(P.url))
+      .limit(BATCH);
+    if (rows.length === 0) return;
+    yield rows
+      .map(({ page, finalIndexable }) => {
+        const d = page.data as PageData & { redirectLoop?: boolean; errorMessage?: string | null };
+        const hops = d.redirectChain ?? [];
+        const times = hops.map((h) => (h as { timeMs?: number }).timeMs ?? null);
+        return csvLine([
+          page.url,
+          page.status,
+          hops.length,
+          [...hops.map((h) => h.url), d.finalUrl],
+          hops.map((h) => h.status),
+          times,
+          times.every((t) => t === null) ? null : times.reduce<number>((sum, t) => sum + (t ?? 0), 0),
+          hops.some((h) => [302, 303, 307].includes(h.status)),
+          d.redirectLoop ?? false,
+          d.finalUrl,
+          d.finalStatus,
+          finalIndexable,
+          d.errorMessage ?? null,
+          page.inlinks,
+          page.clicks,
+          page.inSitemap,
+        ]);
+      })
+      .join("");
+    if (rows.length < BATCH) return;
+    after = rows[rows.length - 1]!.page.url;
+  }
+}
+
 async function* resourcesCsv(auditId: string, types: ("image" | "script" | "stylesheet" | "external")[]): AsyncGenerator<string> {
   yield BOM + csvLine(["URL", "Type", "HTTP status code", "Is broken", "Content type", "Size (bytes)", "Redirected", "No. of pages using it"]);
   const R = schema.auditResources;
@@ -425,6 +488,8 @@ export function bulkCsv(auditId: string, kind: BulkExport): AsyncGenerator<strin
       return links(sql`${targetPage.data}->>'fetchClass' = 'robots_blocked'`);
     case "links-to-4xx":
       return links(and(inArray(L.kind, INTO_PAGE), gte(targetPage.status, 400), lt(targetPage.status, 500)));
+    case "redirect-chains":
+      return redirectsCsv(auditId);
     case "links-to-redirects":
       return links(and(inArray(L.kind, INTO_PAGE), gte(targetPage.status, 300), lt(targetPage.status, 400)));
     case "resources":

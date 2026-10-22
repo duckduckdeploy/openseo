@@ -13,7 +13,8 @@ type PageData = Partial<{
   finalStatus: number | null;
   fetchClass: string;
   errorMessage: string | null;
-  redirectChain: { url: string; status: number; location: string }[];
+  redirectChain: { url: string; status: number; location: string; timeMs?: number }[];
+  redirectLoop: boolean;
   via: "direct" | "render" | "fallback";
   needsJavaScript: boolean;
   sizeBytes: number | null;
@@ -133,15 +134,22 @@ export function PagePanel({ auditId, pageId, titles, onClose }: { auditId: strin
                   <li key={`${hop.url}-${index}`} className="rounded-md border border-line px-3 py-2">
                     <span className="mr-2 font-mono text-xs text-warn tabular">{hop.status}</span>
                     <span className="font-mono text-xs break-all">{hop.url}</span>
+                    {hop.timeMs != null && <span className="ml-2 font-mono text-xs text-muted tabular">{ms(hop.timeMs)}</span>}
                     <span className="block font-mono text-xs break-all text-muted">→ {hop.location}</span>
                   </li>
                 ))}
               </ol>
-              {data.finalStatus != null && (
-                <p className="mt-1 text-xs text-muted">
-                  Ends with HTTP <StatusCode status={data.finalStatus} />
-                </p>
-              )}
+              <p className="mt-1 text-xs text-muted">
+                {data.redirectLoop ? (
+                  <span className="text-neg">Loops back on itself</span>
+                ) : data.finalStatus != null ? (
+                  <>
+                    Ends at <span className="font-mono break-all">{data.finalUrl}</span> with HTTP <StatusCode status={data.finalStatus} />
+                  </>
+                ) : (
+                  <span className="text-neg">Ends with no response{data.errorMessage ? `: ${data.errorMessage}` : ""}</span>
+                )}
+              </p>
             </section>
           )}
 

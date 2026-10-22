@@ -168,10 +168,12 @@ describe('SSRF guard', () => {
     const result = await crawlSite({ startUrl: 'http://93.184.216.34/', fetch: fakeFetch, delayMs: 0 });
     expect(requested.some((u) => u.includes('127.0.0.1'))).toBe(false);
     const start = result.pages.find((p) => p.url === 'http://93.184.216.34/');
-    expect(start).toMatchObject({ fetchClass: 'error', errorKind: 'ssrf', status: 302 });
+    // The redirect itself worked; its destination was refused, so it is a broken redirect.
+    expect(start).toMatchObject({ fetchClass: 'redirect', errorKind: 'ssrf', status: 302, finalStatus: null });
+    expect(result.issues.find((i) => i.url === 'http://93.184.216.34/' && i.type === 'broken-redirect')?.detail).toContain('no response (ssrf)');
     expect(start?.redirectChain).toHaveLength(1);
-    expect(result.issues.filter((i) => i.url === 'http://93.184.216.34/').map((i) => i.type)).toEqual(['fetch-failed']);
-    expect(result.summary.pagesFailed).toBe(1);
+    expect(result.issues.filter((i) => i.url === 'http://93.184.216.34/').map((i) => i.type)).toEqual(expect.arrayContaining(['redirect-3xx', 'broken-redirect']));
+    expect(result.issues.some((i) => i.url === 'http://93.184.216.34/' && i.type === 'fetch-failed')).toBe(false);
 
     const plain = await crawlSite({ startUrl: 'http://93.184.216.34/page', fetch: fakeFetch, delayMs: 0 });
     expect(plain.pages[0]).toMatchObject({ fetchClass: 'ok', title: 't' });
@@ -180,7 +182,7 @@ describe('SSRF guard', () => {
 
     const second = await crawlSite({ startUrl: 'http://93.184.216.34/meta', fetch: fakeFetch, delayMs: 0 });
     expect(requested.some((u) => u.includes('169.254'))).toBe(false);
-    expect(second.pages[0]).toMatchObject({ fetchClass: 'error', errorKind: 'ssrf' });
+    expect(second.pages[0]).toMatchObject({ fetchClass: 'redirect', errorKind: 'ssrf' });
   });
 
   it('pins DNS in the built-in transport: a hostname resolving to loopback is refused at connect time', async () => {

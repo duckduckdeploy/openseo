@@ -26,7 +26,10 @@ export default function BotPage() {
 
         <h2>How it crawls</h2>
         <ul>
-          <li>At most two requests at a time to a site, at least half a second apart.</li>
+          <li>
+            Two requests at a time to start. While the site answers quickly it adds more, up to six at a time and never
+            more than four a second. It halves that as soon as the site slows down or answers with errors.
+          </li>
           <li>
             It follows <code>robots.txt</code>: the rules for <code>OpenSEOBot</code>, or for <code>*</code> when there
             are none, including <code>Crawl-delay</code> up to 10 seconds.

@@ -3,6 +3,7 @@ import { DEFAULT_THRESHOLDS, computeIndexability, crossPageIssues, markIndexabil
 import { canonicalFromLinkHeader, extractPage, extractSecurityHeaders } from './extract';
 import type { ExtractedPage } from './extract';
 import { emptyInlinks } from './graph';
+import { Pace } from './pace';
 import {
   HostThrottle,
   classifyResponse,
@@ -38,6 +39,8 @@ export const DEFAULT_USER_AGENT = 'OpenSEOBot/0.1';
 
 const MAX_ROBOTS_BLOCKED_ROWS = 1000;
 const MAX_FRONTIER = 200_000;
+/** Links to other sites checked at once; each site still has its own throttle. */
+const EXTERNAL_CONCURRENCY = 8;
 const MAX_CRAWL_DELAY_MS = 10_000;
 const HTML_TYPE = /text\/html|application\/xhtml\+xml/i;
 const LLMS_TXT_MAX_BYTES = 64 * 1024;
@@ -240,10 +243,17 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
 
   const pages: PageResult[] = [];
   const entries = new Map<string, FrontierEntry>();
+  // Breadth-first: linked URLs without a query string, then linked URLs with one (usually filters,
+  // sorts and tracking variants of pages already in the first queue), then sitemap-only URLs.
   const linkQueue: string[] = [];
+  const paramQueue: string[] = [];
   const lowQueue: string[] = [];
   let linkHead = 0;
+  let paramHead = 0;
   let lowHead = 0;
+  const queueFor = (url: string): string[] => (url.includes('?') ? paramQueue : linkQueue);
+  const maxConcurrency = Math.max(concurrency, options.maxConcurrency ?? concurrency);
+  const pace = new Pace(concurrency, maxConcurrency);
   const excluded = new Set<string>();
   const sitemapSet = new Set<string>();
   /** Sitemap documents listing each URL. */
@@ -293,8 +303,11 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
         if (options.maxDepth !== undefined && depth > options.maxDepth) return;
         existing.depth = depth;
         existing.source = source;
-        linkQueue.push(url);
+        queueFor(url).push(url);
         notify();
+      } else if (existing.state === 'pending' && existing.depth !== null && depth !== null && depth < existing.depth) {
+        // Found closer to the start than first thought (the parameter queue is crawled later).
+        existing.depth = depth;
       }
       return;
     }
@@ -308,13 +321,21 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     if (depth !== null && options.maxDepth !== undefined && depth > options.maxDepth) return;
     if (entries.size >= MAX_FRONTIER) return;
     setEntry({ url, fetchUrl: fetchForms.get(url) ?? url, depth, source, state: 'pending' });
-    (depth === null ? lowQueue : linkQueue).push(url);
+    (depth === null ? lowQueue : queueFor(url)).push(url);
     notify();
   };
 
   const take = (): FrontierEntry | null => {
     while (linkHead < linkQueue.length) {
       const entry = entries.get(linkQueue[linkHead++] ?? '');
+      if (entry && entry.state === 'pending') {
+        entry.state = 'taken';
+        pending--;
+        return entry;
+      }
+    }
+    while (paramHead < paramQueue.length) {
+      const entry = entries.get(paramQueue[paramHead++] ?? '');
       if (entry && entry.state === 'pending') {
         entry.state = 'taken';
         pending--;
@@ -411,9 +432,17 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     await record(page);
   };
 
+  /** A redirect's destination is only read when it will become a row: not when it is crawled already or off-site. */
+  const readDestination = (finalUrl: string): boolean => {
+    const key = toKey(normalizeUrl(finalUrl, undefined, fetchNorm) ?? finalUrl);
+    return isInternal(key) && entries.get(key)?.state !== 'taken';
+  };
+
   const fetchPage = async (url: string): Promise<FetchOutcome> => {
     for (let attempt = 0; ; attempt++) {
-      const out = await fetchUrl(ctx, url, { wantBody: (contentType) => HTML_TYPE.test(contentType) });
+      const out = await fetchUrl(ctx, url, { wantBody: (contentType, finalUrl) => HTML_TYPE.test(contentType) && (finalUrl === url || readDestination(finalUrl)) });
+      const status = out.error ? 0 : out.status;
+      pace.record(out.responseTimeMs, status === 429 || status >= 500 || out.error?.kind === 'timeout' || out.error?.kind === 'connection');
       if (out.error) return out;
       if (out.status !== 429) {
         consecutiveRateLimited = 0;
@@ -549,7 +578,8 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     } else {
       row.finalStatus = out.status;
     }
-    row.fetchClass = out.error && !chainProblem ? 'error' : 'redirect';
+    // A redirect whose destination gave no response is still a redirect: a broken one (see redirectIssues).
+    row.fetchClass = out.error && !chainProblem && out.redirectChain.length === 0 ? 'error' : 'redirect';
     await record(row);
     if (out.error) return;
 
@@ -583,8 +613,10 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
   const worker = async (): Promise<void> => {
     for (;;) {
       if (stopped()) return;
-      const entry = attempted < maxPages ? take() : null;
+      await pace.acquire();
+      const entry = attempted < maxPages && !stopped() ? take() : null;
       if (!entry) {
+        pace.release();
         if (active === 0) return;
         await new Promise<void>((resolve) => waiters.push(resolve));
         continue;
@@ -597,6 +629,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
         log('warn', `Unexpected error on ${entry.url}: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
         active--;
+        pace.release();
         notify();
       }
     }
@@ -628,7 +661,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
       if (finalOrigin !== startOrigin && isInternal(startRow.finalUrl)) await discoverSitemaps(finalOrigin);
     }
 
-    await Promise.all(Array.from({ length: concurrency }, worker));
+    await Promise.all(Array.from({ length: maxConcurrency }, worker));
     await phase('site-files');
 
     // Site-level files and the plain-HTTP version, on the origin the start URL settled on.
@@ -670,7 +703,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
         for (const url of page.stylesheets) note(url, 'stylesheet', page.url);
       }
       const targets = [...found.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, Math.max(0, options.maxResources ?? 500));
-      await runPool(targets, concurrency, async ([url, entry]) => {
+      await runPool(targets, pace.limit, async ([url, entry]) => {
         if (stopped() || !(await robotsAllows(url))) return;
         const requestUrl = fetchForms.get(url) ?? url;
         let out = await fetchUrl(ctx, requestUrl, { method: 'HEAD', accept: '*/*' });
@@ -706,7 +739,8 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
         }
       }
       const targets = [...sources.keys()].slice(0, Math.max(0, options.maxExternalLinks ?? 100));
-      await runPool(targets, concurrency, async (url) => {
+      // Other sites, each with its own throttle, so more of them can be checked at once.
+      await runPool(targets, Math.max(concurrency, EXTERNAL_CONCURRENCY), async (url) => {
         if (stopped()) return;
         const requestUrl = fetchForms.get(url) ?? url;
         let out = await fetchUrl(ctx, requestUrl, { method: 'HEAD', accept: '*/*' });
@@ -790,6 +824,7 @@ export async function crawlSite(options: CrawlOptions, hooks: CrawlHooks = {}): 
     httpProbe,
     llmsTxtFound: llmsTxtFound === true,
     resources,
+    pace: { start: concurrency, peak: pace.peak, final: pace.limit, slowdowns: pace.slowdowns },
   });
   log('info', `Crawl ${stoppedReason}: ${pages.length} pages, ${issues.length} issues, health ${summary.healthScore}`);
   return { pages, issues, externalLinks, resources, summary };

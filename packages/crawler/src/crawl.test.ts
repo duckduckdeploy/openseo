@@ -185,10 +185,14 @@ function buildSite(): Record<string, (res: http.ServerResponse) => void> {
       res.writeHead(429, { 'content-type': 'text/html', 'retry-after': '0' });
       res.end('slow down');
     },
+    '/rate-again': (res) => {
+      res.writeHead(429, { 'content-type': 'text/html', 'retry-after': '0' });
+      res.end('slow down');
+    },
     '/rate-home': page({
       title: 'Rate limit test start page',
       description: desc('rate limits'),
-      body: `<h1>Rate</h1><p>${WORDS}</p><a href="/rate">a</a><a href="/rate?x=1">b</a><a href="/about">c</a>`,
+      body: `<h1>Rate</h1><p>${WORDS}</p><a href="/rate">a</a><a href="/rate-again">b</a><a href="/about">c</a>`,
     }),
     '/hang': () => {
       // never answers
@@ -327,15 +331,15 @@ describe('crawlSite on the fixture site', () => {
     const old = page('/old');
     expect(old).toMatchObject({ status: 301, fetchClass: 'redirect', finalUrl: `${base}/about`, finalStatus: 200, redirectLoop: false });
     expect(old.redirectChain).toEqual([
-      { url: `${base}/old`, status: 301, location: `${base}/older` },
-      { url: `${base}/older`, status: 302, location: `${base}/about` },
+      { url: `${base}/old`, status: 301, location: `${base}/older`, timeMs: expect.any(Number) },
+      { url: `${base}/older`, status: 302, location: `${base}/about`, timeMs: expect.any(Number) },
     ]);
     expect(issue('redirect-chain', '/old')?.relatedUrls).toEqual([`${base}/old`, `${base}/older`, `${base}/about`]);
     expect(page('/loop-a')).toMatchObject({ fetchClass: 'redirect', redirectLoop: true, errorKind: 'redirect_loop' });
     expect(typesFor('/loop-a')).toEqual(['redirect-loop']);
     expect(issue('internal-link-to-redirect', '/')?.relatedUrls).toEqual([`${base}/old`, `${base}/loop-a`]);
     expect(issue('redirect-in-sitemap', '/old')?.detail).toBe(`Redirects to ${base}/about`);
-    expect(issue('redirect-3xx', '/old')?.detail).toBe(`301 → 302 → ${base}/about (200)`);
+    expect(issue('redirect-3xx', '/old')?.detail?.startsWith(`301 → 302 → ${base}/about (200)`)).toBe(true);
     expect(issue('temporary-redirect', '/old')?.detail).toBe(`302 to ${base}/about`);
     expect(issue('broken-redirect', '/old')).toBeUndefined();
   });
@@ -577,7 +581,8 @@ describe('crawlSite options', () => {
       }),
       { onLog: (_, message) => logs.push(message) },
     );
-    expect(hits.get('/rate')).toBe(4);
+    expect(hits.get('/rate')).toBe(2);
+    expect(hits.get('/rate-again')).toBe(2);
     const limited = result.pages.filter((p) => p.fetchClass === 'rate_limited');
     expect(limited).toHaveLength(2);
     expect(result.issues.filter((i) => i.type === 'rate-limited-page')).toHaveLength(2);
@@ -664,6 +669,77 @@ describe('crawl limits and edge cases', () => {
     expect(result.pages.filter((p) => p.fetchClass !== 'robots_blocked').length).toBeLessThanOrEqual(5);
     expect(result.pages.filter((p) => p.url.includes('/t'))).toHaveLength(1);
     expect(result.summary.stoppedReason).toBe('max_pages');
+  });
+
+  it('crawls parameter variants after clean URLs, so a page limit goes to distinct pages first', async () => {
+    const site = fakeSite({
+      '/': htmlPage('<a href="/shop?sort=price">a</a><a href="/shop?sort=name">b</a><a href="/shop">c</a><a href="/about">d</a>'),
+      '/shop': htmlPage(''),
+      '/about': htmlPage(''),
+    });
+    const result = await crawlSite(fakeOptions(site, { concurrency: 1, maxPages: 3 }));
+    expect(result.pages.filter((p) => p.fetchClass !== 'robots_blocked').map((p) => p.url)).toEqual(['https://example.com/', 'https://example.com/shop', 'https://example.com/about']);
+    expect(result.summary.stoppedReason).toBe('max_pages');
+  });
+
+  it('does not download a redirect destination that was crawled already', async () => {
+    let served = 0;
+    let read = 0;
+    const body = html({ title: 'A page title for tests', description: desc('fake'), body: `<h1>Fake</h1><p>${WORDS}</p>` });
+    const target = () => {
+      served++;
+      const stream = new ReadableStream<Uint8Array>(
+        {
+          pull(controller) {
+            read++;
+            controller.enqueue(new TextEncoder().encode(body));
+            controller.close();
+          },
+        },
+        { highWaterMark: 0 },
+      );
+      return new Response(stream, { headers: { 'content-type': 'text/html' } });
+    };
+    const site = fakeSite({
+      '/': htmlPage('<a href="/target">a</a><a href="/old">b</a>'),
+      '/target': target,
+      '/old': () => new Response(null, { status: 301, headers: { location: 'https://example.com/target' } }),
+    });
+    const result = await crawlSite(fakeOptions(site, { concurrency: 1 }));
+    expect(result.pages.find((p) => p.url === 'https://example.com/old')).toMatchObject({ fetchClass: 'redirect', finalStatus: 200 });
+    expect(served).toBe(2);
+    expect(read).toBe(1);
+  });
+
+  it('flags redirects to the home page, to another site and to a non-indexable page', async () => {
+    const moved = (location: string) => () => new Response(null, { status: 301, headers: { location } });
+    const site = fakeSite({
+      '/': htmlPage('<a href="/old-product">a</a><a href="/index.html">b</a><a href="/en-us/">e</a><a href="/out">c</a><a href="/moved">d</a>'),
+      '/old-product': moved('https://example.com/'),
+      '/index.html': moved('https://example.com/'),
+      '/en-us/': moved('https://example.com/'),
+      '/out': moved('https://other.test/landing'),
+      'other.test/landing': htmlPage(''),
+      '/moved': moved('https://example.com/hidden'),
+      '/hidden': () =>
+        new Response(html({ title: 'A hidden page for tests', description: desc('hidden'), head: '<meta name="robots" content="noindex">', body: `<h1>Hidden</h1><p>${WORDS}</p>` }), {
+          headers: { 'content-type': 'text/html' },
+        }),
+    });
+    const result = await crawlSite(fakeOptions(site));
+    const typesOf = (path: string) => result.issues.filter((i) => i.url === `https://example.com${path}`).map((i) => i.type);
+    expect(typesOf('/old-product')).toContain('redirect-to-homepage');
+    expect(typesOf('/index.html')).not.toContain('redirect-to-homepage');
+    expect(typesOf('/en-us/')).not.toContain('redirect-to-homepage');
+    expect(typesOf('/out')).toContain('redirect-to-external');
+    expect(typesOf('/moved')).toContain('redirect-to-non-indexable');
+    expect(result.issues.find((i) => i.type === 'redirect-to-non-indexable')?.detail).toBe('Ends at a page that is noindex (meta robots)');
+  });
+
+  it('reports how many pages it fetched at once', async () => {
+    const site = fakeSite({ '/': htmlPage('') });
+    const result = await crawlSite(fakeOptions(site, { concurrency: 2, maxConcurrency: 5 }));
+    expect(result.summary.pace).toEqual({ start: 2, peak: 2, final: 2, slowdowns: 0 });
   });
 
   it('treats a 3xx without Location as a failed response, not a redirect', async () => {
