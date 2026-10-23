@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Price } from "@/components/research/lookup-ui";
 import { ms, ScoreGauge, Segmented } from "@/components/tracking/kit";
 import { Badge, Button, Card, CardHeader, cx, ErrorNote, Field, Input, Spinner, Table } from "@/components/ui";
-import { dateTime, usd } from "@/lib/api";
+import { dateTime } from "@/lib/api";
 import { useEstimate, useLookup } from "@/lib/lookup";
 import { type Severity, sortLighthouseAudits } from "@openseo/shared";
 
@@ -88,9 +87,6 @@ export function LighthouseCard({ projectId, domain }: { projectId: string; domai
         <Button type="submit" variant="primary" loading={lookup.isPending} disabled={!valid || estimate.stale}>
           Run Lighthouse
         </Button>
-        <div className="w-full">
-          <Price estimate={estimate} active={input !== null} note="per test, from your YepAPI balance. A repeat within the hour is free." />
-        </div>
       </form>
       {lookup.error && (
         <div className="px-4 pb-4">
@@ -105,7 +101,7 @@ export function LighthouseCard({ projectId, domain }: { projectId: string; domai
       {data && lookup.result && !lookup.isPending && (
         <div className="space-y-5 border-t border-line p-4">
           <p className="font-mono text-xs break-all text-muted">
-            {data.url} · {data.device} · {lookup.result.cached ? "from cache, free" : `cost ${usd(lookup.result.costUsd)}`} · {dateTime(lookup.result.fetchedAt)}
+            {data.url} · {data.device} · fetched {dateTime(lookup.result.fetchedAt)}
           </p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <ScoreGauge label="Performance" score={toHundred(data.performanceScore)} />

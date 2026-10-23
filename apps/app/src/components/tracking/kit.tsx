@@ -5,7 +5,7 @@ import { ArrowDown, ArrowUp, ChevronsUpDown, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useId, useRef } from "react";
 import { Badge, Button, Card, cx, ErrorNote } from "@/components/ui";
-import { api, usd } from "@/lib/api";
+import { api } from "@/lib/api";
 import { safeHref } from "@/lib/url";
 
 export type RunStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
@@ -16,7 +16,6 @@ export const isActive = (status: RunStatus | null | undefined) => status === "qu
 
 export const pct = (value: number | null | undefined) => (value == null ? "—" : `${value}%`);
 export const ms = (value: number | null | undefined) => (value == null ? "—" : value >= 1000 ? `${(value / 1000).toFixed(1)} s` : `${Math.round(value)} ms`);
-export const usdRange = (min: number, max: number) => (max !== min ? `${usd(min)} – ${usd(max)}` : usd(min));
 
 /** Splits a textarea into trimmed, de-duplicated lines. */
 export const lines = (text: string, lower = false) => [
@@ -328,14 +327,13 @@ export function ProgressBar({ done, total, label }: { done: number; total: numbe
   );
 }
 
-/** Live status of a background run: progress, spend so far and a way to stop it. */
+/** Live status of a background run: progress and a way to stop it. */
 export function RunProgress({
   title,
   status,
   done,
   total,
   unit,
-  costUsd,
   failed,
   onCancel,
   cancelling,
@@ -347,7 +345,6 @@ export function RunProgress({
   done: number;
   total: number;
   unit: string;
-  costUsd?: number | null;
   failed?: number;
   onCancel?: () => void;
   cancelling?: boolean;
@@ -373,7 +370,6 @@ export function RunProgress({
       <p className="mt-2 font-mono text-xs text-muted tabular" role="status">
         {status === "queued" ? "Waiting to start" : total > 0 ? `${done} / ${totalIsLimit ? `up to ${total}` : total} ${unit}` : `${done} ${unit}`}
         {failed ? ` · ${failed} failed` : ""}
-        {costUsd != null && ` · ${usd(costUsd)} spent so far`}
       </p>
       {cancelError ? (
         <div className="mt-2">

@@ -23,10 +23,9 @@ import {
   useQueryState,
   useRunPoll,
 } from "@/components/tracking/kit";
-import { Badge, Button, Card, CardHeader, CostNote, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Table, Textarea } from "@/components/ui";
-import { api, dateOnly, num, usd } from "@/lib/api";
+import { Badge, Button, Card, CardHeader, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Table, Textarea } from "@/components/ui";
+import { api, dateOnly, num } from "@/lib/api";
 import { useEstimate, useLookup } from "@/lib/lookup";
-import { Price } from "@/components/research/lookup-ui";
 import { hostOf } from "@/lib/url";
 
 const TABS = ["overview", "prompts", "setup", "explorer"] as const;
@@ -64,7 +63,6 @@ function RunControl({ projectId, state }: { projectId: string; state: AiState })
   });
 
   const activePrompts = state.prompts.filter((prompt) => prompt.active).length;
-  const perRun = estimate.expected ?? estimate.min;
   const runsPerMonth = RUNS_PER_MONTH[settings.schedule];
   const running = isActive(run.data?.status);
   const finished = run.data && !running && startedRunId === run.data.id ? run.data : null;
@@ -85,19 +83,9 @@ function RunControl({ projectId, state }: { projectId: string; state: AiState })
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-[11px] uppercase tracking-wide text-muted">Minimum</dt>
-              <dd className="font-mono text-sm font-medium tabular">{usd(estimate.min)}</dd>
-              <dd className="text-xs text-muted">$0.01 per answer; longer answers and web search cost more</dd>
-            </div>
-            <div>
-              <dt className="font-mono text-[11px] uppercase tracking-wide text-muted">Expected</dt>
-              <dd className="font-mono text-sm font-medium tabular">{estimate.expected != null ? usd(estimate.expected) : "—"}</dd>
-              <dd className="text-xs text-muted">{estimate.expected != null ? "based on your previous runs" : "known once every selected model has run"}</dd>
-            </div>
-            <div>
-              <dt className="font-mono text-[11px] uppercase tracking-wide text-muted">Per month</dt>
-              <dd className="font-mono text-sm font-medium tabular">{runsPerMonth ? `${estimate.expected != null ? "about" : "from"} ${usd(perRun * runsPerMonth)}` : "$0.00"}</dd>
-              <dd className="text-xs text-muted">{runsPerMonth ? `${settings.schedule} schedule, about ${runsPerMonth} runs` : "manual: nothing runs until you click"}</dd>
+              <dt className="font-mono text-[11px] uppercase tracking-wide text-muted">Schedule</dt>
+              <dd className="font-mono text-sm font-medium">{titleCase(settings.schedule)}</dd>
+              <dd className="text-xs text-muted">{runsPerMonth ? `about ${runsPerMonth} runs a month` : "nothing runs until you click"}</dd>
             </div>
           </dl>
           <div className="flex flex-col items-start gap-1.5">
@@ -116,7 +104,6 @@ function RunControl({ projectId, state }: { projectId: string; state: AiState })
           done={run.data.done}
           total={run.data.total || estimate.answers}
           unit="answers"
-          costUsd={run.data.costUsd}
           failed={run.data.failed}
           onCancel={() => cancel.mutate()}
           cancelling={cancel.isPending}
@@ -129,7 +116,7 @@ function RunControl({ projectId, state }: { projectId: string; state: AiState })
             <ErrorNote error={new Error(`The run failed: ${finished.error ?? "unknown error"}`)} />
           ) : (
             <Note>
-              Run {finished.status}: {finished.done} of {finished.total} answers{finished.failed ? `, ${finished.failed} failed` : ""}, <span className="font-mono text-ink tabular">{usd(finished.costUsd)}</span> spent.
+              Run {finished.status}: {finished.done} of {finished.total} answers{finished.failed ? `, ${finished.failed} failed` : ""}.
             </Note>
           )}
         </div>
@@ -141,24 +128,14 @@ function RunControl({ projectId, state }: { projectId: string; state: AiState })
         onClose={() => setConfirming(false)}
         onConfirm={() => start.mutate()}
         title="Run AI visibility now?"
-        confirmLabel={`Run · ${estimate.expected != null ? `about ${usd(estimate.expected)}` : `from ${usd(estimate.min)}`}`}
+        confirmLabel="Run"
         pending={start.isPending}
         error={start.error}
       >
         <p>
-          {activePrompts} active {activePrompts === 1 ? "prompt" : "prompts"} × {settings.models.length} {settings.models.length === 1 ? "model" : "models"} = <span className="font-mono text-ink tabular">{num(estimate.answers)} answers</span>, billed to your YepAPI balance.
+          {activePrompts} active {activePrompts === 1 ? "prompt" : "prompts"} × {settings.models.length} {settings.models.length === 1 ? "model" : "models"} = <span className="font-mono text-ink tabular">{num(estimate.answers)} answers</span>.
         </p>
-        <p>
-          Answers are priced by tokens with a $0.01 minimum each, so the run costs at least <span className="font-mono text-ink tabular">{usd(estimate.min)}</span>.{" "}
-          {estimate.expected != null ? (
-            <>
-              Based on your previous runs, expect about <span className="font-mono text-ink tabular">{usd(estimate.expected)}</span>.
-            </>
-          ) : (
-            "There is no history for every selected model yet, so the final cost is not known in advance."
-          )}{" "}
-          Web search is {settings.webSearch ? "on, which adds roughly a cent or more per answer" : "off"}.
-        </p>
+        <p>Web search is {settings.webSearch ? "on" : "off"}.</p>
       </ConfirmDialog>
     </>
   );
@@ -172,7 +149,7 @@ function SuggestPrompts({ projectId, existing, onAdded }: { projectId: string; e
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const have = useMemo(() => new Set(existing.map((prompt) => prompt.prompt.toLowerCase())), [existing]);
   const suggest = useMutation({
-    mutationFn: () => api<{ prompts: string[]; costUsd: number }>(`/projects/${projectId}/ai/suggest-prompts`, { method: "POST", body: { description: description.trim(), count } }),
+    mutationFn: () => api<{ prompts: string[] }>(`/projects/${projectId}/ai/suggest-prompts`, { method: "POST", body: { description: description.trim(), count } }),
     onSuccess: (data) => setPicked(new Set(data.prompts.filter((prompt) => !have.has(prompt.toLowerCase())))),
   });
   const add = useMutation({
@@ -201,13 +178,12 @@ function SuggestPrompts({ projectId, existing, onAdded }: { projectId: string; e
           <Button onClick={() => suggest.mutate()} loading={suggest.isPending} disabled={description.trim().length < 10}>
             <Sparkles className="size-4" aria-hidden /> Suggest prompts
           </Button>
-          <CostNote min={0.01} note="about a cent, priced by tokens, from your YepAPI balance" />
         </div>
         <ErrorNote error={suggest.error} />
         {suggest.data && (
           <div className="space-y-3 border-t border-line pt-3">
             <p className="font-mono text-xs text-muted" role="status">
-              {suggest.data.prompts.length} suggestions · cost {usd(suggest.data.costUsd, 3)}
+              {suggest.data.prompts.length} suggestions
             </p>
             {suggest.data.prompts.length === 0 ? (
               <p className="text-[13px] text-muted">The model returned nothing usable. Try a more specific description.</p>
@@ -277,12 +253,10 @@ function PromptsTab({ projectId, state }: { projectId: string; state: AiState })
       refresh();
     },
   });
-  const perPrompt = state.settings.models.length * 0.01;
-
   return (
     <div className="space-y-5">
       <Card>
-        <CardHeader title="Prompts" description="The questions asked on every run. Pause a prompt to keep its history without paying for new answers." />
+        <CardHeader title="Prompts" description="The questions asked on every run. Pause a prompt to keep its history without asking it again." />
         {toggle.error && (
           <div className="border-b border-line p-3">
             <ErrorNote error={toggle.error} />
@@ -338,14 +312,13 @@ function PromptsTab({ projectId, state }: { projectId: string; state: AiState })
             if (fresh.length) add.mutate();
           }}
         >
-          <Field label="Add prompts" hint="One per line, written the way a person would ask. Up to 200 per project. Adding is free.">
+          <Field label="Add prompts" hint="One per line, written the way a person would ask. Up to 200 per project.">
             <Textarea value={text} onChange={(event) => setText(event.target.value)} rows={4} placeholder={"What is the best invoicing software for plumbers?\nHow do I find a reliable plumber near me?"} />
           </Field>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" variant="primary" loading={add.isPending} disabled={fresh.length === 0 || fresh.length > 100}>
               <Plus className="size-4" aria-hidden /> Add {fresh.length || ""} {fresh.length === 1 ? "prompt" : "prompts"}
             </Button>
-            {fresh.length > 0 && state.settings.models.length > 0 && <CostNote min={fresh.length * perPrompt} note="or more, added to each run" />}
           </div>
           {fresh.length > 100 && <p className="text-xs text-neg">Add up to 100 prompts at a time.</p>}
           {add.data && (
@@ -386,7 +359,6 @@ function ModelPicker({ value, onChange }: { value: string[]; onChange: (models: 
   });
   const curated = catalog.data?.curated ?? CURATED_MODELS;
   const models: CatalogModel[] = catalog.data?.models ?? MODEL_CATALOG;
-  const byId = useMemo(() => new Map(models.map((model) => [model.id, model])), [models]);
   const full = value.length >= MAX_MODELS;
   const toggle = (id: string, on: boolean) => onChange(on ? [...value, id] : value.filter((model) => model !== id));
   const curatedIds = new Set(curated.map((model) => model.id));
@@ -403,22 +375,16 @@ function ModelPicker({ value, onChange }: { value: string[]; onChange: (models: 
   }, [models, term]);
 
   return (
-    <Group label="Models" hint={`Each selected model answers every prompt, so each one multiplies the price of a run. ${value.length} of ${MAX_MODELS} selected.`}>
+    <Group label="Models" hint={`Each selected model answers every prompt. ${value.length} of ${MAX_MODELS} selected.`}>
       <ul className="grid gap-2 sm:grid-cols-2">
-        {curated.map((model) => {
-          const info = byId.get(model.id);
-          return (
-            <li key={model.id} className="rounded-md border border-line px-3 py-2">
-              <Check checked={value.includes(model.id)} disabled={full && !value.includes(model.id)} onChange={(on) => toggle(model.id, on)}>
-                <span className="block font-medium">{model.assistant}</span>
-                <span className="block font-mono text-[11px] break-all text-muted">
-                  {model.id}
-                  {info?.inputPerM != null && ` · ${usd(info.inputPerM)} / 1M in`}
-                </span>
-              </Check>
-            </li>
-          );
-        })}
+        {curated.map((model) => (
+          <li key={model.id} className="rounded-md border border-line px-3 py-2">
+            <Check checked={value.includes(model.id)} disabled={full && !value.includes(model.id)} onChange={(on) => toggle(model.id, on)}>
+              <span className="block font-medium">{model.assistant}</span>
+              <span className="block font-mono text-[11px] break-all text-muted">{model.id}</span>
+            </Check>
+          </li>
+        ))}
       </ul>
       {extra.length > 0 && (
         <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Other selected models">
@@ -451,7 +417,6 @@ function ModelPicker({ value, onChange }: { value: string[]; onChange: (models: 
                         <span className="flex flex-wrap items-baseline gap-x-2">
                           <span>{cleanName(model.name)}</span>
                           <span className="font-mono text-[11px] break-all text-muted">{model.id}</span>
-                          <span className="font-mono text-[11px] text-muted tabular">{model.inputPerM != null ? `${usd(model.inputPerM)} / 1M input tokens` : "price not listed"}</span>
                           {model.searchGrounded && <Badge>always searches</Badge>}
                         </span>
                       </Check>
@@ -526,7 +491,7 @@ function SetupTab({ projectId, settings }: { projectId: string; settings: AiSett
       </Card>
 
       <Card>
-        <CardHeader title="Competitors" description="Tracked in the same answers for share of voice. Up to 20; they add nothing to the price." />
+        <CardHeader title="Competitors" description="Tracked in the same answers for share of voice. Up to 20." />
         <div className="space-y-3 p-4">
           {competitors.length === 0 && <p className="text-[13px] text-muted">No competitors tracked.</p>}
           {competitors.map((competitor, index) => (
@@ -567,11 +532,11 @@ function SetupTab({ projectId, settings }: { projectId: string; settings: AiSett
           <Group label="Web search">
             <Check checked={webSearch} onChange={setWebSearch}>
               <span className="font-medium">Let models search the web</span>
-              <span className="block text-xs text-muted">Needed for citations: without it models answer from memory and list no sources. It adds roughly a cent or more per answer.</span>
+              <span className="block text-xs text-muted">Needed for citations: without it models answer from memory and list no sources.</span>
             </Check>
           </Group>
           <div className="sm:max-w-64">
-            <Field label="Schedule" hint="Scheduled runs start on their own and spend each time.">
+            <Field label="Schedule" hint="Scheduled runs start on their own.">
               <Select value={schedule} onChange={(event) => setSchedule(event.target.value as Schedule)}>
                 {SCHEDULES.map((option) => (
                   <option key={option} value={option}>
@@ -588,7 +553,6 @@ function SetupTab({ projectId, settings }: { projectId: string; settings: AiSett
         <Button type="submit" variant="primary" loading={save.isPending}>
           Save setup
         </Button>
-        <span className="text-xs text-muted">Saving spends nothing.</span>
         {save.isSuccess && (
           <span role="status" className="text-[13px] text-pos">
             Saved
@@ -603,7 +567,7 @@ function SetupTab({ projectId, settings }: { projectId: string; settings: AiSett
 // ── Explorer ────────────────────────────────────────────────────────────────
 
 type CompareInput = { prompt: string; models: string[]; webSearch: boolean };
-type CompareData = { prompt: string; webSearch: boolean; answers: { model: string; answer: string; sources: { url: string; title?: string }[]; costUsd: number; error: string | null }[] };
+type CompareData = { prompt: string; webSearch: boolean; answers: { model: string; answer: string; sources: { url: string; title?: string }[]; error: string | null }[] };
 
 function ExplorerTab({ projectId, settings }: { projectId: string; settings: AiSettings }) {
   const options = useMemo(() => [...new Set([...settings.models, ...CURATED_MODELS.map((model) => model.id)])], [settings.models]);
@@ -630,7 +594,7 @@ function ExplorerTab({ projectId, settings }: { projectId: string; settings: AiS
           <Field label="Prompt">
             <Textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={3} maxLength={2000} placeholder="What is the best invoicing software for plumbers?" />
           </Field>
-          <Group label="Models" hint={`Up to ${MAX_COMPARE}. Each model is one paid answer.`}>
+          <Group label="Models" hint={`Up to ${MAX_COMPARE}. Each model gives one answer.`}>
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {options.map((id) => (
                 <li key={id}>
@@ -646,13 +610,12 @@ function ExplorerTab({ projectId, settings }: { projectId: string; settings: AiS
             </ul>
           </Group>
           <Check checked={webSearch} onChange={setWebSearch}>
-            Web search on <span className="text-muted">(needed for sources; adds roughly a cent or more per answer)</span>
+            Web search on <span className="text-muted">(needed for sources)</span>
           </Check>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" variant="primary" loading={lookup.isPending} disabled={!valid || estimate.stale}>
               Ask {models.length} {models.length === 1 ? "model" : "models"}
             </Button>
-            <Price estimate={estimate} active={models.length > 0} note="minimum; priced by tokens, from your YepAPI balance" />
           </div>
           <ErrorNote error={lookup.error} />
         </form>
@@ -662,14 +625,13 @@ function ExplorerTab({ projectId, settings }: { projectId: string; settings: AiS
       {lookup.result && lookup.data && (
         <>
           <p className="font-mono text-xs text-muted" role="status">
-            {lookup.data.answers.length} answers · cost {usd(lookup.result.costUsd, 3)} · web search {lookup.data.webSearch ? "on" : "off"}
+            {lookup.data.answers.length} answers · web search {lookup.data.webSearch ? "on" : "off"}
           </p>
           <div className="grid gap-4 lg:grid-cols-2">
             {lookup.data.answers.map((answer) => (
               <Card key={answer.model}>
                 <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3 text-[13px]">
                   <ModelName id={answer.model} />
-                  <span className="shrink-0 font-mono text-xs text-muted tabular">{usd(answer.costUsd, 3)}</span>
                 </header>
                 <div className="space-y-3 p-4">
                   {answer.error ? (

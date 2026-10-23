@@ -1,27 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { monthlyPrice, monthlyText, runPrice, whereText } from "@/components/tracking/rank";
+import { whereText } from "@/components/tracking/rank";
 import { optInt, oneOf, splitLines, toSave, urlPath } from "@/components/research/util";
 import { compact, usd } from "./api";
 import { compareValues, hostOf, safeHref } from "./url";
 
-describe("prices shown before a run", () => {
-  it("prices a rank run at the top 100 for every keyword and device", () => {
-    expect(runPrice(100, 2)).toEqual({ checks: 200, min: 20, max: 20 });
-    expect(runPrice(3, 1)).toEqual({ checks: 3, min: 0.3, max: 0.3 });
-  });
-
-  it("prices shallower checks at $0.01 per 10 results", () => {
-    expect(runPrice(100, 1, 20)).toEqual({ checks: 100, min: 2, max: 2 });
-    expect(runPrice(100, 2, 50)).toEqual({ checks: 200, min: 10, max: 10 });
-  });
-
-  it("projects a monthly price from the schedule", () => {
-    expect(monthlyPrice({ min: 1, max: 2 }, "weekly")).toEqual({ runs: 4.35, min: 4.35, max: 8.7 });
-    expect(monthlyPrice({ min: 1, max: 2 }, "manual")).toBeNull();
-    expect(monthlyText({ min: 1, max: 1 }, "daily")).toBe("$30.00 / month");
-    expect(monthlyText({ min: 1, max: 1 }, "manual")).toBe("manual runs only");
-  });
-
+describe("money", () => {
   it("formats money without rounding small costs away", () => {
     expect(usd(0.024)).toBe("$0.024");
     expect(usd(1.5)).toBe("$1.50");

@@ -2,7 +2,6 @@
 
 import { Loader2, type LucideIcon } from "lucide-react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
-import { usd } from "@/lib/api";
 
 export const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(" ");
 
@@ -147,17 +146,6 @@ export function ErrorNote({ error }: { error: unknown }) {
     <p role="alert" className="rounded-md border border-neg/40 bg-neg/5 px-3 py-2 text-sm text-neg">
       {message}
     </p>
-  );
-}
-
-// Shows what an action will cost on the user's own YepAPI balance before they run it.
-export function CostNote({ min, max, note }: { min: number; max?: number; note?: string }) {
-  const range = max !== undefined && max !== min ? `${usd(min)} – ${usd(max)}` : usd(min);
-  return (
-    <span className="inline-flex items-center gap-1.5 font-mono text-xs text-muted">
-      <span className="rounded-sm bg-price-bg px-1.5 py-0.5 font-medium text-price tabular">{range}</span>
-      {note ?? "from your YepAPI balance"}
-    </span>
   );
 }
 

@@ -4,7 +4,7 @@ import { assistantName } from "@openseo/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge, Card, CardHeader, cx, EmptyState, ErrorNote, Spinner, Stat, Table } from "@/components/ui";
-import { api, dateTime, usd } from "@/lib/api";
+import { api, dateOnly, dateTime } from "@/lib/api";
 import { RateTrend } from "./charts";
 import { hostOf } from "@/lib/url";
 import { ExtLink, Note, pct, type RunStatus, type Schedule, SectionTitle, SidePanel } from "./kit";
@@ -206,7 +206,7 @@ function AnswersPanel({ projectId, prompt, onClose }: { projectId: string; promp
               </>
             )}
             <p className="font-mono text-[11px] text-faint">
-              {dateTime(answer.createdAt)} · {usd(answer.costUsd, 3)} · web search {answer.webSearch ? "on" : "off"}
+              {dateTime(answer.createdAt)} · web search {answer.webSearch ? "on" : "off"}
             </p>
           </div>
         </article>
@@ -250,7 +250,7 @@ export function AiOverview({ projectId, webSearch }: { projectId: string; webSea
             .filter(Boolean)
             .join(" · ")}
         />
-        <Stat label="Cost of last run" value={usd(latest.costUsd)} sub={dateTime(latest.finishedAt)} />
+        <Stat label="Last run" value={dateOnly(latest.finishedAt)} />
       </div>
       {latest.brandedAnswers > 0 && (
         <Note>

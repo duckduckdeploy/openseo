@@ -5,7 +5,7 @@ import { Bot, FileDown, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ExtLink, Facts, ms, ScoreGauge, Segmented } from "@/components/tracking/kit";
 import { Button, Table } from "@/components/ui";
-import { api, num, usd } from "@/lib/api";
+import { api, num } from "@/lib/api";
 import { BarList, Delta, DownloadLink, Meter, Panel, ScoreHistory, SeverityIcon, TrendStrip } from "./bits";
 import { type Audit, type AuditRow, type IssueGroup, rowTrend, SEVERITIES, SEVERITY_PLURAL, siteHistory, STOP_REASON } from "./types";
 
@@ -344,10 +344,8 @@ export function Overview({ audit, history, onOpenIssue }: { audit: Audit; histor
               [
                 "YepAPI",
                 s.paid
-                  ? `${num(s.paid.rendered)} rendered, ${num(s.paid.unblocked)} unblocked, ${audit.costUsd > 0 ? usd(audit.costUsd) : "free"}${s.paid.budgetReached ? " · cap reached" : ""}${s.paid.unavailable ? ` · ${s.paid.unavailable}` : ""}`
-                  : audit.costUsd > 0
-                    ? usd(audit.costUsd)
-                    : "Not used",
+                  ? `${num(s.paid.rendered)} rendered, ${num(s.paid.unblocked)} unblocked${s.paid.budgetReached ? " · cap reached" : ""}${s.paid.unavailable ? ` · ${s.paid.unavailable}` : ""}`
+                  : "Not used",
               ],
             ]}
           />

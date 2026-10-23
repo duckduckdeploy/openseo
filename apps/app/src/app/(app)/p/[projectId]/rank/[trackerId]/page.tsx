@@ -1,6 +1,5 @@
 "use client";
 
-import { rankCheckUsd } from "@openseo/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ChevronLeft, Download, Minus, Pin, Play, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -27,7 +26,6 @@ import {
   StatusBadge,
   TabPanel,
   Tabs,
-  usdRange,
   useQueryState,
   useRunPoll,
 } from "@/components/tracking/kit";
@@ -40,15 +38,13 @@ import {
   featureLabel,
   type KeywordHistory,
   type KeywordRow,
-  monthlyText,
   type RankResults,
   type RankRun,
-  runPrice,
   type TrackerDetail,
   whereText,
 } from "@/components/tracking/rank";
-import { Badge, Button, Card, CardHeader, CostNote, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Stat, Table, Textarea } from "@/components/ui";
-import { api, dateTime, num, usd } from "@/lib/api";
+import { Badge, Button, Card, CardHeader, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Stat, Table, Textarea } from "@/components/ui";
+import { api, dateTime, num } from "@/lib/api";
 import { downloadCsv } from "@/lib/lookup";
 import { compareValues as compare } from "@/lib/url";
 import { keywordToolLabel, OpenInTool } from "@/components/research/tool-link";
@@ -237,7 +233,6 @@ function AddKeywords({ tracker, existing, onDone }: { tracker: TrackerDetail; ex
   // nor trip the server's 1,000 limit (it counts every keyword sent).
   const tracked = useMemo(() => new Set(existing.map((row) => row.keyword.toLowerCase())), [existing]);
   const fresh = keywords.filter((keyword) => !tracked.has(keyword));
-  const extra = runPrice(fresh.length, tracker.devices.length, tracker.depth);
   const room = 1000 - tracker.keywordCount;
   const add = useMutation({
     mutationFn: async () => {
@@ -248,7 +243,7 @@ function AddKeywords({ tracker, existing, onDone }: { tracker: TrackerDetail; ex
     },
     onSuccess: () => {
       setText("");
-      // The tracker list and the project overview show keyword counts and run prices too.
+      // The tracker list and the project overview show keyword counts too.
       void queryClient.invalidateQueries({ queryKey: ["tracker", tracker.id] });
       void queryClient.invalidateQueries({ queryKey: ["trackers", tracker.projectId] });
     },
@@ -261,7 +256,7 @@ function AddKeywords({ tracker, existing, onDone }: { tracker: TrackerDetail; ex
         if (keywords.length) add.mutate();
       }}
     >
-      <Field label="Add keywords" hint={`One per line. Room for ${num(Math.max(0, room))} more. Adding is free; new keywords are checked on the next run.`}>
+      <Field label="Add keywords" hint={`One per line. Room for ${num(Math.max(0, room))} more. New keywords are checked on the next run.`}>
         <Textarea value={text} onChange={(event) => setText(event.target.value)} rows={4} className="font-mono text-[13px]" autoFocus />
       </Field>
       <div className="flex flex-wrap items-center gap-3">
@@ -271,7 +266,6 @@ function AddKeywords({ tracker, existing, onDone }: { tracker: TrackerDetail; ex
         <Button variant="ghost" size="sm" onClick={onDone}>
           Close
         </Button>
-        {fresh.length > 0 && <CostNote min={extra.min} max={extra.max} note="more per run" />}
         {keywords.length > fresh.length && <span className="text-xs text-muted">{num(keywords.length - fresh.length)} already tracked</span>}
       </div>
       {fresh.length > room && <p className="text-xs text-neg">A tracker holds up to 1,000 keywords.</p>}
@@ -484,7 +478,7 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
         {keywords.length === 0 ? (
           <div className="p-4">
             <EmptyState title="No keywords yet" action={!adding && <Button variant="primary" onClick={() => setAdding(true)}>Add keywords</Button>}>
-              Add the searches you want to rank for. Adding keywords is free.
+              Add the searches you want to rank for.
             </EmptyState>
           </div>
         ) : rows.length === 0 ? (
@@ -741,7 +735,7 @@ function CompetitorsTab({ trackerId, device }: { trackerId: string; device: Devi
 }
 
 function RunsTab({ runs }: { runs: RankRun[] }) {
-  if (runs.length === 0) return <EmptyState title="No checks yet">Run a check to record positions. You see the price before it starts.</EmptyState>;
+  if (runs.length === 0) return <EmptyState title="No checks yet">Run a check to record positions.</EmptyState>;
   return (
     <Card>
       <CardHeader title="Recent runs" description="The last 20 checks, newest first." />
@@ -753,7 +747,6 @@ function RunsTab({ runs }: { runs: RankRun[] }) {
             <th scope="col">Trigger</th>
             <th scope="col" className="text-right">Checks</th>
             <th scope="col" className="text-right">Failed</th>
-            <th scope="col" className="text-right">Cost</th>
             <th scope="col">Error</th>
           </tr>
         </thead>
@@ -769,7 +762,6 @@ function RunsTab({ runs }: { runs: RankRun[] }) {
                 {run.done} / {run.total}
               </td>
               <td className={cx("text-right font-mono tabular", run.failed > 0 && "text-neg")}>{run.failed}</td>
-              <td className="text-right font-mono tabular">{usd(run.costUsd)}</td>
               <td className="min-w-48 text-neg">{run.error ?? <span className="text-faint">—</span>}</td>
             </tr>
           ))}
@@ -792,7 +784,6 @@ function SettingsTab({ tracker, projectId }: { tracker: TrackerDetail; projectId
   const setSchedule = (next: Schedule) => setDraft({ ...draft, schedule: next });
   const setDepth = (next: number) => setDraft({ ...draft, depth: next });
   const [confirming, setConfirming] = useState(false);
-  const price = runPrice(tracker.keywordCount, devices.length, depth);
   const changes = {
     ...(devices.join() !== tracker.devices.join() ? { devices } : {}),
     ...(schedule !== tracker.schedule ? { schedule } : {}),
@@ -820,7 +811,7 @@ function SettingsTab({ tracker, projectId }: { tracker: TrackerDetail; projectId
   return (
     <div className="space-y-5">
       <Card>
-        <CardHeader title="Check settings" description="Changes apply from the next run. Saving spends nothing." />
+        <CardHeader title="Check settings" description="Changes apply from the next run." />
         <form
           className="grid gap-4 p-4 sm:grid-cols-2"
           onSubmit={(event) => {
@@ -857,9 +848,6 @@ function SettingsTab({ tracker, projectId }: { tracker: TrackerDetail; projectId
               ))}
             </Select>
           </Field>
-          <p className="font-mono text-xs text-muted sm:col-span-2" aria-live="polite">
-            With these settings: <span className="text-ink tabular">{usdRange(price.min, price.max)}</span> per run, <span className="text-ink tabular">{monthlyText(price, schedule)}</span>.
-          </p>
           <div className="flex items-center gap-3 sm:col-span-2">
             <Button type="submit" variant="primary" loading={save.isPending} disabled={!dirty || devices.length === 0}>
               Save changes
@@ -971,7 +959,7 @@ function TrackerView() {
               <Button variant="primary" onClick={() => setConfirming(true)} disabled={running || data.keywordCount === 0}>
                 <Play className="size-4" aria-hidden /> {running ? "Checking…" : "Check rankings now"}
               </Button>
-              {data.keywordCount > 0 ? <CostNote min={data.estimate.min} max={data.estimate.max} /> : <span className="text-xs text-muted">Add keywords to run a check</span>}
+              {data.keywordCount === 0 && <span className="text-xs text-muted">Add keywords to run a check</span>}
             </div>
           </div>
         }
@@ -984,7 +972,6 @@ function TrackerView() {
           done={run.data.done}
           total={run.data.total || data.estimate.checks}
           unit="checks"
-          costUsd={run.data.costUsd}
           failed={run.data.failed}
           onCancel={() => cancel.mutate()}
           cancelling={cancel.isPending}
@@ -997,7 +984,7 @@ function TrackerView() {
             <ErrorNote error={new Error(`The check failed: ${finished.error ?? "unknown error"}`)} />
           ) : (
             <Note>
-              Check {finished.status}: {finished.done} of {finished.total} checks{finished.failed ? `, ${finished.failed} failed` : ""}, <span className="font-mono text-ink tabular">{usd(finished.costUsd)}</span> spent.
+              Check {finished.status}: {finished.done} of {finished.total} checks{finished.failed ? `, ${finished.failed} failed` : ""}.
             </Note>
           )}
         </div>
@@ -1036,16 +1023,14 @@ function TrackerView() {
         onClose={() => setConfirming(false)}
         onConfirm={() => start.mutate()}
         title="Run a check now?"
-        confirmLabel={`Run check · ${usdRange(data.estimate.min, data.estimate.max)}`}
+        confirmLabel="Run check"
         pending={start.isPending}
         error={start.error}
       >
         <p>
-          {num(data.keywordCount)} {data.keywordCount === 1 ? "keyword" : "keywords"} × {data.devices.length} {data.devices.length === 1 ? "device" : "devices"} = <span className="font-mono text-ink tabular">{num(data.estimate.checks)} checks</span>, billed to your YepAPI balance.
+          {num(data.keywordCount)} {data.keywordCount === 1 ? "keyword" : "keywords"} × {data.devices.length} {data.devices.length === 1 ? "device" : "devices"} = <span className="font-mono text-ink tabular">{num(data.estimate.checks)} checks</span>.
         </p>
-        <p>
-          Each check reads the top {data.depth} results for {usd(rankCheckUsd(data.depth))}, so the run costs <span className="font-mono text-ink tabular">{usd(data.estimate.min)}</span>.
-        </p>
+        <p>Each check reads the top {data.depth} results.</p>
       </ConfirmDialog>
     </>
   );
@@ -1057,7 +1042,7 @@ const SCHEDULE_LABELS: Record<Schedule, string> = { daily: "Every day", weekly: 
  * How often the tracker checks on its own, changed in place. Checks run in the background on the
  * server and are saved, whether or not anyone has the page open.
  */
-function ScheduleControl({ tracker }: { tracker: { id: string; projectId: string; schedule: Schedule; nextRunAt: string | null; estimate: { min: number; max: number } } }) {
+function ScheduleControl({ tracker }: { tracker: { id: string; projectId: string; schedule: Schedule; nextRunAt: string | null } }) {
   const queryClient = useQueryClient();
   const save = useMutation({
     mutationFn: (schedule: Schedule) => api(`/trackers/${tracker.id}`, { method: "PATCH", body: { schedule } }),
@@ -1087,7 +1072,7 @@ function ScheduleControl({ tracker }: { tracker: { id: string; projectId: string
       <span className="text-xs text-muted">
         {tracker.schedule === "manual"
           ? "No automatic checks"
-          : `${monthlyText(tracker.estimate, tracker.schedule)}${tracker.nextRunAt ? ` · next ${dateTime(tracker.nextRunAt)}` : ""}`}
+          : tracker.nextRunAt ? `Next check ${dateTime(tracker.nextRunAt)}` : "Checks run on this schedule"}
       </span>
       <ErrorNote error={save.error} />
     </div>

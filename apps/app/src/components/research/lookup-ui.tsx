@@ -4,35 +4,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check as CheckIcon, Download, RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
-import { Button, CostNote, ErrorNote, Select } from "@/components/ui";
-import { ApiError, api, dateTime, num } from "@/lib/api";
+import { Button, ErrorNote, Select } from "@/components/ui";
+import { api, dateTime, num } from "@/lib/api";
 import { useProjects } from "@/lib/hooks";
-import { downloadCsv, type Estimate, type LookupQuery } from "@/lib/lookup";
+import { downloadCsv, type LookupQuery } from "@/lib/lookup";
 import { isToolsScope } from "@/lib/scope";
 import type { KeywordToSave } from "./types";
-
-export type EstimateQuery = { data?: Estimate; error: unknown; isPending: boolean; stale?: boolean };
-
-/**
- * Price of a lookup before it runs, for the project pages that run one on demand (the research
- * tools show none). Hidden while the form is incomplete. While the input has changed since the
- * price was computed it says "Checking price…" rather than show an old figure; keep Run disabled
- * meanwhile.
- */
-export function Price({ estimate, active = true, note }: { estimate: EstimateQuery; active?: boolean; note?: string }) {
-  if (!active) return null;
-  if (estimate.stale && !estimate.error) return <span className="font-mono text-xs text-faint">Checking price…</span>;
-  if (estimate.data) {
-    const { min, max } = estimate.data;
-    return <CostNote min={min} max={max ?? undefined} note={note ?? (max == null ? "or more, from your YepAPI balance" : undefined)} />;
-  }
-  if (estimate.error) {
-    // Validation errors while typing are expected; the Run action reports them properly.
-    if (estimate.error instanceof ApiError && estimate.error.status === 400) return null;
-    return <span className="font-mono text-xs text-muted">Price unavailable</span>;
-  }
-  return <span className="font-mono text-xs text-faint">Checking price…</span>;
-}
 
 /**
  * When a whole view was fetched, with one refresh for all its lookups. A view is

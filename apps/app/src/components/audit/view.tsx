@@ -158,7 +158,6 @@ export function AuditView({ auditId, historyPath, hrefOf, newCrawl, historyExtra
             total={data.maxPages}
             totalIsLimit
             unit="pages"
-            costUsd={data.renderMode !== "off" || data.useFallback ? data.costUsd : null}
             onCancel={() => cancel.mutate()}
             cancelling={cancel.isPending}
             cancelError={cancel.error}

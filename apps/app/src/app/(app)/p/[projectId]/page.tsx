@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
@@ -10,9 +10,8 @@ import { ProjectPage } from "@/components/research/project-page";
 import type { SavedKeywordsList } from "@/components/research/types";
 import { finite, fixed, percent } from "@/components/research/util";
 import { Badge, Button, Card, ErrorNote, Field, Input, Spinner, Stat } from "@/components/ui";
-import { api, dateOnly, dateTime, num, usd } from "@/lib/api";
+import { api, dateOnly, dateTime, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
-import { useBalance } from "@/components/balance";
 
 type Tracker = {
   id: string;
@@ -21,8 +20,9 @@ type Tracker = {
   keywordCount?: number | null;
   lastRunAt?: string | null;
   nextRunAt?: string | null;
-  estimate?: { checks?: number; min?: number; max?: number } | null;
+  devices?: string[] | null;
 };
+type RankSummary = { keywords: number; ranking: number; averagePosition: number | null; top3: number; top10: number; improved: number; declined: number };
 type Audit = { id: string; startUrl?: string | null; status: string; healthScore?: number | null; pagesCrawled?: number | null; createdAt: string; error?: string | null };
 type AiResults = { latest?: { finishedAt?: string | null; answers?: number | null; mentionRate?: number | null; citeRate?: number | null } | null; prompts?: unknown[] | null };
 type GeoGrid = { id: string; keyword?: string | null; placeName?: string | null; size?: number | null; status?: string | null; averagePosition?: number | null; foundIn?: number | null; done?: number | null; createdAt: string };
@@ -127,9 +127,9 @@ function ProjectSettings({ project }: { project: Project }) {
   });
 
   return (
-    <Card className="mt-4">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
-        <div>
+    <Card>
+      <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
+        <div className="min-w-0">
           <h2 className="font-display text-base font-semibold">Project settings</h2>
           <p className="text-[13px] text-muted">
             Default market {project.locationName.replaceAll(",", ", ")} · data country <span className="font-mono uppercase">{project.country}</span> · language{" "}
@@ -142,7 +142,7 @@ function ProjectSettings({ project }: { project: Project }) {
       </header>
       {open && (
         <form
-          className="grid gap-4 p-4 sm:grid-cols-2"
+          className="grid gap-4 p-4"
           onSubmit={(event) => {
             event.preventDefault();
             save.mutate();
@@ -160,18 +160,18 @@ function ProjectSettings({ project }: { project: Project }) {
           <Field label="Language" hint="Language code, for example en or de.">
             <Input value={language} onChange={(event) => setLanguage(event.target.value)} required minLength={2} maxLength={10} />
           </Field>
-          <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+          <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" variant="primary" loading={save.isPending} disabled={!name.trim() || language.trim().length < 2}>
               Save settings
             </Button>
-            <span className="text-xs text-muted">Saving spends nothing. Cached lookups for the old market are not reused.</span>
+            <span className="text-xs text-muted">Cached lookups for the old market are not reused.</span>
             {save.isSuccess && (
               <span role="status" className="text-[13px] text-pos">
                 Saved
               </span>
             )}
           </div>
-          <div className="sm:col-span-2">
+          <div>
             <ErrorNote error={save.error} />
           </div>
         </form>
@@ -184,9 +184,7 @@ function Overview({ project }: { project: Project }) {
   const base = `/p/${project.id}`;
   const path = `/projects/${project.id}`;
 
-  // Everything on this page is free: stored data plus the account balance. No lookups run here.
-  const balance = useBalance();
-  const usage = useQuery({ queryKey: ["usage", "total"], queryFn: () => api<{ total?: { costUsd?: number; calls?: number } }>("/usage") });
+  // Everything on this page is stored data. No lookups run here.
   const saved = useQuery({ queryKey: ["saved-keywords", project.id, "overview"], queryFn: () => api<SavedKeywordsList>(`${path}/saved-keywords`, { query: { limit: 5 } }) });
   // The same query keys as the tool pages, so their mutations and finished runs refresh this page too.
   const trackers = useQuery({ queryKey: ["trackers", project.id], queryFn: () => api<Tracker[]>(`${path}/trackers`) });
@@ -194,102 +192,44 @@ function Overview({ project }: { project: Project }) {
   const ai = useQuery({ queryKey: ["ai", project.id, "results"], queryFn: () => api<AiResults>(`${path}/ai/results`) });
   const grids = useQuery({ queryKey: ["geo-grids", project.id], queryFn: () => api<GeoGrid[]>(`${path}/geo-grids`) });
 
+  // The same keys as the tracker page, so a finished run there refreshes these summaries.
+  const rankResults = useQueries({
+    queries: (trackers.data ?? []).slice(0, 4).map((tracker) => {
+      const device = tracker.devices?.[0] ?? "desktop";
+      return {
+        queryKey: ["tracker", tracker.id, "results", device],
+        queryFn: () => api<{ summary: RankSummary }>(`/trackers/${tracker.id}/results`, { query: { device } }),
+        enabled: Boolean(tracker.lastRunAt),
+      };
+    }),
+  });
+  const summaries = rankResults.map((result) => result.data?.summary).filter((summary): summary is RankSummary => Boolean(summary));
+  const ranking = summaries.reduce((total, summary) => total + summary.ranking, 0);
+  const averagePosition = ranking ? summaries.reduce((total, summary) => total + (summary.averagePosition ?? 0) * summary.ranking, 0) / ranking : null;
+
   const trackedKeywords = trackers.data?.reduce((total, tracker) => total + (tracker.keywordCount ?? 0), 0);
-  // isLoading, not isPending: the balance query is disabled without a YepAPI key and would stay pending.
-  const showBalance = !balance.error && (balance.isLoading || finite(balance.data?.balanceUsd));
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-semibold tracking-tight">{project.name}</h1>
-        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
-          {project.domain ? <span className="font-mono text-ink">{project.domain}</span> : <span>No website set</span>}
-          <span aria-hidden>·</span>
-          <span>{project.locationName.replaceAll(",", ", ")}</span>
-          <span aria-hidden>·</span>
-          <span className="font-mono uppercase">{project.language}</span>
-        </p>
-      </div>
-
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {showBalance && <Stat label="YepAPI balance" value={balance.isLoading ? "…" : usd(balance.data?.balanceUsd)} sub={balance.data?.autoTopup ? "prepaid credit left · auto top-up on" : "prepaid credit left"} />}
-        <Stat
-          label="Spent this month"
-          value={usage.isPending ? "…" : usage.error ? "—" : usd(usage.data?.total?.costUsd)}
-          sub={
-            <Link href="/settings" className="underline underline-offset-2 hover:text-ink">
-              {usage.data?.total?.calls != null ? `${num(usage.data.total.calls)} paid calls, all projects` : "See usage"}
-            </Link>
-          }
-        />
-        <Stat label="Saved keywords" value={saved.isPending ? "…" : num(saved.data?.total)} />
-        <Stat label="Tracked keywords" value={trackers.isPending ? "…" : num(trackedKeywords)} sub={trackers.data ? `${num(trackers.data.length)} ${trackers.data.length === 1 ? "tracker" : "trackers"}` : undefined} />
+      <div className="mb-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">{project.name}</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+            {project.domain ? <span className="font-mono text-ink">{project.domain}</span> : <span>No website set</span>}
+            <span aria-hidden>·</span>
+            <span>{project.locationName.replaceAll(",", ", ")}</span>
+            <span aria-hidden>·</span>
+            <span className="font-mono uppercase">{project.language}</span>
+          </p>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <Stat label="Saved keywords" value={saved.isPending ? "…" : num(saved.data?.total)} />
+            <Stat label="Tracked keywords" value={trackers.isPending ? "…" : num(trackedKeywords)} sub={trackers.data ? `${num(trackers.data.length)} ${trackers.data.length === 1 ? "tracker" : "trackers"}` : undefined} />
+          </div>
+        </div>
+        <ProjectSettings key={`${project.id}:${project.locationCode}:${project.country}`} project={project} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Section
-          title="Saved keywords"
-          href={`${base}/saved`}
-          query={saved}
-          isEmpty={(data) => data.total === 0}
-          empty={{ text: "Start by finding the keywords your customers search for, then save the ones worth targeting.", action: "Research keywords", href: `${base}/keywords` }}
-        >
-          {(data) => (
-            <>
-              <ul className="divide-y divide-line">
-                {data.keywords.slice(0, 5).map((row) => (
-                  <li key={row.id} className="flex items-center justify-between gap-3 py-1.5 text-[13px]">
-                    <span className="min-w-0 truncate">{row.keyword}</span>
-                    <span className="flex shrink-0 items-center gap-3">
-                      <span className="font-mono text-muted tabular">{num(row.volume)}</span>
-                      <DifficultyPill value={row.difficulty} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-xs text-muted">
-                Top {Math.min(5, data.keywords.length)} of {num(data.total)} by volume{data.tags.length > 0 ? ` · ${num(data.tags.length)} ${data.tags.length === 1 ? "tag" : "tags"}` : ""}
-              </p>
-            </>
-          )}
-        </Section>
-
-        <Section
-          title="Rank tracking"
-          href={`${base}/rank`}
-          query={trackers}
-          isEmpty={(data) => data.length === 0}
-          empty={{ text: "Track where your site ranks for your keywords, by city and device, on a schedule you choose.", action: "Create a tracker" }}
-        >
-          {(data) => (
-            <ul className="divide-y divide-line">
-              {data.slice(0, 4).map((tracker) => (
-                <li key={tracker.id} className="py-2 first:pt-0 last:pb-0">
-                  <p className="truncate text-[13px] font-medium">{tracker.name}</p>
-                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-                    <span className="font-mono tabular">{num(tracker.keywordCount ?? 0)} keywords</span>
-                    <span aria-hidden>·</span>
-                    <span>{tracker.schedule ?? "manual"}</span>
-                    <span aria-hidden>·</span>
-                    <span>{tracker.lastRunAt ? `last run ${dateTime(tracker.lastRunAt)}` : "never run"}</span>
-                    {finite(tracker.estimate?.min) && tracker.estimate.min > 0 && (
-                      <>
-                        <span aria-hidden>·</span>
-                        <span className="font-mono tabular">
-                          {usd(tracker.estimate.min)}
-                          {finite(tracker.estimate.max) && tracker.estimate.max !== tracker.estimate.min ? ` – ${usd(tracker.estimate.max)}` : ""} per run
-                        </span>
-                      </>
-                    )}
-                  </p>
-                  {(tracker.keywordCount ?? 0) === 0 && <p className="mt-1 text-xs text-warn">No keywords yet. Add some to start tracking.</p>}
-                </li>
-              ))}
-              {data.length > 4 && <li className="pt-2 text-xs text-muted">and {num(data.length - 4)} more</li>}
-            </ul>
-          )}
-        </Section>
-
         <Section
           title="Site audit"
           href={`${base}/audit`}
@@ -320,6 +260,70 @@ function Overview({ project }: { project: Project }) {
               </>
             );
           }}
+        </Section>
+
+        <Section
+          title="Rank tracking"
+          href={`${base}/rank`}
+          query={trackers}
+          isEmpty={(data) => data.length === 0}
+          empty={{ text: "Track where your site ranks for your keywords, by city and device, on a schedule you choose.", action: "Create a tracker" }}
+        >
+          {(data) => (
+            <>
+              {summaries.length > 0 && (
+                <Figures
+                  items={[
+                    { label: "Avg. position", value: fixed(averagePosition) },
+                    { label: "Top 3", value: num(summaries.reduce((total, summary) => total + summary.top3, 0)) },
+                    { label: "Top 10", value: num(summaries.reduce((total, summary) => total + summary.top10, 0)) },
+                    {
+                      label: "Up / down",
+                      value: (
+                        <>
+                          <span className="text-pos">{num(summaries.reduce((total, summary) => total + summary.improved, 0))}</span>
+                          <span className="text-muted"> / </span>
+                          <span className="text-neg">{num(summaries.reduce((total, summary) => total + summary.declined, 0))}</span>
+                        </>
+                      ),
+                    },
+                  ]}
+                />
+              )}
+              <ul className={`divide-y divide-line ${summaries.length > 0 ? "mt-4 border-t border-line" : ""}`}>
+                {data.slice(0, 4).map((tracker, index) => {
+                  const summary = rankResults[index]?.data?.summary;
+                  return (
+                    <li key={tracker.id}>
+                      <Link href={`${base}/rank/${tracker.id}`} className="group flex items-center justify-between gap-3 py-2 -outline-offset-2">
+                        <span className="min-w-0">
+                          <span className="block truncate text-[13px] font-medium group-hover:underline">{tracker.name}</span>
+                          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+                            <span className="font-mono tabular">{num(tracker.keywordCount ?? 0)} keywords</span>
+                            {summary && (
+                              <>
+                                <span aria-hidden>·</span>
+                                <span className="font-mono tabular">
+                                  {num(summary.ranking)} ranking, {num(summary.top10)} in top 10
+                                </span>
+                              </>
+                            )}
+                            <span aria-hidden>·</span>
+                            <span>{tracker.lastRunAt ? `last run ${dateTime(tracker.lastRunAt)}` : "never run"}</span>
+                          </span>
+                          {(tracker.keywordCount ?? 0) === 0 && <span className="mt-1 block text-xs text-warn">No keywords yet. Add some to start tracking.</span>}
+                        </span>
+                        <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-muted group-hover:text-ink">
+                          View tracker <ArrowRight className="size-3.5" aria-hidden />
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+                {data.length > 4 && <li className="pt-2 text-xs text-muted">and {num(data.length - 4)} more</li>}
+              </ul>
+            </>
+          )}
         </Section>
 
         <Section
@@ -399,15 +403,40 @@ function Overview({ project }: { project: Project }) {
               </li>
             ))}
           </ul>
-          <p className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-2.5 text-xs text-muted">
-            <span>Each lookup shows its price before it runs. Nothing on this page costs anything.</span>
+          <p className="border-t border-line px-4 py-2.5 text-xs text-muted">
             <Link href="/tools" className="font-medium text-ink underline underline-offset-2">
               All SEO tools, outside this project
             </Link>
           </p>
         </Card>
+
+        <Section
+          title="Saved keywords"
+          href={`${base}/saved`}
+          query={saved}
+          isEmpty={(data) => data.total === 0}
+          empty={{ text: "Start by finding the keywords your customers search for, then save the ones worth targeting.", action: "Research keywords", href: `${base}/keywords` }}
+        >
+          {(data) => (
+            <>
+              <ul className="divide-y divide-line">
+                {data.keywords.slice(0, 5).map((row) => (
+                  <li key={row.id} className="flex items-center justify-between gap-3 py-1.5 text-[13px]">
+                    <span className="min-w-0 truncate">{row.keyword}</span>
+                    <span className="flex shrink-0 items-center gap-3">
+                      <span className="font-mono text-muted tabular">{num(row.volume)}</span>
+                      <DifficultyPill value={row.difficulty} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-muted">
+                Top {Math.min(5, data.keywords.length)} of {num(data.total)} by volume{data.tags.length > 0 ? ` · ${num(data.tags.length)} ${data.tags.length === 1 ? "tag" : "tags"}` : ""}
+              </p>
+            </>
+          )}
+        </Section>
       </div>
-      <ProjectSettings key={`${project.id}:${project.locationCode}:${project.country}`} project={project} />
     </>
   );
 }

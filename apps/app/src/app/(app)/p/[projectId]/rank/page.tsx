@@ -8,8 +8,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { LocationPicker, type LocationChoice } from "@/components/location-picker";
-import { Check, Group, lines, SCHEDULES, type Schedule, Segmented, usdRange } from "@/components/tracking/kit";
-import { DEPTH_HINT, DEPTH_OPTIONS, DEVICES, type Device, monthlyPrice, monthlyText, runPrice, type Tracker, type TrackerRow, whereText } from "@/components/tracking/rank";
+import { Check, Group, lines, SCHEDULES, type Schedule, Segmented } from "@/components/tracking/kit";
+import { DEPTH_HINT, DEPTH_OPTIONS, DEVICES, type Device, type Tracker, type TrackerRow, whereText } from "@/components/tracking/rank";
 import { Badge, Button, Card, CardHeader, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Table, Textarea } from "@/components/ui";
 import { api, dateTime, num } from "@/lib/api";
 import { type Project, useProject } from "@/lib/hooks";
@@ -35,8 +35,6 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
   const lat = Number(latitude);
   const lng = Number(longitude);
   const pointValid = latitude.trim() !== "" && longitude.trim() !== "" && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
-  const price = runPrice(keywords.length, devices.length, depth);
-  const monthly = monthlyPrice(price, schedule);
   const tooMany = keywords.length > MAX_KEYWORDS;
   const ready = domain.trim().length >= 3 && devices.length > 0 && !tooMany && (mode === "place" || pointValid);
 
@@ -64,7 +62,7 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
 
   return (
     <Card className="mb-6">
-      <CardHeader title="New tracker" description="Creating a tracker spends nothing. You pay only when a check runs." />
+      <CardHeader title="New tracker" description="A tracker follows one domain in one location." />
       <form
         className="grid gap-4 p-4 sm:grid-cols-2"
         onSubmit={(event) => {
@@ -116,7 +114,7 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
           )}
         </Group>
 
-        <Group label="Devices" hint="Each device is a separate check, so choosing both doubles the price of a run.">
+        <Group label="Devices" hint="Each device is a separate check.">
           <div className="flex flex-wrap gap-4">
             {DEVICES.map((device) => (
               <Check key={device} checked={devices.includes(device)} onChange={(on) => setDevices(on ? DEVICES.filter((d) => d === device || devices.includes(d)) : devices.filter((d) => d !== device))}>
@@ -126,7 +124,7 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
           </div>
           {devices.length === 0 && <p className="mt-1.5 text-xs text-neg">Choose at least one device.</p>}
         </Group>
-        <Field label="Schedule" hint="Scheduled checks run on their own and spend each time. Manual trackers only run when you click.">
+        <Field label="Schedule" hint="Scheduled checks run on their own. Manual trackers only run when you click.">
           <Select value={schedule} onChange={(event) => setSchedule(event.target.value as Schedule)}>
             {SCHEDULES.map((option) => (
               <option key={option} value={option}>
@@ -152,28 +150,6 @@ function NewTracker({ project, onDone }: { project: Project; onDone: () => void 
             <Textarea value={text} onChange={(event) => setText(event.target.value)} rows={6} placeholder={"emergency plumber austin\nwater heater repair"} className="font-mono text-[13px]" />
           </Field>
           {tooMany && <p className="mt-1.5 text-xs text-neg">{num(keywords.length)} keywords entered. A tracker holds up to {num(MAX_KEYWORDS)}.</p>}
-        </div>
-
-        <div className="rounded-md border border-line bg-sunken/60 px-3 py-2.5 sm:col-span-2" aria-live="polite">
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Price per run and per month</p>
-          {keywords.length === 0 ? (
-            <p className="mt-1 text-[13px] text-muted">Add keywords to see what one run and one month would cost.</p>
-          ) : (
-            <dl className="mt-1 grid gap-x-6 gap-y-1 text-[13px] sm:grid-cols-2">
-              <div>
-                <dt className="text-muted">One run</dt>
-                <dd className="font-mono text-sm font-medium tabular">{usdRange(price.min, price.max)}</dd>
-                <dd className="text-xs text-muted">
-                  {num(keywords.length)} {keywords.length === 1 ? "keyword" : "keywords"} × {devices.length} {devices.length === 1 ? "device" : "devices"} = {num(price.checks)} checks
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted">Per month</dt>
-                <dd className="font-mono text-sm font-medium tabular">{monthly ? usdRange(monthly.min, monthly.max) : "$0.00"}</dd>
-                <dd className="text-xs text-muted">{monthly ? `about ${monthly.runs} runs on a ${schedule} schedule` : "nothing runs until you start a check"}</dd>
-              </div>
-            </dl>
-          )}
         </div>
 
         <div className="flex items-center gap-2 sm:col-span-2">
@@ -205,7 +181,7 @@ export default function RankPage() {
     <>
       <PageHeader
         title="Rank tracking"
-        description="Check where your site ranks on Google for a set of keywords, from a city, a region or an exact point. Each check is billed by YepAPI per results page."
+        description="Check where your site ranks on Google for a set of keywords, from a city, a region or an exact point."
         action={
           canCreate && (
             <Button variant="primary" onClick={() => setCreating(true)}>
@@ -228,7 +204,7 @@ export default function RankPage() {
             )
           }
         >
-          A tracker follows one domain in one location. Setting it up is free; you see the price before every check.
+          A tracker follows one domain in one location. Add keywords, then check them on a schedule or whenever you like.
         </EmptyState>
       )}
       {trackers.data && trackers.data.length > 0 && (
@@ -242,8 +218,6 @@ export default function RankPage() {
                 <th scope="col">Schedule</th>
                 <th scope="col" className="text-right">Keywords</th>
                 <th scope="col">Last run</th>
-                <th scope="col" className="text-right">One run</th>
-                <th scope="col" className="text-right">Per month</th>
               </tr>
             </thead>
             <tbody>
@@ -262,8 +236,6 @@ export default function RankPage() {
                   <td className="whitespace-nowrap">
                     {tracker.activeRunId ? <Badge tone="accent">Running</Badge> : tracker.lastRunAt ? dateTime(tracker.lastRunAt) : <span className="text-faint">Never</span>}
                   </td>
-                  <td className="text-right font-mono whitespace-nowrap tabular">{tracker.keywordCount ? usdRange(tracker.estimate.min, tracker.estimate.max) : "—"}</td>
-                  <td className="text-right font-mono whitespace-nowrap tabular text-muted">{tracker.keywordCount ? monthlyText(tracker.estimate, tracker.schedule).replace(" / month", "") : "—"}</td>
                 </tr>
               ))}
             </tbody>

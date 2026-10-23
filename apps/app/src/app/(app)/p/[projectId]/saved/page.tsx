@@ -12,8 +12,8 @@ import { ProjectPage } from "@/components/research/project-page";
 import { Sparkline } from "@/components/research/sparkline";
 import type { SavedKeyword, SavedKeywordsList } from "@/components/research/types";
 import { csvDate, money, oneOf, optInt, shortDate, slug, splitLines, useSetUrl } from "@/components/research/util";
-import { Button, Card, CostNote, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Textarea } from "@/components/ui";
-import { api, num, usd } from "@/lib/api";
+import { Button, Card, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Textarea } from "@/components/ui";
+import { api, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 import { downloadCsv } from "@/lib/lookup";
 import { keywordToolLabel, OpenInTool } from "@/components/research/tool-link";
@@ -67,18 +67,17 @@ function AddKeywords({ projectId, onDone }: { projectId: string; onDone: () => v
           <Button variant="ghost" onClick={onDone}>
             Cancel
           </Button>
-          <span className="font-mono text-xs text-muted">Free. Nothing is fetched.</span>
         </div>
       </form>
     </Card>
   );
 }
 
-type RefreshEstimate = { keywords: number; otherMarkets: number; min: number; max: number };
+type RefreshEstimate = { keywords: number; otherMarkets: number };
 
 function UpdateMetrics({ project, onClose }: { project: Project; onClose: () => void }) {
   const queryClient = useQueryClient();
-  // The server's dry run, so the count and price cover exactly what the refresh updates:
+  // The server's dry run, so the count covers exactly what the refresh updates:
   // every saved keyword in the project's market, whatever is filtered on screen.
   const estimate = useQuery({
     queryKey: ["saved-keywords", project.id, "refresh-estimate"],
@@ -87,7 +86,7 @@ function UpdateMetrics({ project, onClose }: { project: Project; onClose: () => 
   });
   const count = estimate.data?.keywords;
   const refresh = useMutation({
-    mutationFn: () => api<{ updated: number; skipped: number; costUsd: number }>(`/projects/${project.id}/saved-keywords/refresh`, { method: "POST", body: {} }),
+    mutationFn: () => api<{ updated: number; skipped: number }>(`/projects/${project.id}/saved-keywords/refresh`, { method: "POST", body: {} }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["saved-keywords", project.id] }),
   });
 
@@ -97,21 +96,18 @@ function UpdateMetrics({ project, onClose }: { project: Project; onClose: () => 
         <div>
           <h2 className="font-display text-base font-semibold">Update metrics</h2>
           <p className="mt-0.5 max-w-2xl text-[13px] text-muted">
-            Fetches fresh volume, CPC, difficulty, intent and trend for every saved keyword in {project.locationName}. Costs $0.03 per request plus $0.03 per 100 keywords.
+            Fetches fresh volume, CPC, difficulty, intent and trend for every saved keyword in {project.locationName}.
           </p>
         </div>
         {refresh.isSuccess ? (
           <p role="status" className="text-[13px]">
-            Updated <span className="font-mono tabular">{num(refresh.data.updated)}</span> {refresh.data.updated === 1 ? "keyword" : "keywords"} for{" "}
-            <span className="rounded-sm bg-sunken px-1.5 py-0.5 font-mono text-xs tabular">{usd(refresh.data.costUsd)}</span>.
+            Updated <span className="font-mono tabular">{num(refresh.data.updated)}</span> {refresh.data.updated === 1 ? "keyword" : "keywords"}.
           </p>
         ) : (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <Button variant="primary" loading={refresh.isPending} disabled={!count} onClick={() => refresh.mutate()}>
               {count ? `Update ${num(count)} ${count === 1 ? "keyword" : "keywords"}` : "Update metrics"}
             </Button>
-            {estimate.isPending && <span className="font-mono text-xs text-faint">Checking price…</span>}
-            {estimate.data && estimate.data.keywords > 0 && <CostNote min={estimate.data.max} note="at most, from your YepAPI balance" />}
             {count === 0 && <span className="text-[13px] text-muted">There are no saved keywords in {project.locationName} ({project.language}) to update.</span>}
           </div>
         )}

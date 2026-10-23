@@ -544,7 +544,7 @@ function SearchPerformance() {
     <>
       <PageHeader
         title="Search performance"
-        description="From your own Google Search Console and Google Analytics, read-only. Free: nothing here spends from your YepAPI balance."
+        description="From your own Google Search Console and Google Analytics, read-only."
       />
       <div className="space-y-6">
         {linkError && <ErrorNote error={new Error(LINK_ERRORS[linkError] ?? "Connecting Google failed. Try again.")} />}

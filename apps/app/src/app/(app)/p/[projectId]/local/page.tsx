@@ -5,11 +5,10 @@ import { Check as CheckIcon, MapPin, Star, Trash2, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { ConfirmDialog, ExtLink, Facts, Group, isActive, Note, ProgressBar, type RunStatus, SectionTitle, StatusBadge, TabPanel, Tabs, useQueryState } from "@/components/tracking/kit";
-import { Badge, Button, Card, CardHeader, CostNote, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Stat, Table } from "@/components/ui";
-import { api, dateTime, num, usd } from "@/lib/api";
+import { Badge, Button, Card, CardHeader, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Stat, Table } from "@/components/ui";
+import { api, dateOnly, dateTime, num } from "@/lib/api";
 import { useEstimate, useLookup } from "@/lib/lookup";
 import { GridMap } from "@/components/research/grid-map";
-import { Price } from "@/components/research/lookup-ui";
 
 type Place = {
   id: string;
@@ -160,7 +159,6 @@ function FindTab({ projectId, business, onChoose }: { projectId: string; busines
             <Button type="submit" variant="primary" loading={lookup.isPending} disabled={!valid || estimate.stale}>
               Search Maps
             </Button>
-            <Price estimate={estimate} active={input !== null} note="per search, from your YepAPI balance. A repeat within a day is free." />
           </div>
           <ErrorNote error={lookup.error} />
         </form>
@@ -170,7 +168,7 @@ function FindTab({ projectId, business, onChoose }: { projectId: string; busines
       {lookup.data && lookup.result && !lookup.isPending && (
         <>
           <p className="font-mono text-xs text-muted" role="status">
-            {lookup.data.results.length} places for “{lookup.data.query}” · {lookup.result.cached ? "from cache, free" : `cost ${usd(lookup.result.costUsd)}`}
+            {lookup.data.results.length} places for “{lookup.data.query}” · fetched {dateTime(lookup.result.fetchedAt)}
           </p>
           {lookup.data.results.length === 0 ? (
             <EmptyState title="No places found">Try the business name with its town or postcode.</EmptyState>
@@ -239,12 +237,9 @@ function ProfileTab({ projectId, business }: { projectId: string; business: Busi
           title="Business profile"
           description="The live Google Business details for your place, checked against what a complete profile needs."
           action={
-            <div className="flex flex-col items-start gap-1.5 sm:items-end">
-              <Button variant="primary" loading={lookup.isPending} disabled={estimate.stale} onClick={() => lookup.run({ placeId: business.id }, { refresh: Boolean(place) })}>
-                {place ? "Refresh profile" : "Load profile"}
-              </Button>
-              <Price estimate={estimate} note={place ? "for fresh data" : "from your YepAPI balance"} />
-            </div>
+            <Button variant="primary" loading={lookup.isPending} disabled={estimate.stale} onClick={() => lookup.run({ placeId: business.id }, { refresh: Boolean(place) })}>
+              {place ? "Refresh profile" : "Load profile"}
+            </Button>
           }
         />
         {lookup.error && (
@@ -257,7 +252,7 @@ function ProfileTab({ projectId, business }: { projectId: string; business: Busi
             <Spinner label="Loading the profile" />
           </div>
         )}
-        {!place && !lookup.isPending && !lookup.error && <p className="p-4 text-[13px] text-muted">Load the profile to see how complete it is. A repeat within a day is free.</p>}
+        {!place && !lookup.isPending && !lookup.error && <p className="p-4 text-[13px] text-muted">Load the profile to see how complete it is.</p>}
       </Card>
 
       {place && lookup.result && (
@@ -282,7 +277,7 @@ function ProfileTab({ projectId, business }: { projectId: string; business: Busi
               </ul>
             </Card>
             <Card>
-              <CardHeader title={place.name} description={lookup.result.cached ? `From cache, fetched ${dateTime(lookup.result.fetchedAt)}` : `Fetched ${dateTime(lookup.result.fetchedAt)} · cost ${usd(lookup.result.costUsd)}`} />
+              <CardHeader title={place.name} description={`Fetched ${dateTime(lookup.result.fetchedAt)}`} />
               <div className="p-4">
                 <Facts
                   rows={[
@@ -384,9 +379,6 @@ function ReviewsTab({ projectId, business }: { projectId: string; business: Busi
           <Button type="submit" variant="primary" loading={lookup.isPending} disabled={estimate.stale}>
             Get reviews
           </Button>
-          <div className="w-full">
-            <Price estimate={estimate} note="from your YepAPI balance. A repeat within 6 hours is free." />
-          </div>
         </form>
         {lookup.error && (
           <div className="px-4 pb-4">
@@ -402,7 +394,7 @@ function ReviewsTab({ projectId, business }: { projectId: string; business: Busi
             <Stat label="Google rating" value={data.rating != null ? data.rating.toFixed(1) : "—"} sub={data.totalReviews != null ? `${num(data.totalReviews)} reviews in total` : undefined} />
             <Stat label="Average in sample" value={average != null ? average.toFixed(1) : "—"} sub={`${reviews.length} reviews fetched`} />
             <Stat label="Owner reply rate" value={reviews.length ? `${Math.round((replied / reviews.length) * 100)}%` : "—"} sub={`${replied} of ${reviews.length} answered`} />
-            <Stat label="Cost" value={lookup.result.cached ? "Free" : usd(lookup.result.costUsd)} sub={lookup.result.cached ? "served from cache" : dateTime(lookup.result.fetchedAt)} />
+            <Stat label="Fetched" value={dateOnly(lookup.result.fetchedAt)} sub={new Date(lookup.result.fetchedAt).toLocaleTimeString(undefined, { timeStyle: "short" })} />
           </div>
           {reviews.length === 0 ? (
             <EmptyState title="No reviews returned">This place has no public reviews yet.</EmptyState>
@@ -553,17 +545,16 @@ function GridView({ gridId, projectId, onDeleted }: { gridId: string; projectId:
           <div>
             <ProgressBar done={data.done} total={data.total} label="Geo-grid progress" />
             <p className="mt-2 font-mono text-xs text-muted tabular" role="status">
-              {data.done} / {data.total} points · {usd(data.costUsd)} spent so far
+              {data.done} / {data.total} points
             </p>
           </div>
         )}
         <ErrorNote error={cancel.error} />
-        {data.status === "cancelled" && <Note>This grid was cancelled. Points searched before that are kept, and were billed.</Note>}
+        {data.status === "cancelled" && <Note>This grid was cancelled. Points searched before that are kept.</Note>}
         {data.status === "failed" && <ErrorNote error={new Error(`The grid failed: ${data.error ?? "unknown error"}`)} />}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Stat label="Avg position" value={data.averagePosition ?? "—"} sub="where found" />
           <Stat label="Found in" value={`${found} of ${data.total}`} sub="points" />
-          <Stat label="Cost" value={usd(data.costUsd)} />
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
@@ -729,7 +720,6 @@ function GridTab({ projectId, business }: { projectId: string; business: Busines
               <Button type="submit" variant="primary" disabled={!ready || !estimate.data}>
                 Run grid
               </Button>
-              {estimate.data ? <CostNote min={estimate.data.min} note={`for ${estimate.data.searches} searches, from your YepAPI balance`} /> : estimate.isPending && <span className="font-mono text-xs text-muted">Getting the price…</span>}
             </div>
             {estimate.error && (
               <div className="sm:col-span-3">
@@ -755,7 +745,6 @@ function GridTab({ projectId, business }: { projectId: string; business: Busines
                 <th scope="col">Status</th>
                 <th scope="col" className="text-right">Avg position</th>
                 <th scope="col" className="text-right">Found in</th>
-                <th scope="col" className="text-right">Cost</th>
                 <th scope="col">Created</th>
               </tr>
             </thead>
@@ -777,7 +766,6 @@ function GridTab({ projectId, business }: { projectId: string; business: Busines
                   </td>
                   <td className="text-right font-mono tabular">{grid.averagePosition ?? "—"}</td>
                   <td className="text-right font-mono whitespace-nowrap tabular">{grid.foundIn != null ? `${grid.foundIn} / ${grid.size * grid.size}` : "—"}</td>
-                  <td className="text-right font-mono tabular">{usd(grid.costUsd)}</td>
                   <td className="whitespace-nowrap">{dateTime(grid.createdAt)}</td>
                 </tr>
               ))}
@@ -792,13 +780,12 @@ function GridTab({ projectId, business }: { projectId: string; business: Busines
         onClose={() => setConfirming(false)}
         onConfirm={() => start.mutate()}
         title="Run this geo-grid?"
-        confirmLabel={`Run grid · ${usd(estimate.data?.min ?? 0)}`}
+        confirmLabel="Run grid"
         pending={start.isPending}
         error={start.error}
       >
         <p>
-          {size} × {size} = <span className="font-mono text-ink tabular">{size * size} Maps searches</span> for “{keyword.trim()}” around {business?.name}, at $0.07 each:{" "}
-          <span className="font-mono text-ink tabular">{usd(estimate.data?.min ?? 0)}</span> from your YepAPI balance at most. You can cancel a running grid; points already searched stay billed.
+          {size} × {size} = <span className="font-mono text-ink tabular">{size * size} Maps searches</span> for “{keyword.trim()}” around {business?.name}. You can cancel a running grid; points already searched are kept.
         </p>
       </ConfirmDialog>
     </div>

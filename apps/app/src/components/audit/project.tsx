@@ -47,7 +47,7 @@ export function ProjectAudit({ projectId, auditId }: { projectId: string; auditI
           onStarted={(audit) => router.push(hrefOf(audit.id))}
         />
         <div className="mb-6">{settingsCard}</div>
-        <EmptyState title="No audits yet">The crawl is free. YepAPI is used only for rendering JavaScript and for pages the site blocks, if you allow it, up to the cap you set.</EmptyState>
+        <EmptyState title="No audits yet">OpenSEO crawls the site itself. YepAPI is used only for rendering JavaScript and for pages the site blocks, if you allow it, up to the cap you set.</EmptyState>
         <LighthouseCard projectId={projectId} domain={domain} />
       </>
     );
