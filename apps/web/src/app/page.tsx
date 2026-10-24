@@ -199,6 +199,12 @@ export default function HomePage() {
             );
           })}
         </ul>
+        <p className="mt-10 text-center">
+          <ButtonLink href="/why-openseo" variant="ghost">
+            Why OpenSEO
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </ButtonLink>
+        </p>
       </Band>
 
       {/* Self-host: copy on one side, the command on the other */}

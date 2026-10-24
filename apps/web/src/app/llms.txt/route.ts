@@ -20,6 +20,8 @@ export function GET() {
     `- Source code: ${GITHUB_URL}`,
     `- MCP server: ${MCP_URL}`,
     '',
+    link('Why OpenSEO', '/why-openseo', 'What OpenSEO is, who it is for and how it differs from closed SEO suites. Not related to other projects with a similar name.'),
+    '',
     '## SEO tools',
     '',
     ...tools.map((tool) => link(tool.h1, `/tools/${tool.slug}`, tool.summary)),
