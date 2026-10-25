@@ -134,17 +134,17 @@ export const features: Feature[] = [
     slug: 'search-console-dashboard',
     seoTitle: 'Google Search Console Dashboard with GA4 Data',
     h1: 'Google Search Console dashboard',
-    description: 'Connect Google Search Console and GA4 read-only. Find striking-distance queries at positions 5 to 20 and the pages most worth improving. Free.',
+    description: 'Connect Google Search Console and GA4. Every query synced daily, striking-distance queries at positions 5 to 20 and the pages most worth improving. Free.',
     whatTitle: 'How the Search Console dashboard works',
     glossary: ['google-search-console', 'google-analytics-4', 'striking-distance-keywords', 'impressions', 'click-through-rate', 'average-position'],
     worksWith: ['googlesearchconsole', 'googleanalytics'],
     name: 'Search performance',
     headline: 'Your own Google data, turned into a to-do list',
     summary:
-      'Connect Google Search Console and Analytics read-only to find queries one push from page one and pages worth improving first. Free.',
+      'Connect Google Search Console and Analytics to find queries one push from page one and pages worth improving first. Free.',
     icon: BarChart3,
     what: [
-      'Rankings data says where you could be. Search Console says where you are: the queries people actually typed, how often you showed up and how often they clicked. Connect it read-only, along with Google Analytics if you use it.',
+      'Rankings data says where you could be. Search Console says where you are: the queries people actually typed, how often you showed up and how often they clicked. Connect it, along with Google Analytics if you use it, and OpenSEO syncs it daily.',
       'OpenSEO turns that into work to do: queries sitting at positions 5 to 20, and pages scored by where a push is most worth it, weighing demand, the value of their visits and how close they are to the top.',
     ],
     capabilities: [
@@ -165,8 +165,12 @@ export const features: Feature[] = [
         body: 'Sessions, engagement, key events and revenue from search, and the pages visitors land on.',
       },
       {
-        title: 'Read-only and separate',
-        body: 'Search Console and Analytics are separate, read-only permissions. Nothing Google returns is stored.',
+        title: 'Every keyword, synced daily',
+        body: 'Every query with clicks, impressions and position, stored daily up to 16 months back. Queries you have not tracked yet are suggested for the rank tracker.',
+      },
+      {
+        title: 'Indexing and IndexNow',
+        body: 'Google’s index status for every page, sitemap submission, and IndexNow for Bing and the engines that share it.',
       },
     ],
     facts: [
@@ -334,21 +338,21 @@ export const features: Feature[] = [
     slug: 'seo-mcp-server',
     seoTitle: 'SEO MCP Server: 20+ Free SEO Tools - Fresh Data',
     h1: 'SEO MCP server and API',
-    description: 'An SEO MCP server with 69 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
+    description: 'An SEO MCP server with 78 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
     whatTitle: 'How the MCP server works',
     glossary: ['mcp', 'ai-seo-agent', 'llm', 'keyword-research', 'rank-tracking'],
     worksWith: ['mcp', 'claude', 'chatgpt', 'claudecode', 'cursor', 'codex', 'geminicli'],
     name: 'MCP server and REST API',
     headline: 'SEO your AI agent can do, with a spending cap',
     summary:
-      'An open-source SEO MCP server with 69 tools: keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your own Search Console data, for Claude, ChatGPT, Cursor and any MCP client.',
+      'An open-source SEO MCP server with 78 tools: keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your own Search Console data, for Claude, ChatGPT, Cursor and any MCP client.',
     icon: Terminal,
     what: [
       'OpenSEO is an open-source SEO MCP server and REST API. Connect Claude, ChatGPT, Cursor, Codex, Gemini CLI or any MCP client, and your agent can research keywords, check live Google results, analyse backlinks and competitors, track rankings, audit a site, check AI visibility and read your Google Search Console and Analytics data. One server covers what usually takes three or four separate MCP servers.',
       'It is free: OpenSEO charges nothing for the software, the hosted app or the MCP server. Search data is billed per lookup by the data provider to your own YepAPI key, with no subscription. Agents spend real money, so every paid tool can price itself first with a dry run and takes a ceiling: a call that could cost more is refused before anything is spent. Connecting takes a couple of minutes.',
     ],
     facts: [
-      { value: '67', label: 'MCP tools' },
+      { value: '78', label: 'MCP tools' },
       { value: '7', label: 'free Search Console and Analytics tools' },
       { value: '$0', label: 'OpenSEO fee, bring your own key' },
     ],
@@ -397,7 +401,7 @@ export const features: Feature[] = [
       {
         question: 'What is the best SEO MCP server?',
         answer: [
-          'It depends on what your agent needs. If you want one server that covers keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your Search Console data, OpenSEO does all of it with 69 tools, is open source, and charges no subscription: you pay the data provider per lookup from your own key.',
+          'It depends on what your agent needs. If you want one server that covers keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your Search Console data, OpenSEO does all of it with 78 tools, is open source, and charges no subscription: you pay the data provider per lookup from your own key.',
           'If you already pay for Ahrefs or Semrush, their own MCP servers use the data in your plan. Raw data APIs such as DataForSEO suit developers who want to build their own tools. See [the best SEO MCP servers compared](/best-seo-mcp-servers).',
         ],
       },

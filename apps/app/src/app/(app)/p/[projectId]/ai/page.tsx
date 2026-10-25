@@ -231,6 +231,13 @@ function PromptsTab({ projectId, state }: { projectId: string; state: AiState })
   const stateKey = ["ai", projectId, "state"];
   const refresh = () => void queryClient.invalidateQueries({ queryKey: ["ai", projectId] });
   const fresh = lines(text).filter((line) => line.length >= 3);
+  // Question-style searches people already make in Google, from the stored Search Console sync.
+  const ideas = useQuery({
+    queryKey: ["search", projectId, "prompt-ideas"],
+    queryFn: () => api<{ synced: boolean; rows: { query: string; impressions: number }[] }>(`/projects/${projectId}/search-console/prompt-ideas`),
+    retry: false,
+  });
+  const promptIdeas = (ideas.data?.rows ?? []).filter((row) => !fresh.includes(row.query));
 
   const add = useMutation({
     mutationFn: () => api<{ added: number; skipped: number }>(`/projects/${projectId}/ai/prompts`, { method: "POST", body: { prompts: fresh } }),
@@ -315,6 +322,23 @@ function PromptsTab({ projectId, state }: { projectId: string; state: AiState })
           <Field label="Add prompts" hint="One per line, written the way a person would ask. Up to 200 per project.">
             <Textarea value={text} onChange={(event) => setText(event.target.value)} rows={4} placeholder={"What is the best invoicing software for plumbers?\nHow do I find a reliable plumber near me?"} />
           </Field>
+          {promptIdeas.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted">Questions people already search in Google, from Search Console. Click to add:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {promptIdeas.slice(0, 12).map((idea) => (
+                  <button
+                    key={idea.query}
+                    type="button"
+                    onClick={() => setText((current) => `${current.trim() ? `${current.trim()}\n` : ""}${idea.query}`)}
+                    className="rounded-sm border border-line bg-surface px-2 py-0.5 text-xs hover:border-accent-line hover:bg-accent-soft"
+                  >
+                    + {idea.query}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" variant="primary" loading={add.isPending} disabled={fresh.length === 0 || fresh.length > 100}>
               <Plus className="size-4" aria-hidden /> Add {fresh.length || ""} {fresh.length === 1 ? "prompt" : "prompts"}

@@ -48,6 +48,9 @@ const schema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   // Tests and development: send every Google request to this server instead.
   GOOGLE_API_BASE_URL: z.string().url().optional(),
+  // IndexNow's shared endpoint, which passes submissions on to Bing, Yandex, Seznam, Naver and Yep.
+  // Tests point it at a fake.
+  INDEXNOW_ENDPOINT: z.string().url().default("https://api.indexnow.org/indexnow"),
 
 });
 

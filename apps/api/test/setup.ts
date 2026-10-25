@@ -33,6 +33,7 @@ Object.assign(process.env, {
   GOOGLE_CLIENT_ID: FAKE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: "fake-client-secret",
   GOOGLE_API_BASE_URL: google.url,
+  INDEXNOW_ENDPOINT: `${google.url}/indexnow/indexnow`,
 });
 
 vi.mock("../src/db", async () => {

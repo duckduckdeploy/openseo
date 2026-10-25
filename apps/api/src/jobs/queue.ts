@@ -7,6 +7,8 @@ export type JobMap = {
   "ai.run": { runId: string };
   "audit.run": { auditId: string };
   "geogrid.run": { gridId: string };
+  "indexing.sync": { projectId: string };
+  "gsc.sync": { projectId: string };
   "scheduler.tick": Record<string, never>;
   "maintenance.cleanup": Record<string, never>;
 };
@@ -43,6 +45,8 @@ const QUEUES: Record<keyof JobMap, true> = {
   "ai.run": true,
   "audit.run": true,
   "geogrid.run": true,
+  "indexing.sync": true,
+  "gsc.sync": true,
   "scheduler.tick": true,
   "maintenance.cleanup": true,
 };
@@ -60,6 +64,8 @@ export async function startWorker(log: FastifyBaseLogger) {
   await import("./ai");
   await import("./audit");
   await import("./geogrid");
+  await import("./indexing");
+  await import("./gsc");
   await import("./scheduler");
 
   await ensureStarted();

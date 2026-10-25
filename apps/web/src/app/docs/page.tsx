@@ -71,7 +71,7 @@ export default function DocsIndexPage() {
       </div>
 
       <div className="mt-14 max-w-3xl">
-        <StatusNote>OpenSEO is an early project in active development. The docs describe what the current version does.</StatusNote>
+        <StatusNote>OpenSEO is released and gets active updates. The docs describe what the current version does.</StatusNote>
       </div>
     </div>
   );

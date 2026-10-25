@@ -1,13 +1,16 @@
 /**
- * Google Search Console and Google Analytics 4, read-only.
+ * Google Search Console and Google Analytics 4.
  *
- * Connecting is a separate OAuth grant per product (webmasters.readonly or analytics.readonly),
- * apart from signing in to OpenSEO. The flow:
+ * Connecting is a separate OAuth grant per product (webmasters or analytics.readonly), apart from
+ * signing in to OpenSEO. Search Console asks for full access so OpenSEO can submit sitemaps; grants
+ * made before that are read-only and still work for everything else. The flow:
  * - a single-use random state, stored for 10 minutes in the verification table with the user it
  *   was issued to
  * - PKCE, with the verifier derived from the state by HMAC, so it never needs storing
  * - tokens encrypted with ENCRYPTION_KEY; a refresh token Google leaves out of a later grant is kept
- * Google calls are free and never touch the YepAPI budget. Nothing Google returns is stored.
+ * Google calls are free and never touch the YepAPI budget. Reports read Google live; the daily
+ * sync (gsc-sync.ts) and URL inspections (indexing.ts) store what they read in the project database,
+ * and disconnecting deletes it.
  */
 import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto";
 import { and, eq, like, lt, sql } from "drizzle-orm";
@@ -23,9 +26,10 @@ type Account = typeof schema.googleAccounts.$inferSelect;
 export const PROVIDERS: GoogleProvider[] = ["gsc", "ga4"];
 export const PRODUCT: Record<GoogleProvider, string> = { gsc: "Google Search Console", ga4: "Google Analytics" };
 const SCOPE: Record<GoogleProvider, string> = {
-  gsc: "https://www.googleapis.com/auth/webmasters.readonly",
+  gsc: "https://www.googleapis.com/auth/webmasters",
   ga4: "https://www.googleapis.com/auth/analytics.readonly",
 };
+const GSC_READONLY = "https://www.googleapis.com/auth/webmasters.readonly";
 
 const HOSTS = {
   auth: "https://accounts.google.com",
@@ -176,8 +180,9 @@ export async function finishLink(provider: GoogleProvider, userId: string, query
     code_verifier: pkceVerifier(provider, query.state),
   });
   if (status !== 200 || !json.access_token) throw new LinkError("token_exchange_failed", returnTo);
-  // Google lets people untick scopes on the consent screen.
-  if (!(json.scope ?? "").split(" ").includes(SCOPE[provider])) throw new LinkError("scope_denied", returnTo);
+  // Google lets people untick scopes on the consent screen. Read-only Search Console still works for reports.
+  const granted = (json.scope ?? "").split(" ");
+  if (!granted.includes(SCOPE[provider]) && !(provider === "gsc" && granted.includes(GSC_READONLY))) throw new LinkError("scope_denied", returnTo);
   let identity: { sub: string; email: string | null };
   try {
     identity = readIdToken(json.id_token);
@@ -224,11 +229,14 @@ async function accessToken(account: Account): Promise<string> {
   return json.access_token;
 }
 
+/** Whether a Search Console grant can write (submit sitemaps), not just read. */
+export const canWriteGsc = (account: Pick<Account, "scope">) => (account.scope ?? "").split(" ").includes(SCOPE.gsc);
+
 /** One Google API call with the account's token; errors become app errors with a next step. */
-async function googleCall<T>(account: Account, host: keyof typeof HOSTS, path: string, body?: unknown): Promise<T> {
+export async function googleCall<T>(account: Account, host: keyof typeof HOSTS, path: string, body?: unknown, method?: "GET" | "POST" | "PUT" | "DELETE"): Promise<T> {
   const token = await accessToken(account);
   const res = await fetch(googleUrl(host, path), {
-    method: body === undefined ? "GET" : "POST",
+    method: method ?? (body === undefined ? "GET" : "POST"),
     headers: { authorization: `Bearer ${token}`, ...(body === undefined ? {} : { "content-type": "application/json" }) },
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: AbortSignal.timeout(30_000),
@@ -277,6 +285,7 @@ export async function removeAccount(userId: string, accountId: string): Promise<
   if (!account) throw notFound("Google account");
   const lost = await dataDb.transaction(async (tx) => {
     const gsc = await tx.delete(schema.gscConnections).where(eq(schema.gscConnections.googleAccountId, account.id)).returning({ id: schema.gscConnections.projectId });
+    for (const { id } of gsc) await deleteStoredGsc(tx, id);
     const ga4 = await tx.delete(schema.ga4Connections).where(eq(schema.ga4Connections.googleAccountId, account.id)).returning({ id: schema.ga4Connections.projectId });
     return new Set([...gsc, ...ga4].map((row) => row.id)).size;
   });
@@ -301,8 +310,26 @@ export async function connectGsc(project: Project, userId: string, accountId: st
   // Unverified users can see a property in the list but read no data from it.
   if (!site.verified) throw badRequest("This Google account has no verified access to that property");
   const values = { projectId: project.id, googleAccountId: accountId, siteUrl };
-  await dataDb.insert(schema.gscConnections).values(values).onConflictDoUpdate({ target: schema.gscConnections.projectId, set: values });
+  const [existing] = await dataDb.select({ siteUrl: schema.gscConnections.siteUrl }).from(schema.gscConnections).where(eq(schema.gscConnections.projectId, project.id)).limit(1);
+  await dataDb.transaction(async (tx) => {
+    // Another property's numbers would mix with this one's: start the stored history over.
+    if (existing && existing.siteUrl !== siteUrl) await deleteStoredGsc(tx, project.id);
+    const fresh = !existing || existing.siteUrl !== siteUrl ? { syncedFrom: null, syncedTo: null, backfillDone: false, syncError: null, nextSyncAt: new Date() } : {};
+    await tx.insert(schema.gscConnections).values({ ...values, ...fresh }).onConflictDoUpdate({ target: schema.gscConnections.projectId, set: { ...values, ...fresh } });
+  });
   return values;
+}
+
+type Tx = Parameters<Parameters<typeof dataDb.transaction>[0]>[0];
+
+/** Removes a project's synced Search Console data and the Google results kept on its pages. */
+async function deleteStoredGsc(tx: Tx, projectId: string) {
+  await tx.delete(schema.gscDaily).where(eq(schema.gscDaily.projectId, projectId));
+  await tx.delete(schema.gscDailyTotals).where(eq(schema.gscDailyTotals.projectId, projectId));
+  await tx
+    .update(schema.sitePages)
+    .set({ googleVerdict: null, googleCoverage: null, googleCrawledAt: null, googleCanonical: null, googleInspectedAt: null, googleError: null })
+    .where(eq(schema.sitePages.projectId, projectId));
 }
 
 export type Ga4Property = { propertyId: string; displayName: string; account: string };
@@ -346,8 +373,14 @@ export async function connectGa4(project: Project, userId: string, accountId: st
 }
 
 export async function disconnect(project: Project, provider: GoogleProvider) {
-  const table = provider === "gsc" ? schema.gscConnections : schema.ga4Connections;
-  await dataDb.delete(table).where(eq(table.projectId, project.id));
+  await dataDb.transaction(async (tx) => {
+    if (provider === "gsc") {
+      await tx.delete(schema.gscConnections).where(eq(schema.gscConnections.projectId, project.id));
+      await deleteStoredGsc(tx, project.id);
+    } else {
+      await tx.delete(schema.ga4Connections).where(eq(schema.ga4Connections.projectId, project.id));
+    }
+  });
 }
 
 /** The Google account a connection reads through (core database), by id. */
@@ -363,7 +396,17 @@ export async function connections(project: Project) {
   const gscAccount = gscRow ? await accountById(gscRow.googleAccountId) : null;
   const ga4Account = ga4Row ? await accountById(ga4Row.googleAccountId) : null;
   // A connection whose grant is gone counts as not connected, as the join used to.
-  const gsc = gscRow && gscAccount ? { siteUrl: gscRow.siteUrl, accountId: gscRow.googleAccountId, email: gscAccount.email, createdAt: gscRow.createdAt } : null;
+  const gsc =
+    gscRow && gscAccount
+      ? {
+          siteUrl: gscRow.siteUrl,
+          accountId: gscRow.googleAccountId,
+          email: gscAccount.email,
+          canWrite: canWriteGsc(gscAccount),
+          sync: { from: gscRow.syncedFrom, to: gscRow.syncedTo, backfillDone: gscRow.backfillDone, error: gscRow.syncError, lastSyncAt: gscRow.lastSyncAt },
+          createdAt: gscRow.createdAt,
+        }
+      : null;
   const ga4 =
     ga4Row && ga4Account
       ? {
@@ -379,7 +422,7 @@ export async function connections(project: Project) {
   return { gsc, ga4 };
 }
 
-async function gscFor(project: Project) {
+export async function gscFor(project: Pick<Project, "id">) {
   const [connection] = await dataDb.select().from(schema.gscConnections).where(eq(schema.gscConnections.projectId, project.id)).limit(1);
   const account = connection ? await accountById(connection.googleAccountId) : null;
   if (!connection || !account) throw notConnected("gsc");
@@ -400,8 +443,8 @@ async function ga4For(project: Project) {
 export const RANGES = { last_7_days: 7, last_28_days: 28, last_3_months: 90 } as const;
 export type Range = keyof typeof RANGES;
 
-const DAY_MS = 86_400_000;
-const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+export const DAY_MS = 86_400_000;
+export const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
 /**
  * The current and previous periods. Search Console data lags about three days, so periods end
@@ -441,9 +484,9 @@ function filterGroups(filters: GscFilters, skip: ("country" | "device")[] = []) 
   return list.length ? [{ groupType: "and", filters: list }] : undefined;
 }
 
-type GscRow = { keys?: string[]; clicks: number; impressions: number; ctr: number; position: number };
+export type GscRow = { keys?: string[]; clicks: number; impressions: number; ctr: number; position: number };
 
-async function searchAnalytics(
+export async function searchAnalytics(
   account: Account,
   siteUrl: string,
   period: { startDate: string; endDate: string },

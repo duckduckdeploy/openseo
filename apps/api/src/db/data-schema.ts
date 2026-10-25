@@ -9,6 +9,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   doublePrecision,
   index,
   integer,
@@ -527,6 +528,14 @@ export const gscConnections = pgTable("gsc_connections", {
     .notNull(),
   // Stored as Google returns it: "sc-domain:example.com" or a URL prefix.
   siteUrl: text("site_url").notNull(),
+  // Daily sync into gsc_daily (services/gsc-sync.ts). Dates are Search Console's own (Pacific time).
+  // Oldest and newest day stored; the backfill walks oldest back to Google's 16-month limit.
+  syncedFrom: date("synced_from", { mode: "string" }),
+  syncedTo: date("synced_to", { mode: "string" }),
+  backfillDone: boolean("backfill_done").notNull().default(false),
+  syncError: text("sync_error"),
+  lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+  nextSyncAt: timestamp("next_sync_at", { withTimezone: true }).defaultNow(),
   createdAt: createdAt(),
 });
 
@@ -544,6 +553,133 @@ export const ga4Connections = pgTable("ga4_connections", {
   currencyCode: text("currency_code"),
   createdAt: createdAt(),
 });
+
+// ── Stored Search Console data ──────────────────────────────────────────────
+
+/**
+ * Search Console's numbers per day, query and page, as synced from the API. Google leaves out
+ * rare (anonymised) queries, so the sums here are below gsc_daily_totals.
+ */
+export const gscDaily = pgTable(
+  "gsc_daily",
+  {
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    date: date("date", { mode: "string" }).notNull(),
+    query: text("query").notNull(),
+    page: text("page").notNull(),
+    clicks: integer("clicks").notNull(),
+    impressions: integer("impressions").notNull(),
+    // Average position that day, 1 = top.
+    position: doublePrecision("position").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.projectId, t.date, t.query, t.page] }), index("gsc_daily_query_idx").on(t.projectId, t.query, t.date)],
+);
+
+/** Whole-site totals per day, anonymised queries included. */
+export const gscDailyTotals = pgTable(
+  "gsc_daily_totals",
+  {
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    date: date("date", { mode: "string" }).notNull(),
+    clicks: integer("clicks").notNull(),
+    impressions: integer("impressions").notNull(),
+    position: doublePrecision("position"),
+    // Google still revises the last few days; final days are not fetched again.
+    final: boolean("final").notNull().default(false),
+  },
+  (t) => [primaryKey({ columns: [t.projectId, t.date] })],
+);
+
+// ── Indexing: the page list, IndexNow and Google's index status ─────────────
+
+export type PageSource = "sitemap" | "audit" | "gsc" | "manual";
+export type IndexingTrigger = "manual" | "auto" | "agent";
+
+/** A project's indexing setup: its IndexNow key, how pages are found and what runs on its own. */
+export const indexingSettings = pgTable("indexing_settings", {
+  projectId: uuid("project_id")
+    .primaryKey()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  // The site's origin as it answers, e.g. "https://www.example.com" (redirects followed).
+  origin: text("origin"),
+  indexnowKey: text("indexnow_key").notNull(),
+  // Null: https://<host>/<key>.txt. A custom location limits submissions to its folder.
+  keyLocation: text("key_location"),
+  indexnowVerifiedAt: timestamp("indexnow_verified_at", { withTimezone: true }),
+  indexnowCheckedAt: timestamp("indexnow_checked_at", { withTimezone: true }),
+  indexnowError: text("indexnow_error"),
+  // Submit new and changed pages to IndexNow after each sync.
+  autoSubmit: boolean("auto_submit").notNull().default(false),
+  // Submit the site's sitemaps to Google when a sync finds new pages (needs full Search Console access).
+  autoSitemaps: boolean("auto_sitemaps").notNull().default(false),
+  // URL inspections per day, out of Google's 2,000 per property.
+  inspectPerDay: integer("inspect_per_day").notNull().default(200),
+  inspectedDay: date("inspected_day", { mode: "string" }),
+  inspectedCount: integer("inspected_count").notNull().default(0),
+  sitemaps: text("sitemaps").array().notNull().default(sql`'{}'::text[]`),
+  lastSync: jsonb("last_sync").$type<Record<string, unknown>>(),
+  lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+  nextSyncAt: timestamp("next_sync_at", { withTimezone: true }).defaultNow(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** Every page a project knows about, where it was found, and where it stands with IndexNow and Google. */
+export const sitePages = pgTable(
+  "site_pages",
+  {
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    // Where the latest sync saw it. Empty: gone from every source (goneAt is set).
+    sources: text("sources").array().$type<PageSource[]>().notNull().default(sql`'{}'::text[]`),
+    sitemapLastmod: timestamp("sitemap_lastmod", { withTimezone: true }),
+    contentHash: text("content_hash"),
+    // From the latest site audit; null until a crawl has seen the page.
+    status: integer("status"),
+    indexable: boolean("indexable"),
+    canonical: text("canonical"),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    // When its content last changed: a new content hash or a later sitemap lastmod.
+    changedAt: timestamp("changed_at", { withTimezone: true }),
+    goneAt: timestamp("gone_at", { withTimezone: true }),
+    indexnowSubmittedAt: timestamp("indexnow_submitted_at", { withTimezone: true }),
+    indexnowStatus: integer("indexnow_status"),
+    // Google's URL Inspection result.
+    googleVerdict: text("google_verdict"),
+    googleCoverage: text("google_coverage"),
+    googleCrawledAt: timestamp("google_crawled_at", { withTimezone: true }),
+    googleCanonical: text("google_canonical"),
+    googleInspectedAt: timestamp("google_inspected_at", { withTimezone: true }),
+    googleError: text("google_error"),
+  },
+  (t) => [primaryKey({ columns: [t.projectId, t.url] }), index("site_pages_first_seen_idx").on(t.projectId, t.firstSeenAt)],
+);
+
+/** One IndexNow request: what was sent and what came back. */
+export const indexnowSubmissions = pgTable(
+  "indexnow_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    trigger: text("trigger").$type<IndexingTrigger>().notNull(),
+    urlCount: integer("url_count").notNull(),
+    // The first 100, for the log.
+    urls: text("urls").array().notNull(),
+    status: integer("status"),
+    error: text("error"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("indexnow_submissions_project_idx").on(t.projectId, t.createdAt)],
+);
 
 // ── Relations ───────────────────────────────────────────────────────────────
 

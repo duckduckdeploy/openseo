@@ -49,7 +49,7 @@ describe("connecting Google", () => {
       prompt: "select_account consent",
       code_challenge_method: "S256",
     });
-    expect(url.searchParams.get("scope")).toBe("openid email https://www.googleapis.com/auth/webmasters.readonly");
+    expect(url.searchParams.get("scope")).toBe("openid email https://www.googleapis.com/auth/webmasters");
     expect(state.length).toBeGreaterThanOrEqual(43);
 
     const back = await callback(user, "gsc", { code: "code:sub-9:me@example.test", state });

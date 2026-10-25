@@ -6,6 +6,7 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
 import { Pagination } from "@/components/research/pagination";
+import { type SyncState, StoredKeywords } from "@/components/search/stored-keywords";
 import { ConfirmDialog, ExtLink, Note, Segmented, TabPanel, Tabs, useQueryState } from "@/components/tracking/kit";
 import { Badge, Button, Card, CardHeader, EmptyState, ErrorNote, Field, PageHeader, Select, Spinner, Stat } from "@/components/ui";
 import { api, dateOnly, num } from "@/lib/api";
@@ -16,7 +17,7 @@ type GoogleAccount = { id: string; provider: Provider; email: string | null; cre
 type GoogleState = {
   configured: boolean;
   redirectUris: Record<Provider, string>;
-  gsc: { siteUrl: string; accountId: string; email: string | null; createdAt: string } | null;
+  gsc: { siteUrl: string; accountId: string; email: string | null; canWrite: boolean; sync: SyncState; createdAt: string } | null;
   ga4: { propertyId: string; displayName: string; timeZone: string | null; currencyCode: string | null; accountId: string; email: string | null; createdAt: string } | null;
   accounts: GoogleAccount[];
 };
@@ -47,7 +48,7 @@ const RANGES: { id: Range; label: string }[] = [
 const LINK_ERRORS: Record<string, string> = {
   state_mismatch: "The connection link expired or was opened in another session. Try again from this page.",
   access_denied: "Google access was not granted.",
-  scope_denied: "The read-only permission was unticked on Google's consent screen, so nothing was connected. Try again and leave it ticked.",
+  scope_denied: "A permission was unticked on Google's consent screen, so nothing was connected. Try again and leave the boxes ticked.",
   token_exchange_failed: "Google did not accept the sign-in. Check that the OAuth client's redirect URIs match this server, then try again.",
   invalid_id_token: "Google's reply could not be verified. Check GOOGLE_CLIENT_ID, then try again.",
   signed_out: "You were signed out. Sign in and try again.",
@@ -225,7 +226,7 @@ function AccountsCard({ state, projectId }: { state: GoogleState; projectId: str
   if (!state.accounts.length) return null;
   return (
     <Card>
-      <CardHeader title="Google accounts" description="Read-only grants you have given OpenSEO, per product. Removing one disconnects it from every project that uses it." />
+      <CardHeader title="Google accounts" description="Google grants you have given OpenSEO, per product. Removing one disconnects it from every project that uses it." />
       <ul className="divide-y divide-line">
         {state.accounts.map((account) => (
           <li key={account.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-[13px]">
@@ -259,7 +260,7 @@ function AccountsCard({ state, projectId }: { state: GoogleState; projectId: str
 
 // ── Search Console report ───────────────────────────────────────────────────
 
-const TABS = ["striking", "queries", "pages", "opportunities"] as const;
+const TABS = ["striking", "keywords", "queries", "pages", "opportunities"] as const;
 type TabId = (typeof TABS)[number];
 
 function StrikingTable({ projectId, rows }: { projectId: string; rows: StrikingRow[] }) {
@@ -405,7 +406,7 @@ function OpportunitiesTable({ projectId, range }: { projectId: string; range: Ra
   );
 }
 
-function SearchConsoleReport({ projectId }: { projectId: string }) {
+function SearchConsoleReport({ projectId, sync }: { projectId: string; sync: SyncState }) {
   const [range, setRange] = useState<Range>("last_28_days");
   const [device, setDevice] = useState("");
   const [tab, setTab] = useQueryState<TabId>("tab", TABS, "striking");
@@ -453,6 +454,7 @@ function SearchConsoleReport({ projectId }: { projectId: string }) {
         onChange={setTab}
         tabs={[
           { id: "striking", label: "Striking distance", count: report.data?.striking.length ?? null },
+          { id: "keywords", label: "All keywords" },
           { id: "queries", label: "Queries" },
           { id: "pages", label: "Pages" },
           { id: "opportunities", label: "Opportunities" },
@@ -460,6 +462,9 @@ function SearchConsoleReport({ projectId }: { projectId: string }) {
       />
       <TabPanel id="striking" hidden={tab !== "striking"}>
         {report.data && <StrikingTable projectId={projectId} rows={report.data.striking} />}
+      </TabPanel>
+      <TabPanel id="keywords" hidden={tab !== "keywords"}>
+        {tab === "keywords" && <StoredKeywords projectId={projectId} sync={sync} />}
       </TabPanel>
       <TabPanel id="queries" hidden={tab !== "queries"}>
         {tab === "queries" && <TopTable key={JSON.stringify(params)} projectId={projectId} dimension="query" params={params} />}
@@ -544,7 +549,7 @@ function SearchPerformance() {
     <>
       <PageHeader
         title="Search performance"
-        description="From your own Google Search Console and Google Analytics, read-only."
+        description="From your own Google Search Console and Google Analytics."
       />
       <div className="space-y-6">
         {linkError && <ErrorNote error={new Error(LINK_ERRORS[linkError] ?? "Connecting Google failed. Try again.")} />}
@@ -562,18 +567,27 @@ function SearchPerformance() {
               <ProviderCard projectId={projectId} provider="gsc" state={state} />
               <ProviderCard projectId={projectId} provider="ga4" state={state} />
             </div>
+            {state.gsc && !state.gsc.canWrite && (
+              <Note>
+                This Search Console connection is read-only, from before OpenSEO could submit sitemaps. Everything here works; to let the Indexing page submit sitemaps to Google,{" "}
+                <a href={connectUrl("gsc", `/p/${projectId}/search`)} className="font-medium underline underline-offset-2">
+                  reconnect Search Console
+                </a>{" "}
+                and allow full access.
+              </Note>
+            )}
             {state.gsc ? (
-              <SearchConsoleReport projectId={projectId} />
+              <SearchConsoleReport projectId={projectId} sync={state.gsc.sync} />
             ) : (
               <EmptyState title="Connect Search Console to see your search data">
-                Clicks, impressions, positions and striking-distance queries come straight from Google. Connecting asks only for read-only access.
+                Clicks, impressions, positions and every query you rank for, synced daily from Google. Connecting also lets the Indexing page check Google&apos;s index status and submit your sitemaps.
               </EmptyState>
             )}
             {state.ga4 && <AnalyticsReport projectId={projectId} />}
             <AccountsCard state={state} projectId={projectId} />
             <p className="flex items-center gap-1.5 text-xs text-muted">
               <ExternalLink className="size-3.5" aria-hidden />
-              Nothing Google returns is stored; every view asks Google again.
+              Search Console data is synced into this project daily (up to 16 months back) so keyword suggestions, rank tracking and indexing can use it. Disconnecting deletes it.
             </p>
           </>
         )}

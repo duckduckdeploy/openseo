@@ -15,7 +15,7 @@ export default function SearchConsoleTutorial() {
       <p>
         Search Console is the one source of search data that comes from Google itself: the queries people typed, how
         often you appeared, where, and how often they clicked. Google Analytics adds what those visitors did on your
-        site. OpenSEO reads both, read-only, and nothing here spends from your YepAPI balance.
+        site. OpenSEO reads both, syncs your Search Console data daily, and nothing here spends from your YepAPI balance.
       </p>
 
       <h2 id="connect">Connect Google Search Console</h2>
@@ -29,7 +29,7 @@ export default function SearchConsoleTutorial() {
         <Step title="Connect a Google account">
           <p>
             Under <strong>Google Search Console</strong>, click <Ui>Connect a Google account</Ui>. Google asks you to
-            choose an account and allow read-only access. Leave the permission ticked: without it nothing is connected.
+            choose an account and allow access. Leave the permissions ticked: without them nothing is connected.
             Search Console and Analytics are separate permissions, so each has its own button, and connecting one never
             grants the other.
           </p>
@@ -51,8 +51,10 @@ export default function SearchConsoleTutorial() {
 
       <Callout title="What OpenSEO keeps">
         <p>
-          Only the connection: which account, which property, and its access tokens, encrypted. Nothing Google returns
-          is stored; every view asks Google again. Removing a Google account under <strong>Google accounts</strong>{' '}
+          The connection (which account, which property and its access tokens, encrypted), your Search Console
+          numbers per day, query and page, synced daily up to 16 months back, and Google&apos;s index status for your
+          pages from the Indexing page. Disconnecting Search Console deletes the synced data. Removing a Google
+          account under <strong>Google accounts</strong>{' '}
           deletes the tokens and disconnects it from every project. To revoke access on Google&apos;s side too, use
           your Google account&apos;s security settings.
         </p>

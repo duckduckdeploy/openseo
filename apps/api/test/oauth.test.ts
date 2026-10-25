@@ -157,7 +157,7 @@ describe("OAuth sign-in for ChatGPT", () => {
     const access = issued.body.access_token as string;
     const list = await mcp(access, "tools/list");
     expect(list.status).toBe(200);
-    expect(list.body.result.tools).toHaveLength(69);
+    expect(list.body.result.tools).toHaveLength(78);
     const who = await mcp(access, "tools/call", { name: "whoami", arguments: {} });
     expect(who.body.result.content[0].text).toContain(user.email);
 

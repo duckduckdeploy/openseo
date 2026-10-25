@@ -234,6 +234,12 @@ function AddKeywords({ tracker, existing, onDone }: { tracker: TrackerDetail; ex
   const tracked = useMemo(() => new Set(existing.map((row) => row.keyword.toLowerCase())), [existing]);
   const fresh = keywords.filter((keyword) => !tracked.has(keyword));
   const room = 1000 - tracker.keywordCount;
+  const suggestions = useQuery({
+    queryKey: ["search", tracker.projectId, "suggestions"],
+    queryFn: () => api<{ synced: boolean; rows: { query: string; position: number | null; impressions: number }[] }>(`/projects/${tracker.projectId}/search-console/keyword-suggestions`, { query: { limit: 30 } }),
+    retry: false,
+  });
+  const ideas = (suggestions.data?.rows ?? []).filter((row) => !tracked.has(row.query.toLowerCase()) && !keywords.includes(row.query.toLowerCase()));
   const add = useMutation({
     mutationFn: async () => {
       const skipped = keywords.length - fresh.length;
@@ -259,6 +265,24 @@ function AddKeywords({ tracker, existing, onDone }: { tracker: TrackerDetail; ex
       <Field label="Add keywords" hint={`One per line. Room for ${num(Math.max(0, room))} more. New keywords are checked on the next run.`}>
         <Textarea value={text} onChange={(event) => setText(event.target.value)} rows={4} className="font-mono text-[13px]" autoFocus />
       </Field>
+      {ideas.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted">From Search Console, not tracked yet (positions 5 to 20 first). Click to add:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ideas.slice(0, 20).map((idea) => (
+              <button
+                key={idea.query}
+                type="button"
+                onClick={() => setText((current) => `${current.trim() ? `${current.trim()}\n` : ""}${idea.query}`)}
+                className="rounded-sm border border-line bg-surface px-2 py-0.5 text-xs hover:border-accent-line hover:bg-accent-soft"
+                title={`Position ${idea.position?.toFixed(1) ?? "—"} · ${num(idea.impressions)} impressions`}
+              >
+                + {idea.query}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" variant="primary" size="sm" loading={add.isPending} disabled={!keywords.length || fresh.length > room}>
           Add {fresh.length ? num(fresh.length) : ""} {fresh.length === 1 ? "keyword" : "keywords"}
@@ -315,6 +339,17 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
   });
 
   const all = results.data?.keywords;
+  // Search Console's own average position over 28 days, from the project's stored sync; empty without it.
+  const keywordList = useMemo(() => (all ?? []).map((row) => row.keyword).slice(0, 1000), [all]);
+  const gsc = useQuery({
+    queryKey: ["search", tracker.projectId, "positions", keywordList],
+    queryFn: () => api<Record<string, { position: number | null; clicks: number; impressions: number }>>(`/projects/${tracker.projectId}/search-console/positions`, { method: "POST", body: { keywords: keywordList } }),
+    enabled: keywordList.length > 0,
+    retry: false,
+    staleTime: 10 * 60_000,
+  });
+  const gscPositions = gsc.data ?? {};
+  const hasGsc = Object.keys(gscPositions).length > 0;
   const rows = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
     const filtered = (all ?? []).filter((row) => matches(row, filter) && (!term || row.keyword.includes(term)));
@@ -506,6 +541,11 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
                 <SortTh label="Position" column="position" sort={activeSort} onSort={sortBy} />
                 <SortTh label="Change" column="change" sort={activeSort} onSort={sortBy} firstDir="desc" />
                 <SortTh label="Best" column="best" sort={activeSort} onSort={sortBy} />
+                {hasGsc && (
+                  <th scope="col" title="Search Console's average position over the last 28 days, with clicks: Google's own number, across every location and device">
+                    Search Console
+                  </th>
+                )}
                 <th scope="col">Ranking URL</th>
                 <th scope="col">SERP features</th>
                 <th scope="col">History</th>
@@ -543,6 +583,18 @@ function KeywordsTab({ tracker, device }: { tracker: TrackerDetail; device: Devi
                     <ChangeCell row={row} />
                   </td>
                   <td className="font-mono tabular">{row.best ?? <span className="text-faint">—</span>}</td>
+                  {hasGsc && (
+                    <td className="whitespace-nowrap font-mono text-xs tabular">
+                      {gscPositions[row.keyword.toLowerCase()] ? (
+                        <>
+                          {gscPositions[row.keyword.toLowerCase()]!.position?.toFixed(1) ?? "—"}
+                          <span className="text-muted"> · {num(gscPositions[row.keyword.toLowerCase()]!.clicks)} clicks</span>
+                        </>
+                      ) : (
+                        <span className="text-faint">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="max-w-56">
                     {row.url ? (
                       <ExtLink href={row.url} className="block truncate font-mono text-xs text-muted">

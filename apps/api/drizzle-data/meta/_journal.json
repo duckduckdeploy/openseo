@@ -43,6 +43,13 @@
       "when": 1792709816473,
       "tag": "0005_audit_attempts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792956466820,
+      "tag": "0006_indexing_and_gsc_sync",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge" alt="MIT licence"></a>
   <a href="#-self-host-with-docker"><img src="https://img.shields.io/badge/self--host-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Self-host with Docker"></a>
-  <a href="https://openseo.gg/docs/mcp"><img src="https://img.shields.io/badge/MCP-67%20tools-7c3aed?style=for-the-badge" alt="67 MCP tools"></a>
+  <a href="https://openseo.gg/docs/mcp"><img src="https://img.shields.io/badge/MCP-78%20tools-7c3aed?style=for-the-badge" alt="78 MCP tools"></a>
   <a href="https://openseo.gg"><img src="https://img.shields.io/badge/openseo.gg-live-2563eb?style=for-the-badge" alt="openseo.gg"></a>
 </p>
 
@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js">
   <img src="https://img.shields.io/badge/Fastify-000000?style=flat-square&logo=fastify&logoColor=white" alt="Fastify">
   <img src="https://img.shields.io/badge/Postgres-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="Postgres">
-  <img src="https://img.shields.io/badge/status-early%20%26%20active-f59e0b?style=flat-square" alt="Status: early and in active development">
+  <img src="https://img.shields.io/badge/status-released%20%26%20active-2350e6?style=flat-square" alt="Status: released, with active updates">
 </p>
 
 <h3 align="center">
@@ -41,7 +41,7 @@ No monthly plan: the software is free, and search data is paid per lookup, under
 ⭐ **If OpenSEO is useful to you, a star helps other people find it.**
 
 > [!NOTE]
-> OpenSEO is early and in active development. [Issues](https://github.com/duckduckdeploy/openseo/issues) and ideas are very welcome.
+> OpenSEO is released and gets active updates. [Issues](https://github.com/duckduckdeploy/openseo/issues) and ideas are very welcome.
 
 <p align="center">
   <picture>
@@ -83,7 +83,7 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 - 🔓 **Open source, all of it.** The app, the API, the crawler and the agent server are MIT licensed. Change what you need and keep your changes.
 - 🏠 **Your server, your data.** One Docker command runs the whole suite on your own computer or server. Your keywords, rankings and audits stay in your own database.
 - 💸 **No surprise bills.** Every call is listed with its cost, and a monthly limit stops all spending once it is reached.
-- 🤖 **Agents on a leash.** 67 MCP tools cover the whole workspace. Every paid tool takes `dry_run` and `max_cost_usd`, so an agent cannot spend more than you agreed.
+- 🤖 **Agents on a leash.** 78 MCP tools cover the whole workspace. Every paid tool takes `dry_run` and `max_cost_usd`, so an agent cannot spend more than you agreed.
 - 📈 **Your own Google data.** Connect Search Console and GA4 read-only. You get queries one push from page one, and pages scored by where improving them is most worth it.
 - 🎯 **Focused workflows.** The SEO work most sites actually do, without the hundred reports nobody opens.
 
@@ -167,7 +167,7 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 | Where it runs | Their cloud | openseo.gg, or your own server with Docker |
 | Price | Monthly plans from $49 (Moz) to $140 (Semrush) to start | Free software; data paid per lookup |
 | Seats | Paid per user | No seats |
-| AI agents | API or MCP on some plans | 67 MCP tools and a REST API, spending capped per call |
+| AI agents | API or MCP on some plans | 78 MCP tools and a REST API, spending capped per call |
 | Data depth | Their own crawlers and indexes, the deepest | A large commercial dataset through a provider |
 
 Honest side-by-sides, including when each one is the better buy: [Ahrefs](https://openseo.gg/compare/ahrefs-alternative) · [Semrush](https://openseo.gg/compare/semrush-alternative) · [SE Ranking](https://openseo.gg/compare/se-ranking-alternative) · [Mangools](https://openseo.gg/compare/mangools-alternative) · [Ubersuggest](https://openseo.gg/compare/ubersuggest-alternative) · [Moz](https://openseo.gg/compare/moz-alternative) · [Screaming Frog](https://openseo.gg/compare/screaming-frog-alternative) · [Otterly.AI](https://openseo.gg/compare/otterly-alternative)
@@ -203,7 +203,7 @@ The [self-hosting guide](https://openseo.gg/docs/self-hosting) covers servers, u
 
 ## 🤖 Connect your AI agent
 
-The [SEO MCP server](https://openseo.gg/features/seo-mcp-server) gives agents the whole workspace as 67 tools, listed with their prices in [MCP tools](https://openseo.gg/docs/mcp-tools).
+The [SEO MCP server](https://openseo.gg/features/seo-mcp-server) gives agents the whole workspace as 78 tools, listed with their prices in [MCP tools](https://openseo.gg/docs/mcp-tools).
 
 **ChatGPT and Claude (web and desktop):** add a custom connector with the URL `{API_URL}/mcp` and OAuth sign-in. You sign in with your OpenSEO account and approve; no key needed. Connected apps can be revoked in Settings.
 
@@ -231,7 +231,7 @@ Set `OPENSEO_MCP_URL` to point it at a self-hosted install.
 
 ### 🧩 Skills
 
-Ready-made SEO workflows in [`plugins/openseo/skills`](plugins/openseo/skills), built on the 67 MCP tools:
+Ready-made SEO workflows in [`plugins/openseo/skills`](plugins/openseo/skills), built on the 78 MCP tools:
 
 | Skill | What it does |
 |---|---|

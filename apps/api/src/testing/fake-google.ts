@@ -6,6 +6,11 @@
  *   "code:<sub>:<email>". A code containing "noscope" grants only openid and email; one
  *   containing "norefresh" gets no refresh token, as on a repeat grant.
  * - Refresh tokens work unless they are "revoked".
+ * - A code containing "readonly" grants read-only Search Console, as grants made before full
+ *   access was asked for.
+ * - URL inspection says "Crawled - currently not indexed" for URLs containing "not-indexed".
+ * - Also stands in for IndexNow at /indexnow/indexnow: a key of "bad-key" gets 403, a URL list
+ *   containing "slow-down" gets 429, anything else 200.
  * - Data is made up and deterministic. Nothing here reflects real search data.
  */
 import { createServer, type Server } from "node:http";
@@ -120,7 +125,7 @@ export async function startFakeGoogle(port = 0): Promise<FakeGoogle> {
           const [, sub = "sub-1", email = "owner@example.test"] = String(body.code).split(":");
           const scope = String(body.code).includes("noscope")
             ? "openid https://www.googleapis.com/auth/userinfo.email"
-            : `openid https://www.googleapis.com/auth/userinfo.email ${String(body.code).includes("ga4") ? "https://www.googleapis.com/auth/analytics.readonly" : "https://www.googleapis.com/auth/webmasters.readonly"}`;
+            : `openid https://www.googleapis.com/auth/userinfo.email ${String(body.code).includes("ga4") ? "https://www.googleapis.com/auth/analytics.readonly" : String(body.code).includes("readonly") ? "https://www.googleapis.com/auth/webmasters.readonly" : "https://www.googleapis.com/auth/webmasters"}`;
           // Google often sends no refresh token when the account already granted access.
           const refresh = String(body.code).includes("norefresh") ? {} : { refresh_token: `rt-${sub}` };
           return send(200, { access_token: `at-${++issued}`, expires_in: 3599, ...refresh, scope, token_type: "Bearer", id_token: idToken(sub, email) });
@@ -130,6 +135,12 @@ export async function startFakeGoogle(port = 0): Promise<FakeGoogle> {
           return send(200, { access_token: `at-${++issued}`, expires_in: 3599, scope: "", token_type: "Bearer" });
         }
         return send(400, { error: "unsupported_grant_type" });
+      }
+
+      if (path === "/indexnow/indexnow") {
+        if (body.key === "bad-key") return send(403, {});
+        if ((body.urlList ?? []).some((u: string) => u.includes("slow-down"))) return send(429, {});
+        return send(200, {});
       }
 
       if (!token?.startsWith("at-")) return send(401, { error: { code: 401, message: "Request had invalid authentication credentials.", status: "UNAUTHENTICATED" } });
@@ -144,8 +155,14 @@ export async function startFakeGoogle(port = 0): Promise<FakeGoogle> {
       }
       const query = path.match(/^\/webmasters\/webmasters\/v3\/sites\/([^/]+)\/searchAnalytics\/query$/);
       if (query?.[1]) return send(200, { rows: gscRows(body, decodeURIComponent(query[1])), responseAggregationType: "byProperty" });
+      const sitemaps = path.match(/^\/webmasters\/webmasters\/v3\/sites\/([^/]+)\/sitemaps(?:\/([^/]+))?$/);
+      if (sitemaps) {
+        if (req.method === "PUT") return send(204, {});
+        return send(200, { sitemap: [{ path: "https://acme.com/sitemap.xml", lastSubmitted: "2026-10-01T00:00:00Z", lastDownloaded: "2026-10-20T00:00:00Z", isPending: false, isSitemapsIndex: false, warnings: "0", errors: "1", contents: [{ type: "web", submitted: "42" }] }] });
+      }
       if (path === "/searchconsole/v1/urlInspection/index:inspect") {
         if (String(body.inspectionUrl).includes("not-in-property")) return send(400, { error: { code: 400, message: "URL is not in the property" } });
+        if (String(body.inspectionUrl).includes("not-indexed")) return send(200, { inspectionResult: { indexStatusResult: { verdict: "NEUTRAL", coverageState: "Crawled - currently not indexed", lastCrawlTime: "2026-10-01T08:00:00Z" } } });
         return send(200, { inspectionResult: { inspectionResultLink: "https://search.google.com/x", indexStatusResult: { verdict: "PASS", coverageState: "Submitted and indexed", indexingState: "INDEXING_ALLOWED", robotsTxtState: "ALLOWED", pageFetchState: "SUCCESSFUL", lastCrawlTime: "2026-10-10T08:00:00Z", googleCanonical: body.inspectionUrl, userCanonical: body.inspectionUrl } } });
       }
       if (path === "/admin/v1beta/accountSummaries") {

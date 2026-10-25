@@ -538,6 +538,8 @@ async function storeAudit(audit: Audit, result: CrawlResult, cancelled: boolean,
         finishedAt: new Date(),
       })
       .where(and(eq(schema.audits.id, auditId), inArray(schema.audits.status, ["running", "cancelled"])));
+    // A finished crawl may have found new or changed pages: sync the indexing page list at the next tick.
+    if (audit.projectId && !cancelled) await tx.update(schema.indexingSettings).set({ nextSyncAt: new Date() }).where(eq(schema.indexingSettings.projectId, audit.projectId));
   });
 }
 

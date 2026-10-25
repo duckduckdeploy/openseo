@@ -81,7 +81,7 @@ export default function ErrorsPage() {
       <p>
         When connecting fails, the dashboard returns with <code>google_error</code> in the address and explains it:{' '}
         <code>state_mismatch</code> (the link expired or came from another session; start again),{' '}
-        <code>scope_denied</code> (the read-only permission was unticked), <code>access_denied</code> (you cancelled),{' '}
+        <code>scope_denied</code> (a permission was unticked), <code>access_denied</code> (you cancelled),{' '}
         <code>token_exchange_failed</code> (check the OAuth client&apos;s redirect URIs).
       </p>
 

@@ -717,6 +717,90 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
     true,
   );
 
+  // ── Indexing: the page list, IndexNow and Google's index status (free) ──
+  const indexingFilter = z.enum(["all", "suggested", "new", "changed", "reindex", "indexed", "not_indexed", "not_inspected", "excluded", "submitted"]);
+  tool(
+    "get_indexing_status",
+    "A project's indexing overview: page counts (suggested for IndexNow, new, changed, needing Google reindexing, indexed, not indexed, excluded), the IndexNow key, its key-file URL and whether it is verified, the last submission, auto-submit settings, sitemaps found and the last page sync. Free.",
+    { project_id: projectId },
+    async (a) => rest("GET", `/projects/${await resolveProject(a.project_id)}/indexing`),
+    true,
+  );
+  tool(
+    "list_indexing_pages",
+    "The project's pages with where each was found (sitemap, audit, Search Console, manual), when it was first seen and last changed, its IndexNow submission and Google's index verdict, coverage, last crawl and reasons to reindex. Filter: suggested = new or changed since IndexNow last heard of it; reindex = Google should look again. Free.",
+    { project_id: projectId, filter: indexingFilter.optional(), search: z.string().max(500).optional(), page: z.number().int().min(1).optional(), size: z.number().int().min(1).max(500).optional() },
+    async (a) => {
+      const q = new URLSearchParams({ filter: a.filter ?? "suggested", page: String(a.page ?? 1), size: String(a.size ?? 50), ...(a.search ? { search: a.search } : {}) });
+      return rest("GET", `/projects/${await resolveProject(a.project_id)}/indexing/pages?${q}`);
+    },
+    true,
+  );
+  tool(
+    "sync_indexing_pages",
+    "Rebuild the project's page list now from its sitemaps, latest site audit and Search Console, then (when switched on) submit new and changed pages to IndexNow and inspect pages in Google. Runs in the background; read the result with get_indexing_status. Free.",
+    { project_id: projectId },
+    async (a) => rest("POST", `/projects/${await resolveProject(a.project_id)}/indexing/sync`),
+  );
+  tool(
+    "verify_indexnow",
+    "Check that the project's IndexNow key file is on the site (the user uploads <key>.txt to the site root; get_indexing_status gives the key and URL). Free.",
+    { project_id: projectId },
+    async (a) => rest("POST", `/projects/${await resolveProject(a.project_id)}/indexing/verify`),
+  );
+  tool(
+    "submit_indexnow",
+    "Notify IndexNow (Bing, Yandex, Seznam, Naver, Yep; not Google) of new or changed pages: pass urls, or suggested: true for every page new or changed since it was last submitted. Needs a verified key file. Only submit pages that changed. Free.",
+    { project_id: projectId, urls: z.array(z.string().url()).min(1).max(10_000).optional(), suggested: z.boolean().optional() },
+    async (a) => {
+      if (!a.urls?.length && !a.suggested) throw new Error("Pass urls, or suggested: true");
+      return rest("POST", `/projects/${await resolveProject(a.project_id)}/indexing/indexnow`, a.urls?.length ? { urls: a.urls } : { suggested: true });
+    },
+  );
+  tool(
+    "get_google_sitemaps",
+    "The sitemaps Google has for the connected Search Console property: last submitted, last read, pending, errors, warnings and URLs submitted, and whether OpenSEO may submit sitemaps. Free.",
+    { project_id: projectId },
+    async (a) => rest("GET", `/projects/${await resolveProject(a.project_id)}/indexing/google-sitemaps`),
+    true,
+  );
+  tool(
+    "submit_google_sitemaps",
+    "Submit sitemaps to Google Search Console: the given paths, or every sitemap the last page sync found. Needs a Search Console connection with full access. Free.",
+    { project_id: projectId, paths: z.array(z.string().url()).max(50).optional() },
+    async (a) => rest("POST", `/projects/${await resolveProject(a.project_id)}/indexing/google-sitemaps`, { paths: a.paths }),
+  );
+  tool(
+    "get_gsc_keywords",
+    "Every Search Console query from the stored daily sync over 7 to 480 days: clicks, impressions, CTR, average position, the position in the period before and its top page. Filter by text, position and impressions. Longer history than get_search_console_rows and no 1,000-row cap. Free.",
+    {
+      project_id: projectId,
+      days: z.union([z.literal(7), z.literal(28), z.literal(90), z.literal(180), z.literal(365), z.literal(480)]).optional(),
+      search: z.string().max(200).optional(),
+      min_position: z.number().min(1).optional(),
+      max_position: z.number().min(1).optional(),
+      min_impressions: z.number().int().min(0).optional(),
+      sort: z.enum(["impressions", "clicks", "position"]).optional(),
+      limit: z.number().int().min(1).max(1000).optional(),
+    },
+    async (a) => {
+      const q = new URLSearchParams({ days: String(a.days ?? 28), sort: a.sort ?? "impressions", size: String(a.limit ?? 100) });
+      if (a.search) q.set("search", a.search);
+      if (a.min_position != null) q.set("minPosition", String(a.min_position));
+      if (a.max_position != null) q.set("maxPosition", String(a.max_position));
+      if (a.min_impressions != null) q.set("minImpressions", String(a.min_impressions));
+      return rest("GET", `/projects/${await resolveProject(a.project_id)}/search-console/keywords?${q}`);
+    },
+    true,
+  );
+  tool(
+    "get_keyword_suggestions",
+    "Search Console queries the project is not tracking or saving yet: first those at positions 5 to 20 (one push from page one), then the most impressions. Good input for add_rank_keywords and save_keywords. Free.",
+    { project_id: projectId, limit: z.number().int().min(1).max(200).optional() },
+    async (a) => rest("GET", `/projects/${await resolveProject(a.project_id)}/search-console/keyword-suggestions?limit=${a.limit ?? 50}`),
+    true,
+  );
+
   return server;
 }
 

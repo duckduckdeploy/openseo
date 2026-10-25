@@ -25,8 +25,7 @@ export default function FeaturesPage() {
         />
         <div className="mx-auto mt-10 max-w-2xl">
           <StatusNote>
-            OpenSEO is an early project in active development. The features below are being built, and some may not be
-            available yet.
+            OpenSEO is released and gets active updates, with new features added regularly.
           </StatusNote>
         </div>
         <div className="mt-14 md:mt-16">

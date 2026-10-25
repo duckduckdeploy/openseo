@@ -7,7 +7,10 @@ import { cleanupOAuth } from "../services/oauth";
 import { buildAuditRequest, failAudit, resumeInterruptedAudits, startAudit } from "../services/audit";
 import { failRankRun, startRankRun } from "../services/rank";
 import { dispatch } from "./dispatch";
-import { defineJob } from "./queue";
+import { defineJob, enqueue } from "./queue";
+
+/** How long a claimed sync waits before it can be claimed again, in case its job never ran. */
+const SYNC_CLAIM_MS = 2 * 3_600_000;
 
 // How soon a schedule is retried when its tracker or project already has a run going, or the
 // queue could not take the run.
@@ -104,6 +107,26 @@ defineJob("scheduler.tick", 1, async (_data, log) => {
       }
       log.info({ projectId: project.id, reason: (error as Error).message }, "scheduled audit not started");
     }
+  }
+
+  // Search Console syncs (daily, or every tick while a backfill runs) and daily page syncs. Each
+  // claim pushes next_sync_at forward; the job sets the real next time when it finishes.
+  const claimUntil = new Date(now.getTime() + SYNC_CLAIM_MS);
+  const dueGsc = await dataDb
+    .update(schema.gscConnections)
+    .set({ nextSyncAt: claimUntil })
+    .where(and(isNotNull(schema.gscConnections.nextSyncAt), lte(schema.gscConnections.nextSyncAt, now)))
+    .returning({ projectId: schema.gscConnections.projectId });
+  for (const { projectId } of dueGsc) {
+    await enqueue("gsc.sync", { projectId }).catch((error) => log.error({ err: error, projectId }, "search console sync not queued"));
+  }
+  const dueIndexing = await dataDb
+    .update(schema.indexingSettings)
+    .set({ nextSyncAt: claimUntil })
+    .where(and(isNotNull(schema.indexingSettings.nextSyncAt), lte(schema.indexingSettings.nextSyncAt, now)))
+    .returning({ projectId: schema.indexingSettings.projectId });
+  for (const { projectId } of dueIndexing) {
+    await enqueue("indexing.sync", { projectId }).catch((error) => log.error({ err: error, projectId }, "indexing sync not queued"));
   }
 });
 

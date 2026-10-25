@@ -23,4 +23,7 @@ export { matchesPattern, normalizeUrl } from './url';
 export type { NormalizeOptions } from './url';
 export { extractPage } from './extract';
 export { parseSitemapXml } from './robots';
+export type { SitemapDiscovery, SitemapLimits } from './robots';
+export { createSiteFetcher } from './site';
+export type { SiteFetcher, SiteFetcherOptions, SiteFile } from './site';
 export type * from './types';

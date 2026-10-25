@@ -27,6 +27,8 @@ type Audit = { id: string; startUrl?: string | null; status: string; healthScore
 type AiResults = { latest?: { finishedAt?: string | null; answers?: number | null; mentionRate?: number | null; citeRate?: number | null } | null; prompts?: unknown[] | null };
 type GeoGrid = { id: string; keyword?: string | null; placeName?: string | null; size?: number | null; status?: string | null; averagePosition?: number | null; foundIn?: number | null; done?: number | null; createdAt: string };
 
+type IndexingSummary = { counts: Record<"total" | "suggested" | "new" | "reindex" | "indexed" | "notIndexed", number>; indexnow: { verifiedAt: string | null }; lastSyncAt: string | null };
+
 const linkButton = "inline-flex h-8 items-center gap-1.5 rounded-md border border-accent bg-accent px-2.5 text-[13px] font-medium text-accent-fg shadow-card hover:brightness-95";
 
 function Section<T>({
@@ -191,6 +193,7 @@ function Overview({ project }: { project: Project }) {
   const audits = useQuery({ queryKey: ["audits", project.id], queryFn: () => api<Audit[]>(`${path}/audits`) });
   const ai = useQuery({ queryKey: ["ai", project.id, "results"], queryFn: () => api<AiResults>(`${path}/ai/results`) });
   const grids = useQuery({ queryKey: ["geo-grids", project.id], queryFn: () => api<GeoGrid[]>(`${path}/geo-grids`) });
+  const indexing = useQuery({ queryKey: ["indexing", project.id, "summary"], queryFn: () => api<IndexingSummary>(`${path}/indexing`), enabled: Boolean(project.domain) });
 
   // The same keys as the tracker page, so a finished run there refreshes these summaries.
   const rankResults = useQueries({
@@ -260,6 +263,31 @@ function Overview({ project }: { project: Project }) {
               </>
             );
           }}
+        </Section>
+
+        <Section
+          title="Indexing"
+          href={`${base}/indexing`}
+          query={indexing}
+          isEmpty={(data) => data.counts.total === 0 && !data.indexnow.verifiedAt}
+          empty={{ text: "Find every page on your site, send new and changed ones to Bing and other engines with IndexNow, and see which ones Google has indexed.", action: "Set up indexing" }}
+        >
+          {(data) => (
+            <>
+              <Figures
+                items={[
+                  { label: "Pages", value: num(data.counts.total) },
+                  { label: "Suggested", value: num(data.counts.suggested) },
+                  { label: "Indexed in Google", value: num(data.counts.indexed) },
+                  { label: "Need Google", value: num(data.counts.reindex) },
+                ]}
+              />
+              <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+                <Badge tone={data.indexnow.verifiedAt ? "pos" : "warn"}>{data.indexnow.verifiedAt ? "IndexNow on" : "IndexNow not set up"}</Badge>
+                <span>{data.counts.new ? `${num(data.counts.new)} new pages this month · ` : ""}{data.lastSyncAt ? `Synced ${dateOnly(data.lastSyncAt)}` : "First sync pending"}</span>
+              </p>
+            </>
+          )}
         </Section>
 
         <Section

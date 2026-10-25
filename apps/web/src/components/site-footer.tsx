@@ -25,7 +25,7 @@ export function SiteFooter() {
           </p>
           <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-line bg-bg px-3 py-1 text-xs text-muted">
             <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
-            Early project, in active development
+            Released, with active updates
           </p>
         </div>
 

@@ -15,7 +15,7 @@ export default function McpToolsPage() {
   return (
     <DocArticle slug={slug}>
       <p>
-        The MCP server at <code>{'{API_URL}'}/mcp</code> offers 69 tools. Each one calls the same REST route the
+        The MCP server at <code>{'{API_URL}'}/mcp</code> offers 78 tools. Each one calls the same REST route the
         dashboard uses, with the caller&apos;s API key, so validation, prices, caching and limits are identical. Most
         tools take an optional <code>project_id</code>; leave it out when the account has one project. With no project
         at all, paid lookups run on their own in the market their input names (the United States by default).
@@ -182,6 +182,29 @@ export default function McpToolsPage() {
           ['get_analytics_overview', 'GA4 sessions, engagement, key events and revenue against the previous period.', 'free'],
           ['get_analytics_landing_pages', 'GA4 landing pages with engagement and key events.', 'free'],
           ['get_search_opportunities', 'Pages at positions 4 to 20 scored for where a push is most worth it.', 'free'],
+        ]}
+      />
+
+      <h2 id="indexing">Indexing and IndexNow</h2>
+      <p>
+        The project&apos;s page list, built daily from its sitemaps, latest site audit and Search Console, with each
+        page&apos;s IndexNow submission and Google index status. IndexNow reaches Bing, Yandex, Seznam, Naver and Yep,
+        not Google. All free.
+      </p>
+      <DocTable
+        caption="Indexing tools"
+        head={head}
+        mono={[2]}
+        rows={[
+          ['get_indexing_status', 'Page counts (suggested, new, changed, to reindex, indexed, not indexed), the IndexNow key and whether its file is verified, and the last sync.', 'free'],
+          ['list_indexing_pages', 'Pages with where each was found, when it changed, its IndexNow submission and Google’s verdict, filtered by state.', 'free'],
+          ['sync_indexing_pages', 'Rebuild the page list now, then auto-submit and inspect when those are switched on.', 'free'],
+          ['verify_indexnow', 'Check the IndexNow key file is on the site.', 'free'],
+          ['submit_indexnow', 'Notify IndexNow of new or changed pages: given URLs, or every suggested page.', 'free'],
+          ['get_google_sitemaps', 'The sitemaps Google has for the property, with last read, errors and URLs submitted.', 'free'],
+          ['submit_google_sitemaps', 'Submit sitemaps to Search Console. Needs a connection with full access.', 'free'],
+          ['get_gsc_keywords', 'Every query from the stored daily Search Console sync over 7 to 480 days, with position change and top page.', 'free'],
+          ['get_keyword_suggestions', 'Search Console queries not yet tracked or saved, those at positions 5 to 20 first.', 'free'],
         ]}
       />
 

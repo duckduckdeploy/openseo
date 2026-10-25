@@ -38,7 +38,7 @@ export default function GoogleSetupPage() {
         <Step title="Configure the consent screen">
           <p>
             Set the app name, support email and your domain. Add the scopes{' '}
-            <code>https://www.googleapis.com/auth/webmasters.readonly</code> and{' '}
+            <code>https://www.googleapis.com/auth/webmasters</code> and{' '}
             <code>https://www.googleapis.com/auth/analytics.readonly</code>, plus <code>openid</code> and{' '}
             <code>email</code>. While the app is in testing, only test users you list can connect; publishing it for
             other users may need Google&apos;s verification.
@@ -61,8 +61,10 @@ export default function GoogleSetupPage() {
       <h2 id="how">How the connection works</h2>
       <ul>
         <li>
-          Each product is a separate grant with a read-only scope, apart from signing in to OpenSEO. Connecting Search
-          Console never grants Analytics, or the other way round.
+          Each product is a separate grant, apart from signing in to OpenSEO: full Search Console access (so the
+          Indexing page can submit sitemaps) and read-only Analytics. Connecting Search Console never grants
+          Analytics, or the other way round. Grants made when OpenSEO asked only for read-only Search Console keep
+          working for everything except submitting sitemaps.
         </li>
         <li>
           The redirect goes through the dashboard&apos;s address, so the user&apos;s session comes along and the grant
@@ -79,7 +81,11 @@ export default function GoogleSetupPage() {
           Access and refresh tokens are encrypted with <code>ENCRYPTION_KEY</code>. Access tokens are refreshed shortly
           before they expire. If Google withdraws the grant, the page asks the user to reconnect.
         </li>
-        <li>Nothing Google returns is stored. Google&apos;s API quotas apply; when one is used up the page says so.</li>
+        <li>
+          Search Console data is synced into the project database daily, up to 16 months back, and URL inspection
+          results are kept per page. Disconnecting deletes both. Google&apos;s API quotas apply; when one is used up
+          the page says so.
+        </li>
       </ul>
 
       <Callout title="Testing without Google">

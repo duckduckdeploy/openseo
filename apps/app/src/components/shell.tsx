@@ -1,31 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Activity,
-  BarChart3,
-  ClipboardCheck,
-  Bot,
-  ChevronLeft,
-  FolderKanban,
-  Gauge,
-  Globe,
-  KeyRound,
-  LayoutDashboard,
-  Link2,
-  LogOut,
-  MapPin,
-  Network,
-  Menu,
-  Search,
-  Settings,
-  Sparkles,
-  Star,
-  Swords,
-  TrendingUp,
-  Wrench,
-  X,
-} from "lucide-react";
+import { Activity, BarChart3, Bot, ChevronLeft, ClipboardCheck, FolderKanban, Gauge, Globe, KeyRound, LayoutDashboard, Link2, LogOut, MapPin, Menu, Network, ScanSearch, Search, Settings, Sparkles, Star, Swords, TrendingUp, Wrench, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -52,6 +28,7 @@ const projectNav = [
   { href: "/backlinks", label: "Backlinks", icon: Link2 },
   { href: "/competitors", label: "Competitors", icon: Swords },
   { href: "/audit", label: "Site audit", icon: Activity },
+  { href: "/indexing", label: "Indexing", icon: ScanSearch },
   { href: "/ai", label: "AI visibility", icon: Bot },
   { href: "/local", label: "Local rank tracker", icon: MapPin },
 ];

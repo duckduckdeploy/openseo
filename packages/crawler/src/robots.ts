@@ -60,6 +60,8 @@ export async function loadRobots(origin: string, ctx: FetchContext, userAgent: s
 export interface ParsedSitemap {
   kind: 'urlset' | 'index' | 'unknown';
   locs: string[];
+  /** Each loc's `<lastmod>`, as written (same index); null when it has none. */
+  lastmods: (string | null)[];
 }
 
 const xml = new XMLParser({ ignoreAttributes: true, removeNSPrefix: true, parseTagValue: false });
@@ -69,16 +71,22 @@ function toArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [value];
 }
 
-function locsOf(entries: unknown): string[] {
-  const out: string[] = [];
+const textOf = (value: unknown): string => (typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : '');
+
+function locsOf(entries: unknown): { locs: string[]; lastmods: (string | null)[] } {
+  const locs: string[] = [];
+  const lastmods: (string | null)[] = [];
   for (const entry of toArray(entries)) {
     if (typeof entry !== 'object' || entry === null) continue;
+    const lastmod = textOf(toArray((entry as { lastmod?: unknown }).lastmod)[0]) || null;
     for (const loc of toArray((entry as { loc?: unknown }).loc)) {
-      const text = typeof loc === 'string' ? loc.trim() : typeof loc === 'number' ? String(loc) : '';
-      if (text) out.push(text);
+      const text = textOf(loc);
+      if (!text) continue;
+      locs.push(text);
+      lastmods.push(lastmod);
     }
   }
-  return out;
+  return { locs, lastmods };
 }
 
 export function parseSitemapXml(text: string): ParsedSitemap {
@@ -86,12 +94,12 @@ export function parseSitemapXml(text: string): ParsedSitemap {
   try {
     doc = xml.parse(text);
   } catch {
-    return { kind: 'unknown', locs: [] };
+    return { kind: 'unknown', locs: [], lastmods: [] };
   }
   const root = doc as { urlset?: { url?: unknown }; sitemapindex?: { sitemap?: unknown } };
-  if (root.sitemapindex) return { kind: 'index', locs: locsOf(root.sitemapindex.sitemap) };
-  if (root.urlset) return { kind: 'urlset', locs: locsOf(root.urlset.url) };
-  return { kind: 'unknown', locs: [] };
+  if (root.sitemapindex) return { kind: 'index', ...locsOf(root.sitemapindex.sitemap) };
+  if (root.urlset) return { kind: 'urlset', ...locsOf(root.urlset.url) };
+  return { kind: 'unknown', locs: [], lastmods: [] };
 }
 
 export interface SitemapLimits {
@@ -114,6 +122,8 @@ export interface SitemapDiscovery {
   urls: string[];
   /** The sitemap document each entry of `urls` came from (same index). */
   sources: string[];
+  /** Each entry's `<lastmod>` (same index); null when it has none. */
+  lastmods: (string | null)[];
   /** Documents that could not be read: an error status, no response, or not a sitemap. `fromIndex` when a sitemap index named it. */
   failed: { url: string; status: number; fromIndex: boolean }[];
   /** Sitemap documents that parsed as a urlset or index. */
@@ -132,6 +142,7 @@ export async function discoverSitemapUrls(
 ): Promise<SitemapDiscovery> {
   const urls: string[] = [];
   const sources: string[] = [];
+  const lastmods: (string | null)[] = [];
   const failed: SitemapDiscovery['failed'] = [];
   const sitemaps: string[] = [];
   const tooLarge: string[] = [];
@@ -139,7 +150,7 @@ export async function discoverSitemapUrls(
   const seen = new Set<string>();
   let queue = seeds.map((url) => ({ url, depth: 0 }));
   let fetched = 0;
-  const done = (): SitemapDiscovery => ({ urls, sources, failed, sitemaps, tooLarge, capped });
+  const done = (): SitemapDiscovery => ({ urls, sources, lastmods, failed, sitemaps, tooLarge, capped });
 
   while (queue.length > 0 && fetched < limits.maxDocuments && urls.length < limits.maxUrls) {
     const next: { url: string; depth: number }[] = [];
@@ -180,13 +191,14 @@ export async function discoverSitemapUrls(
       }
       sitemaps.push(item.url);
       if (parsed.kind === 'urlset') {
-        for (const loc of parsed.locs) {
+        for (const [i, loc] of parsed.locs.entries()) {
           if (urls.length >= limits.maxUrls) {
             capped = true;
             break;
           }
           urls.push(loc);
           sources.push(item.url);
+          lastmods.push(parsed.lastmods[i] ?? null);
         }
       } else if (item.depth >= limits.maxDepth) {
         if (parsed.locs.length > 0) capped = true;
