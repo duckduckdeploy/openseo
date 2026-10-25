@@ -13,7 +13,16 @@ describe("sessions", () => {
     const { api, email } = await signUp("Ada");
     const me = await api.ok("GET", "/me");
     expect(me.user).toMatchObject({ email, name: "Ada" });
-    expect(me.settings).toEqual({ hasYepapiKey: false, yepapiKeyHint: null, yepapiKeyCheckedAt: null, monthlyBudgetUsd: null });
+    expect(me.settings).toEqual({ hasYepapiKey: false, yepapiKeyHint: null, yepapiKeyCheckedAt: null, monthlyBudgetUsd: null, onboardedAt: null });
+  });
+
+  it("records when the first-run welcome is finished", async () => {
+    const { api, cookie } = await signUp();
+    const done = await api.ok("POST", "/onboarding/complete");
+    expect(typeof done.onboardedAt).toBe("string");
+    expect((await api.ok("GET", "/me")).settings.onboardedAt).toBe(done.onboardedAt);
+    // Session only: an API key cannot change it.
+    expect((await client({ cookie }).request("POST", "/api/onboarding/complete", {}, { origin: "https://evil.example" })).status).toBe(403);
   });
 
   it("refuses cookie-authenticated writes from another origin (CSRF)", async () => {

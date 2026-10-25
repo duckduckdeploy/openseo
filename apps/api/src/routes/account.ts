@@ -15,6 +15,7 @@ async function settingsFor(userId: string) {
     yepapiKeyHint: row?.yepapiKeyHint ?? null,
     yepapiKeyCheckedAt: row?.yepapiKeyCheckedAt ?? null,
     monthlyBudgetUsd: row?.monthlyBudgetUsd ?? null,
+    onboardedAt: row?.onboardedAt ?? null,
   };
 }
 
@@ -56,6 +57,17 @@ export async function accountRoutes(app: FastifyInstance) {
       .update(schema.userSettings)
       .set({ yepapiKeyEnc: null, yepapiKeyHint: null, yepapiKeyCheckedAt: null })
       .where(eq(schema.userSettings.userId, user.id));
+    return { ok: true, data: await settingsFor(user.id) };
+  });
+
+  // The first-run welcome is done (or skipped by someone who already has a key). Shown again only if this is cleared.
+  app.post("/onboarding/complete", async (request) => {
+    const user = await requireSessionUser(request);
+    const onboardedAt = new Date();
+    await db
+      .insert(schema.userSettings)
+      .values({ userId: user.id, onboardedAt })
+      .onConflictDoUpdate({ target: schema.userSettings.userId, set: { onboardedAt } });
     return { ok: true, data: await settingsFor(user.id) };
   });
 

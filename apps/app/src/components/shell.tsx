@@ -84,13 +84,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (unauthenticated) router.replace("/sign-in");
   }, [unauthenticated, router]);
+  // First visit after signing up (or signing in before finishing it): the welcome flow comes first.
+  const needsWelcome = me.data != null && !me.data.settings.onboardedAt;
+  useEffect(() => {
+    if (needsWelcome) router.replace("/welcome");
+  }, [needsWelcome, router]);
   useEffect(() => setOpen(false), [pathname]);
   // Keep the current page's item in view when the nav list scrolls.
   useEffect(() => {
     document.querySelector('aside [aria-current="page"]')?.scrollIntoView({ block: "nearest" });
   }, [pathname]);
 
-  if (me.isPending || unauthenticated) {
+  if (me.isPending || unauthenticated || needsWelcome) {
     return (
       <div className="grid min-h-dvh place-items-center">
         <Spinner />

@@ -3,8 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { LocationPicker, type LocationChoice } from "@/components/location-picker";
 import { Button, Card, EmptyState, ErrorNote, Field, Input, PageHeader, Spinner } from "@/components/ui";
 import { api, dateOnly } from "@/lib/api";
@@ -68,9 +68,10 @@ function NewProject({ onDone }: { onDone: () => void }) {
   );
 }
 
-export default function ProjectsPage() {
+function Projects() {
   const projects = useProjects();
-  const [creating, setCreating] = useState(false);
+  // ?new=1 opens the form straight away, for example from the welcome flow's last step.
+  const [creating, setCreating] = useState(useSearchParams().get("new") === "1");
 
   return (
     <>
@@ -105,5 +106,14 @@ export default function ProjectsPage() {
         ))}
       </div>
     </>
+  );
+}
+
+// useSearchParams needs a Suspense boundary for the static build.
+export default function ProjectsPage() {
+  return (
+    <Suspense>
+      <Projects />
+    </Suspense>
   );
 }

@@ -91,6 +91,8 @@ export const userSettings = pgTable("user_settings", {
   yepapiKeyCheckedAt: timestamp("yepapi_key_checked_at", { withTimezone: true }),
   // Optional monthly ceiling the app enforces on its own spending, in USD.
   monthlyBudgetUsd: doublePrecision("monthly_budget_usd"),
+  // When the user finished the first-run welcome (app /welcome). Null shows it on the next visit.
+  onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   updatedAt: updatedAt(),
 });
 

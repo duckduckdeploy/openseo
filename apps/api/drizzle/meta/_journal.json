@@ -43,6 +43,13 @@
       "when": 1792188203186,
       "tag": "0005_move_project_data",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792971086049,
+      "tag": "0006_onboarding",
+      "breakpoints": true
     }
   ]
 }

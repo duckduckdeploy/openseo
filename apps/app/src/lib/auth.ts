@@ -2,7 +2,7 @@ import { api } from "./api";
 
 export type Me = {
   user: { id: string; email: string; name: string };
-  settings: { hasYepapiKey: boolean; yepapiKeyHint: string | null; yepapiKeyCheckedAt: string | null; monthlyBudgetUsd: number | null };
+  settings: { hasYepapiKey: boolean; yepapiKeyHint: string | null; yepapiKeyCheckedAt: string | null; monthlyBudgetUsd: number | null; onboardedAt: string | null };
   /** This install's agent endpoint and docs, for the agent setup prompt. */
   links?: { mcpUrl: string; docsUrl: string };
 };

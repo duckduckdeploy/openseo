@@ -163,3 +163,100 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* Welcome flow (components/onboarding): entrances, floating art and celebration bursts. The global
+   reduced-motion rule above switches the animations off; the two overrides below keep the check
+   mark drawn and hide the burst pieces when it does. */
+@keyframes ob-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ob-enter-next {
+  from { opacity: 0; transform: translateX(32px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ob-enter-back {
+  from { opacity: 0; transform: translateX(-32px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ob-art-in {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); filter: blur(8px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes ob-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes ob-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes ob-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes ob-burst {
+  0% { opacity: 1; transform: translate(-50%, -50%) rotate(var(--r)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--r)) translateY(var(--d)) scale(0.3); }
+}
+@keyframes ob-orb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(var(--x, 30px), var(--y, -20px)) scale(1.08); }
+}
+@keyframes ob-shine {
+  from { transform: translateX(-120%) skewX(-20deg); }
+  to { transform: translateX(320%) skewX(-20deg); }
+}
+
+.ob-rise {
+  animation: ob-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 60ms);
+}
+.ob-next { animation: ob-enter-next 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ob-back { animation: ob-enter-back 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ob-art { animation: ob-art-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ob-float { animation: ob-float 6s ease-in-out infinite; animation-delay: var(--delay, 0s); }
+.ob-pop { animation: ob-pop 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.ob-orb { animation: ob-orb 16s ease-in-out infinite; }
+.ob-check path {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: ob-draw 0.45s 0.2s ease-out forwards;
+}
+.ob-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: ob-burst 0.95s cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+}
+/* A light sweep across the primary button, every few seconds. */
+.ob-shine { position: relative; overflow: hidden; }
+.ob-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  animation: ob-shine 3.2s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+
+/* The illustrations sit on warm cream; fade their edges out and keep the glow behind them gentle in dark mode. */
+.ob-glow { background: #f9e6c3; opacity: 0.7; }
+.ob-picture {
+  mask-image: radial-gradient(closest-side, black 62%, transparent 100%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ob-glow { opacity: 0.12; }
+  :root:not([data-theme="light"]) .ob-picture { filter: brightness(0.92); mask-image: radial-gradient(closest-side, black 48%, transparent 100%); }
+}
+:root[data-theme="dark"] .ob-glow { opacity: 0.12; }
+:root[data-theme="dark"] .ob-picture { filter: brightness(0.92); mask-image: radial-gradient(closest-side, black 48%, transparent 100%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-check path { stroke-dashoffset: 0; }
+  .ob-spark, .ob-shine::after { display: none; }
+}

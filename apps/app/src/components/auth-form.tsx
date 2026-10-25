@@ -30,7 +30,8 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     try {
       if (isSignUp) await signUp(String(form.get("name") ?? ""), email, password);
       else await signIn(email, password);
-      router.replace(next ?? "/projects");
+      // New accounts start with the welcome flow; the app sends unfinished ones there too.
+      router.replace(next ?? (isSignUp ? "/welcome" : "/projects"));
     } catch (caught) {
       setError(caught);
       setPending(false);
