@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/Node-22%2B-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node 22+">
+  <img src="https://img.shields.io/badge/Node-26%2B-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node 26+">
   <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js">
   <img src="https://img.shields.io/badge/Fastify-000000?style=flat-square&logo=fastify&logoColor=white" alt="Fastify">
   <img src="https://img.shields.io/badge/Postgres-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="Postgres">
@@ -251,7 +251,7 @@ The crawler, site audit and Google data are free. Keyword volumes, rankings, bac
 
 ## 🛠️ Development
 
-Requirements: Node 22+, pnpm 10, Postgres 15+ (or `docker compose up -d postgres`).
+Requirements: Node 26+, pnpm 10, Postgres 15+ (or `docker compose up -d postgres`).
 
 ```bash
 pnpm install

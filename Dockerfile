@@ -5,7 +5,7 @@
 #
 # Build arguments are baked into the two Next.js apps, so changing them needs a rebuild.
 
-FROM node:22-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH COREPACK_ENABLE_DOWNLOAD_PROMPT=0 NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
 WORKDIR /openseo

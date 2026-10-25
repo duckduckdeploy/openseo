@@ -73,7 +73,7 @@ export default function SelfHostingPage() {
         rows={[
           ['Your own computer', 'Trying it out, or using it just for yourself', 'Docker Desktop (Windows, macOS) or Docker (Linux)'],
           ['A cloud server', 'Using it from anywhere, with a team, on your own domain', 'A server with 2 CPUs and 4 GB of memory, and a domain'],
-          ['From source', 'Changing the code', 'Node.js 22, pnpm 10 and Postgres'],
+          ['From source', 'Changing the code', 'Node.js 26, pnpm 10 and Postgres'],
         ]}
       />
 

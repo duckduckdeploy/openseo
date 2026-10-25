@@ -6,7 +6,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.30.3",
   "engines": {
-    "node": ">=22"
+    "node": ">=26"
   },
   "scripts": {
     "dev": "pnpm -r --parallel --filter ./apps/* dev",
@@ -23,6 +23,12 @@
       "esbuild",
       "sharp",
       "@tailwindcss/oxide"
-    ]
+    ],
+    "overrides": {
+      "body-parser@2": "^2.4.0",
+      "undici@7": "^7.30.1",
+      "fast-uri@3": "^3.1.9",
+      "fast-uri@4": "^4.2.3"
+    }
   }
 }
