@@ -8,7 +8,6 @@ import { SITE_URL } from '@/lib/site';
 
 // Language alternates live in each page's <head>; with one language they add nothing here and make
 // browsers show the file as unstyled text. Add them back with the translations.
-// Privacy and terms are unreviewed drafts and are marked noindex, so they are left out.
 export default function sitemap(): MetadataRoute.Sitemap {
   const paths: { path: string; priority: number }[] = [
     { path: '/', priority: 1 },
@@ -27,6 +26,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/glossary', priority: 0.8 },
     ...glossaryCategories.map((category) => ({ path: `/glossary/topics/${category.id}`, priority: 0.6 })),
     ...glossary.map((term) => ({ path: `/glossary/${term.slug}`, priority: 0.6 })),
+    { path: '/privacy', priority: 0.2 },
+    { path: '/terms', priority: 0.2 },
   ];
 
   return paths.map(({ path, priority }) => {

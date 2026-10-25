@@ -17,6 +17,8 @@ export const MCP_URL = `${PUBLIC_API_URL}/mcp`;
 export const SIGN_UP_URL = `${APP_URL}/sign-up`;
 export const SIGN_IN_URL = `${APP_URL}/sign-in`;
 export const YEPAPI_URL = 'https://yepapi.com?ref=openseo';
+/** Where privacy, legal and support requests go. */
+export const CONTACT_EMAIL = 'info@openseo.gg';
 /** OpenSEO News: the Google algorithm update tracker. */
 export const NEWS_URL = 'https://news.openseo.gg';
 

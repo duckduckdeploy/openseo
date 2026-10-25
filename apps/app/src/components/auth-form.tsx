@@ -6,6 +6,9 @@ import { useState } from "react";
 import { signIn, signUp } from "@/lib/auth";
 import { Button, ErrorNote, Field, Input } from "./ui";
 
+// The website with the terms and privacy policy. Unset (a bare self-hosted app), the sign-up note is left out.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
   // Where to go after signing in, for example back to a connection request. Same-site paths only.
@@ -49,6 +52,19 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         <Input name="password" type="password" autoComplete={isSignUp ? "new-password" : "current-password"} required minLength={8} />
       </Field>
       <ErrorNote error={error} />
+      {isSignUp && SITE_URL && (
+        <p className="text-[13px] text-muted">
+          By creating an account you agree to the{" "}
+          <a href={`${SITE_URL}/terms`} className="underline underline-offset-2">
+            terms of service
+          </a>{" "}
+          and{" "}
+          <a href={`${SITE_URL}/privacy`} className="underline underline-offset-2">
+            privacy policy
+          </a>
+          .
+        </p>
+      )}
       <Button type="submit" variant="primary" loading={pending} className="w-full">
         {isSignUp ? "Create account" : "Sign in"}
       </Button>
