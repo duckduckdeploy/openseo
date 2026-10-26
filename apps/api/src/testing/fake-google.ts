@@ -1,5 +1,5 @@
 /**
- * Test stand-in for Google's OAuth, Search Console and Analytics APIs. Point GOOGLE_API_BASE_URL
+ * Test stand-in for Google's OAuth and Search Console APIs. Point GOOGLE_API_BASE_URL
  * at it; requests arrive as /<host>/<path> (see googleUrl in services/google.ts).
  *
  * - The token endpoint accepts any code. The account it signs in comes from the code:
@@ -63,35 +63,6 @@ function gscRows(body: { dimensions?: string[]; startDate: string; endDate: stri
   return rows.slice(start, start + (body.rowLimit ?? 1000));
 }
 
-function ga4Report(body: { dateRanges?: unknown[]; dimensions?: { name: string }[]; metrics?: { name: string }[]; limit?: number }) {
-  const ranges = body.dateRanges?.length ?? 1;
-  const dims = (body.dimensions ?? []).map((d) => d.name);
-  const metrics = (body.metrics ?? []).map((m) => m.name);
-  const dimensionHeaders = [...dims, ...(ranges > 1 ? ["dateRange"] : [])].map((name) => ({ name }));
-  const values: Record<string, string[]> = {
-    date: Array.from({ length: 28 }, (_, i) => `202609${String(i + 1).padStart(2, "0")}`),
-    hostName: ["www.acme.com"],
-    landingPage: PAGES,
-  };
-  let combos: string[][] = [[]];
-  for (const d of dims) combos = combos.flatMap((c) => (values[d] ?? ["(not set)"]).map((v) => [...c, v]));
-  const rows = combos.flatMap((keys) =>
-    Array.from({ length: ranges }, (_, r) => {
-      const h = hash(keys.join("|") + r);
-      const metric = (name: string) => {
-        if (name.endsWith("Rate")) return ((h % 60) / 100 + 0.1).toFixed(4);
-        if (name === "purchaseRevenue") return ((h % 5000) / 10).toFixed(2);
-        return String(20 + (h % 400));
-      };
-      return {
-        dimensionValues: [...keys, ...(ranges > 1 ? [`date_range_${r}`] : [])].map((value) => ({ value })),
-        metricValues: metrics.map((name) => ({ value: metric(name) })),
-      };
-    }),
-  );
-  return { dimensionHeaders, metricHeaders: metrics.map((name) => ({ name, type: "TYPE_INTEGER" })), rows: rows.slice(0, body.limit ?? 10000), rowCount: rows.length, metadata: {} };
-}
-
 export type FakeGoogle = {
   server: Server;
   url: string;
@@ -125,7 +96,7 @@ export async function startFakeGoogle(port = 0): Promise<FakeGoogle> {
           const [, sub = "sub-1", email = "owner@example.test"] = String(body.code).split(":");
           const scope = String(body.code).includes("noscope")
             ? "openid https://www.googleapis.com/auth/userinfo.email"
-            : `openid https://www.googleapis.com/auth/userinfo.email ${String(body.code).includes("ga4") ? "https://www.googleapis.com/auth/analytics.readonly" : String(body.code).includes("readonly") ? "https://www.googleapis.com/auth/webmasters.readonly" : "https://www.googleapis.com/auth/webmasters"}`;
+            : `openid https://www.googleapis.com/auth/userinfo.email ${String(body.code).includes("readonly") ? "https://www.googleapis.com/auth/webmasters.readonly" : "https://www.googleapis.com/auth/webmasters"}`;
           // Google often sends no refresh token when the account already granted access.
           const refresh = String(body.code).includes("norefresh") ? {} : { refresh_token: `rt-${sub}` };
           return send(200, { access_token: `at-${++issued}`, expires_in: 3599, ...refresh, scope, token_type: "Bearer", id_token: idToken(sub, email) });
@@ -165,11 +136,6 @@ export async function startFakeGoogle(port = 0): Promise<FakeGoogle> {
         if (String(body.inspectionUrl).includes("not-indexed")) return send(200, { inspectionResult: { indexStatusResult: { verdict: "NEUTRAL", coverageState: "Crawled - currently not indexed", lastCrawlTime: "2026-10-01T08:00:00Z" } } });
         return send(200, { inspectionResult: { inspectionResultLink: "https://search.google.com/x", indexStatusResult: { verdict: "PASS", coverageState: "Submitted and indexed", indexingState: "INDEXING_ALLOWED", robotsTxtState: "ALLOWED", pageFetchState: "SUCCESSFUL", lastCrawlTime: "2026-10-10T08:00:00Z", googleCanonical: body.inspectionUrl, userCanonical: body.inspectionUrl } } });
       }
-      if (path === "/admin/v1beta/accountSummaries") {
-        return send(200, { accountSummaries: [{ account: "accounts/1", displayName: "Acme Inc", propertySummaries: [{ property: "properties/123", displayName: "acme.com - GA4" }, { property: "properties/456", displayName: "Old site" }] }] });
-      }
-      if (path === "/admin/v1beta/properties/123") return send(200, { name: "properties/123", displayName: "acme.com - GA4", timeZone: "America/New_York", currencyCode: "USD" });
-      if (path === "/data/v1beta/properties/123:runReport") return send(200, ga4Report(body));
       return send(404, { error: { code: 404, message: `No fake for ${path}` } });
     });
   });

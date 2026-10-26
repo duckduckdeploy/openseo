@@ -92,10 +92,10 @@ export const docPages: DocPage[] = [
   },
   {
     slug: 'tutorials/search-console',
-    title: 'Use your Search Console and Analytics data',
+    title: 'Use your Search Console data',
     h1: 'How to use Google Search Console for SEO',
     seoTitle: 'Google Search Console for SEO: How to Use It',
-    description: 'How to use Google Search Console and GA4 for SEO: connect it, find striking-distance queries and rank pages by where a push pays off.',
+    description: 'How to use Google Search Console for SEO: connect it, find striking-distance queries and rank pages by where a push pays off.',
     section: 'Tutorials',
   },
   {
@@ -126,8 +126,8 @@ export const docPages: DocPage[] = [
     slug: 'google-setup',
     title: 'Set up Google sign-in',
     h1: 'Set up Google sign-in for Search Console',
-    seoTitle: 'Set Up Google OAuth for Search Console and GA4',
-    description: 'Create the Google OAuth client that lets users connect Search Console and Analytics to your install.',
+    seoTitle: 'Set Up Google OAuth for Search Console',
+    description: 'Create the Google OAuth client that lets users connect Search Console to your install.',
     section: 'Run it yourself',
   },
   {
@@ -143,7 +143,7 @@ export const docPages: DocPage[] = [
     title: 'MCP tools',
     h1: 'SEO MCP tools reference',
     seoTitle: 'SEO MCP Tools: All 67 Tools Explained',
-    description: 'All 78 tools of the OpenSEO SEO MCP server: keyword research, rank tracking, site audits, AI visibility and Search Console, and which ones spend.',
+    description: 'All 76 tools of the OpenSEO SEO MCP server: keyword research, rank tracking, site audits, AI visibility and Search Console, and which ones spend.',
     section: 'Reference',
   },
   {

@@ -131,9 +131,9 @@ export const usageLog = pgTable(
   (t) => [index("usage_user_time_idx").on(t.userId, t.createdAt)],
 );
 
-// ── Google Search Console and Analytics ─────────────────────────────────────
+// ── Google Search Console ───────────────────────────────────────────────────
 
-export type GoogleProvider = "gsc" | "ga4";
+export type GoogleProvider = "gsc";
 
 /** A user's grant from one Google account for one product. Read-only scopes; tokens encrypted. */
 export const googleAccounts = pgTable(

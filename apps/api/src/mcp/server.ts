@@ -194,7 +194,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Tool failed";
         // The REST message points to the dashboard; an agent also needs the tool that checks it.
-        if (/^Connect Google (Search Console|Analytics)/.test(message)) return fail(`${message} Check with get_google_connections; only the user can connect Google, in the OpenSEO dashboard.`);
+        if (/^Connect Google Search Console/.test(message)) return fail(`${message} Check with get_google_connections; only the user can connect Google, in the OpenSEO dashboard.`);
         return fail(message);
       }
     }) as never);
@@ -624,7 +624,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   );
   tool("get_geo_grid", "A geo-grid's status, average position and the position and top results at every point.", { grid_id: z.string().uuid() }, (a) => rest("GET", `/geo-grids/${a.grid_id}`), true);
 
-  // ── Google Search Console and Analytics (free; the user connects them in the dashboard) ──
+  // ── Google Search Console (free; the user connects it in the dashboard) ──
   const range = z.enum(["last_7_days", "last_28_days", "last_3_months"]).optional().describe("Default last_28_days. Search Console periods end 3 days ago (its data lag).");
   const gscFilters = {
     device: z.enum(["DESKTOP", "MOBILE", "TABLET"]).optional(),
@@ -643,11 +643,11 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   };
   tool(
     "get_google_connections",
-    "Whether the project has Google Search Console and Google Analytics connected, and which property. If not, ask the user to connect them in the dashboard under Search performance; agents cannot connect them.",
+    "Whether the project has Google Search Console connected, and which property. If not, ask the user to connect it in the dashboard under Search performance; agents cannot connect it.",
     { project_id: projectId },
     async (a) => {
       const data = (await rest("GET", `/projects/${await resolveProject(a.project_id)}/google`)) as Json;
-      return { configured: data.configured, gsc: data.gsc, ga4: data.ga4 };
+      return { configured: data.configured, gsc: data.gsc };
     },
     true,
   );
@@ -690,28 +690,8 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
     true,
   );
   tool(
-    "get_analytics_overview",
-    "Google Analytics 4 sessions, users, engaged sessions, engagement rate, key events and revenue for the period against the one before, with a daily series. Organic search only unless channel is all. Free.",
-    { project_id: projectId, range, channel: z.enum(["organic", "all"]).optional() },
-    async (a) => {
-      const query = new URLSearchParams({ range: a.range ?? "last_28_days", channel: a.channel ?? "organic" });
-      return rest("GET", `/projects/${await resolveProject(a.project_id)}/analytics/overview?${query}`);
-    },
-    true,
-  );
-  tool(
-    "get_analytics_landing_pages",
-    "Google Analytics 4 landing pages by sessions, with engagement, key events and key-event rate. Organic search only unless channel is all. Free.",
-    { project_id: projectId, range, channel: z.enum(["organic", "all"]).optional(), limit: z.number().int().min(1).max(1000).optional() },
-    async (a) => {
-      const query = new URLSearchParams({ range: a.range ?? "last_28_days", channel: a.channel ?? "organic", limit: String(a.limit ?? 100) });
-      return rest("GET", `/projects/${await resolveProject(a.project_id)}/analytics/landing-pages?${query}`);
-    },
-    true,
-  );
-  tool(
     "get_search_opportunities",
-    "Pages ranking at positions 4 to 20 in Search Console, scored 0 to 100 for where a push is most worth it: half demand (impressions), 0.3 value (GA4 key-event rate, or engagement rate) and 0.2 reachability (how close to the top). Needs Search Console; Google Analytics is optional. Free.",
+    "Pages ranking at positions 4 to 20 in Search Console, scored 0 to 100 for where a push is most worth it: 0.7 demand (impressions) and 0.3 reachability (how close to the top). Needs Search Console. Free.",
     { project_id: projectId, range },
     async (a) => rest("GET", `/projects/${await resolveProject(a.project_id)}/search-opportunities?range=${a.range ?? "last_28_days"}`),
     true,

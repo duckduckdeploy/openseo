@@ -12,13 +12,12 @@ import { Badge, Button, Card, CardHeader, EmptyState, ErrorNote, Field, PageHead
 import { api, dateOnly, num } from "@/lib/api";
 import { downloadCsv } from "@/lib/lookup";
 
-type Provider = "gsc" | "ga4";
+type Provider = "gsc";
 type GoogleAccount = { id: string; provider: Provider; email: string | null; createdAt: string };
 type GoogleState = {
   configured: boolean;
   redirectUris: Record<Provider, string>;
   gsc: { siteUrl: string; accountId: string; email: string | null; canWrite: boolean; sync: SyncState; createdAt: string } | null;
-  ga4: { propertyId: string; displayName: string; timeZone: string | null; currencyCode: string | null; accountId: string; email: string | null; createdAt: string } | null;
   accounts: GoogleAccount[];
 };
 type Range = "last_7_days" | "last_28_days" | "last_3_months";
@@ -33,13 +32,10 @@ type Report = {
 };
 type TableRow = { key: string; clicks: number; impressions: number; ctr: number; position: number };
 type TablePage = { page: number; size: number; hasMore: boolean; rows: TableRow[] };
-type Opportunity = { url: string; clicks: number; impressions: number; position: number; sessions: number | null; value: number | null; score: number; parts: { demand: number; value: number | null; reachability: number } };
-type Opportunities = { analytics: boolean; valueMetric: string | null; warnings: string[]; pages: Opportunity[] };
-type Metrics = { sessions: number; activeUsers: number; engagedSessions: number; engagementRate: number; keyEvents: number; purchaseRevenue: number };
-type Overview = { property: { displayName: string; timeZone: string | null; currencyCode: string | null }; current: Metrics; previous: Metrics; limitedData: boolean };
-type LandingPages = { rows: Record<string, string | number>[]; limitedData: boolean };
+type Opportunity = { url: string; clicks: number; impressions: number; position: number; score: number; parts: { demand: number; reachability: number } };
+type Opportunities = { pages: Opportunity[] };
 
-const PRODUCT: Record<Provider, string> = { gsc: "Google Search Console", ga4: "Google Analytics" };
+const PRODUCT: Record<Provider, string> = { gsc: "Google Search Console" };
 const RANGES: { id: Range; label: string }[] = [
   { id: "last_7_days", label: "7 days" },
   { id: "last_28_days", label: "28 days" },
@@ -83,15 +79,11 @@ function PropertyPicker({ projectId, provider, accounts, onDone }: { projectId: 
   const options = useQuery({
     queryKey: ["google-options", projectId, provider, accountId],
     queryFn: () =>
-      provider === "gsc"
-        ? api<{ siteUrl: string; verified: boolean }[]>(`/projects/${projectId}/google/gsc/sites`, { query: { accountId } }).then((rows) => rows.map((r) => ({ id: r.siteUrl, label: r.siteUrl, disabled: !r.verified })))
-        : api<{ propertyId: string; displayName: string; account: string }[]>(`/projects/${projectId}/google/ga4/properties`, { query: { accountId } }).then((rows) =>
-            rows.map((r) => ({ id: r.propertyId, label: `${r.displayName} (${r.account}, ${r.propertyId.replace("properties/", "")})`, disabled: false })),
-          ),
+      api<{ siteUrl: string; verified: boolean }[]>(`/projects/${projectId}/google/${provider}/sites`, { query: { accountId } }).then((rows) => rows.map((r) => ({ id: r.siteUrl, label: r.siteUrl, disabled: !r.verified }))),
     enabled: Boolean(accountId),
   });
   const save = useMutation({
-    mutationFn: () => api(`/projects/${projectId}/google/${provider}`, { method: "PUT", body: provider === "gsc" ? { accountId, siteUrl: choice } : { accountId, propertyId: choice } }),
+    mutationFn: () => api(`/projects/${projectId}/google/${provider}`, { method: "PUT", body: { accountId, siteUrl: choice } }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["google", projectId] });
       void queryClient.invalidateQueries({ queryKey: ["search", projectId] });
@@ -121,7 +113,7 @@ function PropertyPicker({ projectId, provider, accounts, onDone }: { projectId: 
           ))}
         </Select>
       </Field>
-      <Field label={provider === "gsc" ? "Property" : "GA4 property"} hint={provider === "gsc" ? "Properties without verified access are listed but cannot be chosen." : undefined}>
+      <Field label="Property" hint="Properties without verified access are listed but cannot be chosen.">
         <Select value={choice} onChange={(event) => setChoice(event.target.value)} disabled={!options.data?.length}>
           <option value="">{options.isPending ? "Loading…" : options.data?.length ? "Choose…" : "None in this account"}</option>
           {options.data?.map((option) => (
@@ -161,13 +153,13 @@ function ProviderCard({ projectId, provider, state }: { projectId: string; provi
       void queryClient.invalidateQueries({ queryKey: ["google", projectId] });
     },
   });
-  const label = connection ? (provider === "gsc" ? state.gsc?.siteUrl : `${state.ga4?.displayName} (${state.ga4?.propertyId})`) : null;
+  const label = connection?.siteUrl ?? null;
 
   return (
     <Card>
       <CardHeader
         title={PRODUCT[provider]}
-        description={provider === "gsc" ? "Clicks, impressions and positions from Google itself." : "What search visitors do on your site."}
+        description="Clicks, impressions and positions from Google itself."
         action={<Badge tone={connection ? "pos" : "neutral"}>{connection ? "Connected" : "Not connected"}</Badge>}
       />
       <div className="space-y-3 p-4 text-[13px]">
@@ -226,7 +218,7 @@ function AccountsCard({ state, projectId }: { state: GoogleState; projectId: str
   if (!state.accounts.length) return null;
   return (
     <Card>
-      <CardHeader title="Google accounts" description="Google grants you have given OpenSEO, per product. Removing one disconnects it from every project that uses it." />
+      <CardHeader title="Google accounts" description="Google grants you have given OpenSEO. Removing one disconnects it from every project that uses it." />
       <ul className="divide-y divide-line">
         {state.accounts.map((account) => (
           <li key={account.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-[13px]">
@@ -367,14 +359,13 @@ function OpportunitiesTable({ projectId, range }: { projectId: string; range: Ra
     { key: "url", header: "Page", rowHeader: true, sortValue: (r) => r.url, render: (r) => <ExtLink href={r.url} className="max-w-80 truncate" /> },
     { key: "position", header: "Position", align: "right", firstOrder: "asc", sortValue: (r) => r.position, render: (r) => r.position.toFixed(1) },
     { key: "impressions", header: "Impressions", align: "right", sortValue: (r) => r.impressions, render: (r) => num(r.impressions) },
-    { key: "sessions", header: "Organic sessions", align: "right", sortValue: (r) => r.sessions, render: (r) => num(r.sessions) },
     {
       key: "parts",
-      header: "Demand · value · reach",
+      header: "Demand · reach",
       title: "Each part is a percentile among these pages, 0 to 1",
       render: (r) => (
         <span className="font-mono text-xs text-muted tabular">
-          {r.parts.demand.toFixed(2)} · {r.parts.value == null ? "—" : r.parts.value.toFixed(2)} · {r.parts.reachability.toFixed(2)}
+          {r.parts.demand.toFixed(2)} · {r.parts.reachability.toFixed(2)}
         </span>
       ),
     },
@@ -383,7 +374,7 @@ function OpportunitiesTable({ projectId, range }: { projectId: string; range: Ra
     <Card>
       <CardHeader
         title="Opportunities"
-        description="Pages at positions 4 to 20, scored 0 to 100 for where a push is most worth it: half demand (impressions), 0.3 value (GA4 key-event rate) and 0.2 reachability (how close to the top)."
+        description="Pages at positions 4 to 20, scored 0 to 100 for where a push is most worth it: 0.7 demand (impressions) and 0.3 reachability (how close to the top)."
         action={
           <Button size="sm" disabled={!data.data?.pages.length} onClick={() => data.data && downloadCsv("search-opportunities.csv", data.data.pages.map(({ parts, ...row }) => ({ ...row, ...parts })))}>
             <Download className="size-3.5" aria-hidden /> CSV
@@ -393,14 +384,7 @@ function OpportunitiesTable({ projectId, range }: { projectId: string; range: Ra
       {data.isPending && <Spinner />}
       <ErrorNote error={data.error} />
       {data.data && (
-        <>
-          {data.data.warnings.map((warning) => (
-            <p key={warning} className="border-b border-line px-4 py-2 text-xs text-muted">
-              {warning}
-            </p>
-          ))}
-          <DataTable rows={data.data.pages} columns={columns} rowKey={(r) => r.url} caption="Search opportunities" initialSort={{ key: "score", order: "desc" }} empty={<p className="p-4 text-[13px] text-muted">No pages at positions 4 to 20 in this period.</p>} />
-        </>
+        <DataTable rows={data.data.pages} columns={columns} rowKey={(r) => r.url} caption="Search opportunities" initialSort={{ key: "score", order: "desc" }} empty={<p className="p-4 text-[13px] text-muted">No pages at positions 4 to 20 in this period.</p>} />
       )}
     </Card>
   );
@@ -479,62 +463,6 @@ function SearchConsoleReport({ projectId, sync }: { projectId: string; sync: Syn
   );
 }
 
-// ── Analytics report ────────────────────────────────────────────────────────
-
-function AnalyticsReport({ projectId }: { projectId: string }) {
-  const [range, setRange] = useState<Range>("last_28_days");
-  const overview = useQuery({ queryKey: ["search", projectId, "ga4", range], queryFn: () => api<Overview>(`/projects/${projectId}/analytics/overview`, { query: { range } }), placeholderData: keepPreviousData });
-  const pages = useQuery({ queryKey: ["search", projectId, "ga4-pages", range], queryFn: () => api<LandingPages>(`/projects/${projectId}/analytics/landing-pages`, { query: { range, limit: 50 } }), placeholderData: keepPreviousData });
-  const data = overview.data;
-  const money = (value: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: data?.property.currencyCode ?? "USD", maximumFractionDigits: 0 }).format(value);
-  type PageRow = Record<string, string | number>;
-  const columns: Column<PageRow>[] = [
-    { key: "landingPage", header: "Landing page", rowHeader: true, sortValue: (r) => String(r.landingPage), render: (r) => <span className="font-mono text-xs break-all">{String(r.landingPage)}</span> },
-    { key: "sessions", header: "Sessions", align: "right", sortValue: (r) => Number(r.sessions), render: (r) => num(Number(r.sessions)) },
-    { key: "engagementRate", header: "Engagement", align: "right", sortValue: (r) => Number(r.engagementRate), render: (r) => `${(Number(r.engagementRate) * 100).toFixed(1)}%` },
-    { key: "keyEvents", header: "Key events", align: "right", sortValue: (r) => Number(r.keyEvents), render: (r) => num(Number(r.keyEvents)) },
-    { key: "sessionKeyEventRate", header: "Key-event rate", align: "right", sortValue: (r) => Number(r.sessionKeyEventRate), render: (r) => `${(Number(r.sessionKeyEventRate) * 100).toFixed(1)}%` },
-  ];
-  return (
-    <section className="space-y-5" aria-label="Google Analytics">
-      <div className="flex flex-wrap items-end gap-3">
-        <h2 className="font-display text-lg font-semibold">Organic traffic</h2>
-        <Segmented label="Analytics period" value={range} onChange={setRange} options={RANGES} />
-        {data && (
-          <p className="font-mono text-xs text-muted">
-            {data.property.displayName} · complete days to yesterday{data.property.timeZone ? `, ${data.property.timeZone}` : ""}
-          </p>
-        )}
-      </div>
-      {overview.isPending && <Spinner />}
-      <ErrorNote error={overview.error ?? pages.error} />
-      {data?.limitedData && <Note tone="warn">Google sampled, thresholded or grouped part of this data, so the numbers are approximate.</Note>}
-      {data && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="Organic sessions" value={num(data.current.sessions)} sub={<Change value={change(data.current.sessions, data.previous.sessions)} />} />
-          <Stat label="Engagement rate" value={`${(data.current.engagementRate * 100).toFixed(1)}%`} sub={<Change value={change(data.current.engagementRate, data.previous.engagementRate)} />} />
-          <Stat label="Key events" value={num(data.current.keyEvents)} sub={<Change value={change(data.current.keyEvents, data.previous.keyEvents)} />} />
-          <Stat label="Revenue" value={money(data.current.purchaseRevenue)} sub={<Change value={change(data.current.purchaseRevenue, data.previous.purchaseRevenue)} />} />
-        </div>
-      )}
-      {pages.data && (
-        <Card>
-          <CardHeader
-            title="Organic landing pages"
-            description="Where search visitors arrive, by sessions, top 50."
-            action={
-              <Button size="sm" disabled={!pages.data.rows.length} onClick={() => pages.data && downloadCsv("analytics-organic-landing-pages.csv", pages.data.rows)}>
-                <Download className="size-3.5" aria-hidden /> CSV
-              </Button>
-            }
-          />
-          <DataTable rows={pages.data.rows} columns={columns} rowKey={(r) => `${r.hostName}${r.landingPage}`} caption="Organic landing pages" initialSort={{ key: "sessions", order: "desc" }} empty={<p className="p-4 text-[13px] text-muted">No organic sessions in this period.</p>} />
-        </Card>
-      )}
-    </section>
-  );
-}
-
 // ── Page ────────────────────────────────────────────────────────────────────
 
 function SearchPerformance() {
@@ -549,7 +477,7 @@ function SearchPerformance() {
     <>
       <PageHeader
         title="Search performance"
-        description="From your own Google Search Console and Google Analytics."
+        description="From your own Google Search Console."
       />
       <div className="space-y-6">
         {linkError && <ErrorNote error={new Error(LINK_ERRORS[linkError] ?? "Connecting Google failed. Try again.")} />}
@@ -558,15 +486,12 @@ function SearchPerformance() {
         <ErrorNote error={google.error} />
         {state && !state.configured && (
           <EmptyState title="Google is not set up on this server">
-            Whoever runs this OpenSEO needs a Google OAuth client: set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, with these redirect URIs: {state.redirectUris.gsc} and {state.redirectUris.ga4}. The self-hosting docs walk through it.
+            Whoever runs this OpenSEO needs a Google OAuth client: set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, with this redirect URI: {state.redirectUris.gsc}. The self-hosting docs walk through it.
           </EmptyState>
         )}
         {state?.configured && (
           <>
-            <div className="grid gap-5 lg:grid-cols-2 [&>*]:min-w-0">
-              <ProviderCard projectId={projectId} provider="gsc" state={state} />
-              <ProviderCard projectId={projectId} provider="ga4" state={state} />
-            </div>
+            <ProviderCard projectId={projectId} provider="gsc" state={state} />
             {state.gsc && !state.gsc.canWrite && (
               <Note>
                 This Search Console connection is read-only, from before OpenSEO could submit sitemaps. Everything here works; to let the Indexing page submit sitemaps to Google,{" "}
@@ -583,7 +508,6 @@ function SearchPerformance() {
                 Clicks, impressions, positions and every query you rank for, synced daily from Google. Connecting also lets the Indexing page check Google&apos;s index status and submit your sitemaps.
               </EmptyState>
             )}
-            {state.ga4 && <AnalyticsReport projectId={projectId} />}
             <AccountsCard state={state} projectId={projectId} />
             <p className="flex items-center gap-1.5 text-xs text-muted">
               <ExternalLink className="size-3.5" aria-hidden />

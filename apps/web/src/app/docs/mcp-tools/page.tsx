@@ -15,7 +15,7 @@ export default function McpToolsPage() {
   return (
     <DocArticle slug={slug}>
       <p>
-        The MCP server at <code>{'{API_URL}'}/mcp</code> offers 78 tools. Each one calls the same REST route the
+        The MCP server at <code>{'{API_URL}'}/mcp</code> offers 76 tools. Each one calls the same REST route the
         dashboard uses, with the caller&apos;s API key, so validation, prices, caching and limits are identical. Most
         tools take an optional <code>project_id</code>; leave it out when the account has one project. With no project
         at all, paid lookups run on their own in the market their input names (the United States by default).
@@ -164,23 +164,21 @@ export default function McpToolsPage() {
         ]}
       />
 
-      <h2 id="google">Search Console and Analytics</h2>
+      <h2 id="google">Search Console</h2>
       <p>
         These read the project&apos;s own Google data. The user connects Google in the dashboard under Search
         performance; an agent cannot. They are free and spend nothing from YepAPI. See{' '}
-        <Link href="/docs/tutorials/search-console">Use your Search Console and Analytics data</Link>.
+        <Link href="/docs/tutorials/search-console">Use your Search Console data</Link>.
       </p>
       <DocTable
-        caption="Search Console and Analytics tools"
+        caption="Search Console tools"
         head={head}
         mono={[2]}
         rows={[
-          ['get_google_connections', 'Whether Search Console and Analytics are connected, and which property.', 'free'],
+          ['get_google_connections', 'Whether Search Console is connected, and which property.', 'free'],
           ['get_search_performance', 'Clicks, impressions, CTR and position against the previous period, daily series, countries and striking-distance queries.', 'free'],
           ['get_search_console_rows', 'Rows by up to three dimensions, filtered by position and impressions over the top 1,000.', 'free'],
           ['inspect_urls', "Google's index status for 1 to 10 URLs. Google limits inspections per day.", 'free'],
-          ['get_analytics_overview', 'GA4 sessions, engagement, key events and revenue against the previous period.', 'free'],
-          ['get_analytics_landing_pages', 'GA4 landing pages with engagement and key events.', 'free'],
           ['get_search_opportunities', 'Pages at positions 4 to 20 scored for where a push is most worth it.', 'free'],
         ]}
       />

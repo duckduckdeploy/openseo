@@ -33,15 +33,15 @@ describe("MCP server", () => {
     expect((await app.inject({ method: "GET", url: "/mcp" })).statusCode).toBe(405);
   });
 
-  it("initialises and lists all 78 tools, with spending controls on every lookup", async () => {
+  it("initialises and lists all 76 tools, with spending controls on every lookup", async () => {
     const { key } = await agent();
     const init = await rpc({ apiKey: key }, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } });
     expect(init.body.result.serverInfo.name).toBe("openseo");
     const { body } = await rpc({ apiKey: key }, "tools/list");
     const tools = body.result.tools as { name: string; inputSchema: { properties: Record<string, unknown> } }[];
-    expect(tools).toHaveLength(78);
+    expect(tools).toHaveLength(76);
     // Google tools are free and read-only.
-    for (const name of ["get_google_connections", "get_search_performance", "get_search_console_rows", "inspect_urls", "get_analytics_overview", "get_analytics_landing_pages", "get_search_opportunities"]) {
+    for (const name of ["get_google_connections", "get_search_performance", "get_search_console_rows", "inspect_urls", "get_search_opportunities"]) {
       const found = tools.find((t) => t.name === name) as { annotations?: { readOnlyHint?: boolean }; inputSchema: { properties: Record<string, unknown> } } | undefined;
       expect(found?.annotations?.readOnlyHint, name).toBe(true);
       expect(found?.inputSchema.properties).not.toHaveProperty("max_cost_usd");
@@ -274,7 +274,7 @@ describe("MCP server", () => {
     const before = await call("get_search_performance");
     expect(before.isError).toBe(true);
     expect(before.text).toMatch(/Connect Google Search Console/);
-    expect((await call("get_google_connections")).json).toMatchObject({ configured: true, gsc: null, ga4: null });
+    expect((await call("get_google_connections")).json).toMatchObject({ configured: true, gsc: null });
 
     // The user connects it in the dashboard.
     const start = await api.request("GET", "/api/google/gsc/connect");

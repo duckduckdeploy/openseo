@@ -69,7 +69,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Users', them: 'Paid per seat beyond the first', us: 'No seats: self-host it for your whole team' },
       { topic: 'Keyword and backlink data', them: 'Own crawler and index, among the largest', us: 'A large commercial dataset, through a data provider' },
       { topic: 'Rank tracking', them: '750 tracked keywords on Lite', us: '$0.02 per keyword and device for the top 20, up to $0.10 for the top 100, on your schedule or on demand' },
-      { topic: 'AI agents', them: 'Check their current plans', us: '78 MCP tools and a REST API on every install, spending capped per call' },
+      { topic: 'AI agents', them: 'Check their current plans', us: '76 MCP tools and a REST API on every install, spending capped per call' },
     ],
     chooseThem: [
       'Link building is your full-time job and you need the deepest backlink index.',
@@ -105,7 +105,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Scope', them: 'SEO plus ads, content, social and more', us: 'SEO: keywords, ranks, backlinks, audits, AI visibility, local' },
       { topic: 'Keyword and backlink data', them: 'Own databases with long history', us: 'A large commercial dataset, through a data provider' },
       { topic: 'Rank tracking', them: '500 tracked keywords on Pro', us: '$0.02 per keyword and device for the top 20, up to $0.10 for the top 100, on your schedule or on demand' },
-      { topic: 'AI agents', them: 'Check their current plans', us: '78 MCP tools and a REST API on every install, spending capped per call' },
+      { topic: 'AI agents', them: 'Check their current plans', us: '76 MCP tools and a REST API on every install, spending capped per call' },
     ],
     chooseThem: [
       'You run paid search, content and social from one place as well as SEO.',
@@ -134,7 +134,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Rank tracking', them: '2,000 keywords checked daily on Core', us: '$0.02 per keyword and device for the top 20, up to $0.10 for the top 100' },
       { topic: 'AI search', them: '100 prompts tracked daily on Core; more as an add-on', us: 'Pay per prompt run on 120+ models, priced before it runs' },
       { topic: 'Reports', them: 'Report builder; white label with the Agency Pack', us: 'CSV exports and shareable views; no white-label reports yet' },
-      { topic: 'AI agents', them: 'API credits and MCP on every plan', us: '78 MCP tools and a REST API on every install, spending capped per call' },
+      { topic: 'AI agents', them: 'API credits and MCP on every plan', us: '76 MCP tools and a REST API on every install, spending capped per call' },
     ],
     chooseThem: [
       'You track thousands of keywords every day: at that volume a flat plan is cheaper than paying per check.',
@@ -162,7 +162,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Price model', them: 'Monthly or yearly plan from $30.50', us: 'Open-source software; data paid per lookup, from $0.01' },
       { topic: 'Rank tracking', them: 'Weekly updates on Basic; daily only on Agency', us: 'Daily, weekly, monthly or on demand, to the top 20, 50 or 100' },
       { topic: 'Site audit', them: 'Not included', us: `Crawls up to 5,000 pages with ${AUDIT_CHECKS} checks, no data cost` },
-      { topic: 'Search Console', them: 'Not built in', us: 'Search Console synced daily, GA4 reports and indexing in the app' },
+      { topic: 'Search Console', them: 'Not built in', us: 'Search Console synced daily, with indexing in the app' },
       { topic: 'AI search', them: 'AI Search Watcher with 500 prompts on every plan', us: 'Pay per prompt run on 120+ models' },
     ],
     chooseThem: [
@@ -191,7 +191,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Price model', them: 'Monthly, yearly or lifetime licence', us: 'Open-source software; data paid per lookup, from $0.01' },
       { topic: 'Rank tracking', them: '125 keywords per project, weekly, on Individual', us: 'Daily, weekly, monthly or on demand, to the top 20, 50 or 100' },
       { topic: 'Site audit', them: '1,000 pages per project, weekly', us: `Up to 5,000 pages per audit with ${AUDIT_CHECKS} checks, no data cost` },
-      { topic: 'API and agents', them: 'No API', us: '78 MCP tools and a REST API on every install' },
+      { topic: 'API and agents', them: 'No API', us: '76 MCP tools and a REST API on every install' },
       { topic: 'Projects', them: 'One website on Individual; more cost extra', us: 'As many projects as you like' },
     ],
     chooseThem: [
@@ -221,7 +221,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Authority metric', them: 'Domain Authority (DA), widely quoted in link building', us: 'Domain Rating from the data provider' },
       { topic: 'Keyword research', them: '150 keyword queries a month on Standard', us: 'Pay per search: about $0.08 for 150 ideas' },
       { topic: 'Rank tracking', them: '300 tracked keywords on Standard', us: '$0.02 per keyword and device for the top 20, up to $0.10 for the top 100' },
-      { topic: 'API', them: 'A separate product, from $20 a month', us: '78 MCP tools and a REST API on every install' },
+      { topic: 'API', them: 'A separate product, from $20 a month', us: '76 MCP tools and a REST API on every install' },
     ],
     chooseThem: [
       'Your clients or partners ask for Domain Authority by name.',
@@ -251,7 +251,7 @@ export const comparisons: Comparison[] = [
       { topic: 'Crawl size', them: 'Limited by your machine’s memory', us: 'Up to 5,000 pages per audit (500 when rendered)' },
       { topic: 'Depth and configuration', them: 'Very deep: custom extraction, JavaScript, crawl comparison', us: `${AUDIT_CHECKS} checks, a health score and the worst issues first` },
       { topic: 'Beyond audits', them: 'Technical crawling only', us: 'Keywords, rank tracking, backlinks, AI visibility and Search Console too' },
-      { topic: 'AI agents', them: 'Local MCP server', us: '78 MCP tools and a REST API, hosted or self-hosted' },
+      { topic: 'AI agents', them: 'Local MCP server', us: '76 MCP tools and a REST API, hosted or self-hosted' },
     ],
     chooseThem: [
       'You audit large or complex sites and need custom extraction, JavaScript rendering at scale or crawl comparison.',
@@ -289,7 +289,7 @@ export const comparisons: Comparison[] = [
       { topic: 'AI engines', them: '4 included; Gemini, AI Mode and Claude as add-ons', us: '120+ models to choose from' },
       { topic: 'Classic SEO', them: 'Not included', us: 'Keywords, rank tracking, backlinks, site audit and Search Console' },
       { topic: 'AI Overviews', them: 'Tracked as an AI engine', us: 'AI Overview checker for up to 100 keywords, $0.01 each' },
-      { topic: 'API and agents', them: 'From the $189 Standard plan', us: '78 MCP tools and a REST API on every install' },
+      { topic: 'API and agents', them: 'From the $189 Standard plan', us: '76 MCP tools and a REST API on every install' },
     ],
     chooseThem: [
       'AI visibility is all you need, tracked daily, with ready-made brand reports for a team.',

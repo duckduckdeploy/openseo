@@ -539,21 +539,6 @@ export const gscConnections = pgTable("gsc_connections", {
   createdAt: createdAt(),
 });
 
-/** The GA4 property a project reads. One per project. */
-export const ga4Connections = pgTable("ga4_connections", {
-  projectId: uuid("project_id")
-    .primaryKey()
-    .references(() => projects.id, { onDelete: "cascade" }),
-  googleAccountId: uuid("google_account_id")
-    .notNull(),
-  // "properties/123456789"
-  propertyId: text("property_id").notNull(),
-  displayName: text("display_name").notNull(),
-  timeZone: text("time_zone"),
-  currencyCode: text("currency_code"),
-  createdAt: createdAt(),
-});
-
 // ── Stored Search Console data ──────────────────────────────────────────────
 
 /**

@@ -1,7 +1,7 @@
 /**
  * Runs before every integration test file, in that file's module context:
  *  - a fake YepAPI on a random port (src/testing/fake-yepapi.ts)
- *  - a fake Google (OAuth, Search Console, Analytics) on another (src/testing/fake-google.ts)
+ *  - a fake Google (OAuth, Search Console) on another (src/testing/fake-google.ts)
  *  - the environment the API validates at import time
  *  - `../src/db` replaced by two in-memory Postgres databases (PGlite), core and project data,
  *    each with its real migrations applied

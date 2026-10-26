@@ -36,7 +36,7 @@ export const openSourceTools: OpenSourceTool[] = [
     licence: 'MIT',
     what: 'Full suite: keywords, rank tracking, backlinks, site audit, AI visibility, local, Search Console',
     runs: 'Docker, or hosted at openseo.gg',
-    data: 'Own crawler; your Search Console and GA4; search data per lookup through YepAPI',
+    data: 'Own crawler; your Search Console; search data per lookup through YepAPI',
     activity: 'Active, October 2026',
     summary:
       'Ours. An all-in-one SEO suite you can self-host with one Docker compose file: keyword research, rank tracking to the top 20, 50 or 100, backlinks and link gap, a site audit with Lighthouse, AI visibility across 120+ models, geo-grid local rankings and Search Console reports, with an MCP server and REST API for AI agents.',

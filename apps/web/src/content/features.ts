@@ -132,20 +132,20 @@ export const features: Feature[] = [
   },
   {
     slug: 'search-console-dashboard',
-    seoTitle: 'Google Search Console Dashboard with GA4 Data',
+    seoTitle: 'Google Search Console Dashboard - Free & Open Source',
     h1: 'Google Search Console dashboard',
-    description: 'Connect Google Search Console and GA4. Every query synced daily, striking-distance queries at positions 5 to 20 and the pages most worth improving. Free.',
+    description: 'Connect Google Search Console. Every query synced daily, striking-distance queries at positions 5 to 20 and the pages most worth improving. Free.',
     whatTitle: 'How the Search Console dashboard works',
-    glossary: ['google-search-console', 'google-analytics-4', 'striking-distance-keywords', 'impressions', 'click-through-rate', 'average-position'],
-    worksWith: ['googlesearchconsole', 'googleanalytics'],
+    glossary: ['google-search-console', 'striking-distance-keywords', 'impressions', 'click-through-rate', 'average-position'],
+    worksWith: ['googlesearchconsole'],
     name: 'Search performance',
     headline: 'Your own Google data, turned into a to-do list',
     summary:
-      'Connect Google Search Console and Analytics to find queries one push from page one and pages worth improving first. Free.',
+      'Connect Google Search Console to find queries one push from page one and pages worth improving first. Free.',
     icon: BarChart3,
     what: [
-      'Rankings data says where you could be. Search Console says where you are: the queries people actually typed, how often you showed up and how often they clicked. Connect it, along with Google Analytics if you use it, and OpenSEO syncs it daily.',
-      'OpenSEO turns that into work to do: queries sitting at positions 5 to 20, and pages scored by where a push is most worth it, weighing demand, the value of their visits and how close they are to the top.',
+      'Rankings data says where you could be. Search Console says where you are: the queries people actually typed, how often you showed up and how often they clicked. Connect it and OpenSEO syncs it daily.',
+      'OpenSEO turns that into work to do: queries sitting at positions 5 to 20, and pages scored by where a push is most worth it, weighing demand and how close they are to the top.',
     ],
     capabilities: [
       {
@@ -154,15 +154,11 @@ export const features: Feature[] = [
       },
       {
         title: 'Opportunity scores',
-        body: 'Pages at positions 4 to 20 scored 0 to 100 on demand, the value of their visits from GA4, and reachability.',
+        body: 'Pages at positions 4 to 20 scored 0 to 100 on demand and reachability.',
       },
       {
         title: 'Period comparisons',
         body: 'Clicks, impressions, CTR and average position against the period before.',
-      },
-      {
-        title: 'Organic traffic from GA4',
-        body: 'Sessions, engagement, key events and revenue from search, and the pages visitors land on.',
       },
       {
         title: 'Every keyword, synced daily',
@@ -177,7 +173,7 @@ export const features: Feature[] = [
       { value: '$0', label: 'Google data is free' },
       { value: '16', label: 'months of history' },
     ],
-    costs: [{ action: 'Search Console and Analytics reports', unit: 'Any view, any period', price: 'Free' }],
+    costs: [{ action: 'Search Console reports', unit: 'Any view, any period', price: 'Free' }],
     costNote: 'Google’s data is free, and nothing here is billed.',
   },
   {
@@ -338,22 +334,22 @@ export const features: Feature[] = [
     slug: 'seo-mcp-server',
     seoTitle: 'SEO MCP Server: 20+ Free SEO Tools - Fresh Data',
     h1: 'SEO MCP server and API',
-    description: 'An SEO MCP server with 78 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
+    description: 'An SEO MCP server with 76 tools and a REST API. Claude, ChatGPT, Cursor and Codex can research keywords and track rankings under a spending cap.',
     whatTitle: 'How the MCP server works',
     glossary: ['mcp', 'ai-seo-agent', 'llm', 'keyword-research', 'rank-tracking'],
     worksWith: ['mcp', 'claude', 'chatgpt', 'claudecode', 'cursor', 'codex', 'geminicli'],
     name: 'MCP server and REST API',
     headline: 'SEO your AI agent can do, with a spending cap',
     summary:
-      'An open-source SEO MCP server with 78 tools: keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your own Search Console data, for Claude, ChatGPT, Cursor and any MCP client.',
+      'An open-source SEO MCP server with 76 tools: keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your own Search Console data, for Claude, ChatGPT, Cursor and any MCP client.',
     icon: Terminal,
     what: [
-      'OpenSEO is an open-source SEO MCP server and REST API. Connect Claude, ChatGPT, Cursor, Codex, Gemini CLI or any MCP client, and your agent can research keywords, check live Google results, analyse backlinks and competitors, track rankings, audit a site, check AI visibility and read your Google Search Console and Analytics data. One server covers what usually takes three or four separate MCP servers.',
+      'OpenSEO is an open-source SEO MCP server and REST API. Connect Claude, ChatGPT, Cursor, Codex, Gemini CLI or any MCP client, and your agent can research keywords, check live Google results, analyse backlinks and competitors, track rankings, audit a site, check AI visibility and read your Google Search Console data. One server covers what usually takes three or four separate MCP servers.',
       'It is free: OpenSEO charges nothing for the software, the hosted app or the MCP server. Search data is billed per lookup by the data provider to your own YepAPI key, with no subscription. Agents spend real money, so every paid tool can price itself first with a dry run and takes a ceiling: a call that could cost more is refused before anything is spent. Connecting takes a couple of minutes.',
     ],
     facts: [
-      { value: '78', label: 'MCP tools' },
-      { value: '7', label: 'free Search Console and Analytics tools' },
+      { value: '76', label: 'MCP tools' },
+      { value: '5', label: 'free Search Console tools' },
       { value: '$0', label: 'OpenSEO fee, bring your own key' },
     ],
     capabilities: [
@@ -363,7 +359,7 @@ export const features: Feature[] = [
       },
       {
         title: 'Search Console MCP, free',
-        body: 'Seven free tools read your own Google Search Console and GA4 data: clicks and impressions, queries and pages, URL inspection, landing pages and the pages most worth a push.',
+        body: 'Five free tools read your own Google Search Console data: clicks and impressions, queries and pages, URL inspection and the pages most worth a push.',
       },
       {
         title: 'Rank tracking and audits',
@@ -392,7 +388,7 @@ export const features: Feature[] = [
     ],
     costs: [
       { action: 'MCP server and REST API access', unit: 'OpenSEO fee', price: '$0.00' },
-      { action: 'Search Console and Analytics tools', unit: 'Per call', price: '$0.00' },
+      { action: 'Search Console tools', unit: 'Per call', price: '$0.00' },
       { action: 'Research, rank and audit tools', unit: 'Per action', price: 'Same as in the app' },
     ],
     costNote:
@@ -401,14 +397,14 @@ export const features: Feature[] = [
       {
         question: 'What is the best SEO MCP server?',
         answer: [
-          'It depends on what your agent needs. If you want one server that covers keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your Search Console data, OpenSEO does all of it with 78 tools, is open source, and charges no subscription: you pay the data provider per lookup from your own key.',
+          'It depends on what your agent needs. If you want one server that covers keyword research, live SERPs, backlinks, rank tracking, site audits, AI visibility and your Search Console data, OpenSEO does all of it with 76 tools, is open source, and charges no subscription: you pay the data provider per lookup from your own key.',
           'If you already pay for Ahrefs or Semrush, their own MCP servers use the data in your plan. Raw data APIs such as DataForSEO suit developers who want to build their own tools. See [the best SEO MCP servers compared](/best-seo-mcp-servers).',
         ],
       },
       {
         question: 'Is there a free Google Search Console MCP server?',
         answer: [
-          'Yes. OpenSEO’s MCP server has seven free Search Console and Analytics tools: search performance against the previous period, rows by query, page, country and device, URL inspection, GA4 overview and landing pages, and the pages at positions 4 to 20 most worth improving. You connect Google once in the app; the tools never spend anything. See [Use your Search Console and Analytics data](/docs/tutorials/search-console).',
+          'Yes. OpenSEO’s MCP server has five free Search Console tools: the connection status, search performance against the previous period, rows by query, page, country and device, URL inspection, and the pages at positions 4 to 20 most worth improving. You connect Google once in the app; the tools never spend anything. See [Use your Search Console data](/docs/tutorials/search-console).',
         ],
       },
       {

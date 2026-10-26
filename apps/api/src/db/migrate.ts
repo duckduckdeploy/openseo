@@ -34,7 +34,6 @@ const MOVED_TABLES = [
   "geo_grids",
   "geo_grid_points",
   "gsc_connections",
-  "ga4_connections",
   "api_cache",
 ];
 

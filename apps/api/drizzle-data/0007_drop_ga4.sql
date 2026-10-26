@@ -1,0 +1,1 @@
+DROP TABLE "ga4_connections" CASCADE;

@@ -96,7 +96,7 @@ export const pricingFaqs: Faq[] = [
     ],
   },
   {
-    question: 'Do Search Console and Analytics cost anything?',
+    question: 'Does Search Console cost anything?',
     answer: [
       'No. Google\'s data is free, and reading it never touches your data balance. The site audit crawl is free too; only JavaScript rendering is billed.',
     ],

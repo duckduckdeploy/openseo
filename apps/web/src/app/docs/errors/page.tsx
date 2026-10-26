@@ -64,16 +64,16 @@ export default function ErrorsPage() {
         ]}
       />
 
-      <h2 id="google">Search Console and Analytics</h2>
+      <h2 id="google">Search Console</h2>
       <DocTable
         caption="Google errors"
         head={['Code', 'Status', 'What to do']}
         mono={[0, 1]}
         rows={[
           ['google_not_configured', '503', 'This install has no Google OAuth client. Whoever runs it sets GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET; see Set up Google sign-in.'],
-          ['google_not_connected', '409', 'The project has no Search Console or Analytics property yet. Connect one under Search performance.'],
+          ['google_not_connected', '409', 'The project has no Search Console property yet. Connect one under Search performance.'],
           ['google_reconnect_required', '409', 'Google withdrew access, or it expired. Connect the account again under Search performance.'],
-          ['google_permission', '403', 'The Google account cannot read that property any more. Check its access in Search Console or Analytics.'],
+          ['google_permission', '403', 'The Google account cannot read that property any more. Check its access in Search Console.'],
           ['google_quota', '429', 'Google’s daily or per-minute quota is used up. Try again later.'],
           ['google_error', '502', 'Google returned an error. Try again shortly.'],
         ]}

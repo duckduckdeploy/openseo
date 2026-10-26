@@ -197,30 +197,26 @@ export default function RestApiPage() {
         ]}
       />
 
-      <h2 id="google">Search Console and Analytics</h2>
+      <h2 id="google">Search Console</h2>
       <p>
         Free: these read the user&apos;s own Google data and spend nothing from YepAPI. Connecting is done in the
         dashboard (<code>GET /google/:provider/connect</code> starts Google&apos;s consent screen and needs a signed-in
-        session, not an API key). Search Console periods end three days ago; GA4 periods end yesterday.
+        session, not an API key). Search Console periods end three days ago.
       </p>
       <DocTable
         caption="Google routes"
         head={['Route', 'Notes']}
         mono={[0]}
         rows={[
-          ['GET /projects/:id/google', '{ configured, redirectUris, gsc, ga4, accounts }.'],
+          ['GET /projects/:id/google', '{ configured, redirectUris, gsc, accounts }.'],
           ['GET /google/accounts; DELETE /google/accounts/:accountId', 'Your Google grants. Deleting one disconnects every project using it and returns { projects }.'],
           ['GET /projects/:id/google/gsc/sites?accountId=', 'Search Console properties, with verified: false for ones you cannot read.'],
           ['PUT /projects/:id/google/gsc', '{ accountId, siteUrl }. Unverified properties are refused.'],
-          ['GET /projects/:id/google/ga4/properties?accountId=', 'GA4 properties in the account.'],
-          ['PUT /projects/:id/google/ga4', '{ accountId, propertyId: "properties/123" }.'],
-          ['DELETE /projects/:id/google/:provider', 'Disconnect gsc or ga4 from the project.'],
+          ['DELETE /projects/:id/google/gsc', 'Disconnect Search Console from the project and delete its synced data.'],
           ['GET /projects/:id/search-performance', '?range=last_7_days|last_28_days|last_3_months &device= &country= (alpha-3) &pageText= &pageMatch=contains|equals &queryText= &queryMatch=. Totals against the previous period, daily rows, striking distance, countries.'],
           ['GET /projects/:id/search-performance/table', 'The same filters plus ?dimension=query|page &page= &size=25|50|100. Returns { rows, hasMore }.'],
           ['GET /projects/:id/search-console/rows', '?dimensions=query,page (up to 3) &minPosition= &maxPosition= &minImpressions= &limit= (≤ 1,000) and the filters above.'],
           ['POST /projects/:id/search-console/inspect', '{ urls } (1 to 10). Index status per URL.'],
-          ['GET /projects/:id/analytics/overview', '?range= &channel=organic|all. Sessions, engagement, key events and revenue against the previous period, plus a daily series.'],
-          ['GET /projects/:id/analytics/landing-pages', '?range= &channel= &limit= (≤ 1,000).'],
           ['GET /projects/:id/search-opportunities', '?range=. Pages at positions 4 to 20 with a 0 to 100 score and its parts.'],
         ]}
       />

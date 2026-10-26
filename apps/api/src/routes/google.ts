@@ -5,8 +5,6 @@ import { env } from "../env";
 import { requireProject, requireSessionUser, requireUser, resolveUser } from "../lib/context";
 import { AppError, notFound, parse, uuidParam } from "../lib/errors";
 import {
-  analyticsOverview,
-  connectGa4,
   connectGsc,
   connections,
   disconnect,
@@ -14,10 +12,8 @@ import {
   googleConfigured,
   googleNotConfigured,
   inspectUrls,
-  landingPages,
   LinkError,
   listAccounts,
-  listProperties,
   listSites,
   performanceReport,
   performanceTable,
@@ -31,7 +27,7 @@ import {
   startLink,
 } from "../services/google";
 
-const provider = z.enum(["gsc", "ga4"]);
+const provider = z.enum(["gsc"]);
 const range = z.enum(Object.keys(RANGES) as [keyof typeof RANGES, ...(keyof typeof RANGES)[]]).default("last_28_days");
 const match = z.enum(["contains", "equals"]).default("contains");
 
@@ -128,24 +124,11 @@ export async function googleRoutes(app: FastifyInstance) {
     return { ok: true, data: await connectGsc(project, user.id, input.accountId, input.siteUrl) };
   });
 
-  app.get<{ Params: { projectId: string }; Querystring: { accountId?: string } }>("/projects/:projectId/google/ga4/properties", async (request) => {
-    const user = await requireUser(request);
-    await requireProject(user.id, request.params.projectId);
-    const accountId = uuidParam(String(request.query.accountId ?? ""), "Google account");
-    return { ok: true, data: await listProperties(user.id, accountId) };
-  });
-
-  app.put<P>("/projects/:projectId/google/ga4", async (request) => {
-    const user = await requireSessionUser(request);
-    const project = await requireProject(user.id, request.params.projectId);
-    const input = parse(z.object({ accountId: z.string().uuid(), propertyId: z.string().min(3).max(100) }), request.body);
-    return { ok: true, data: await connectGa4(project, user.id, input.accountId, input.propertyId) };
-  });
-
   app.delete<{ Params: { projectId: string; provider: string } }>("/projects/:projectId/google/:provider", async (request) => {
     const user = await requireSessionUser(request);
     const project = await requireProject(user.id, request.params.projectId);
-    await disconnect(project, parse(provider, request.params.provider) as GoogleProvider);
+    parse(provider, request.params.provider);
+    await disconnect(project);
     return { ok: true };
   });
 
@@ -206,21 +189,5 @@ export async function googleRoutes(app: FastifyInstance) {
     const project = await requireProject(user.id, request.params.projectId);
     const q = parse(z.object({ range }), request.query);
     return { ok: true, data: await searchOpportunities(project, q.range) };
-  });
-
-  const channel = z.enum(["organic", "all"]).default("organic");
-
-  app.get<P>("/projects/:projectId/analytics/overview", async (request) => {
-    const user = await requireUser(request);
-    const project = await requireProject(user.id, request.params.projectId);
-    const q = parse(z.object({ range, channel }), request.query);
-    return { ok: true, data: await analyticsOverview(project, q.range, q.channel) };
-  });
-
-  app.get<P>("/projects/:projectId/analytics/landing-pages", async (request) => {
-    const user = await requireUser(request);
-    const project = await requireProject(user.id, request.params.projectId);
-    const q = parse(z.object({ range, channel, limit: z.coerce.number().int().min(1).max(1000).default(100) }), request.query);
-    return { ok: true, data: await landingPages(project, q.range, q.channel, q.limit) };
   });
 }

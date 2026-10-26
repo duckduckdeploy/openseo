@@ -184,7 +184,7 @@ export default function SelfHostingPage() {
         head={['Setting', 'What it does']}
         mono={[0]}
         rows={[
-          ['GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET', 'Lets users connect Search Console and Analytics. See Set up Google sign-in.'],
+          ['GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET', 'Lets users connect Search Console. See Set up Google sign-in.'],
           ['API_BIND, APP_BIND, WEB_BIND', 'Which address each service listens on. 127.0.0.1 by default, so only this machine can reach them.'],
           ['POSTGRES_PASSWORD', 'The database password. Set a long random one on a server.'],
         ]}

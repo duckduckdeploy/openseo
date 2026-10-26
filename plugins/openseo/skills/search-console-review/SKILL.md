@@ -1,6 +1,6 @@
 ---
 name: search-console-review
-description: Review the site's own Google Search Console and Analytics data (free) to find queries one push from page one, pages losing ground and the pages most worth improving. Use when asked how the site is doing in search or what to improve next.
+description: Review the site's own Google Search Console data (free) to find queries one push from page one, pages losing ground and the pages most worth improving. Use when asked how the site is doing in search or what to improve next.
 ---
 
 # Search Console review
@@ -21,8 +21,7 @@ Everything in this skill is free: it reads the user's own Google data.
    - Pick up to ten with the most impressions.
    - For each, say which page should be improved and how, for example: make the title match the query, add a section that answers it, or link to it from related pages.
 4. **What's worth the effort.** Call `get_search_opportunities`.
-   - With Analytics connected, the score includes the value of each page's visits; say which pages lead and why.
-   - Without it, suggest connecting GA4 for better scores.
+   - The score weighs demand (impressions) and how close each page is to the top; say which pages lead and why.
 5. **Losses.** Compare the queries or pages that dropped:
    - call `get_search_console_rows` for `last_28_days` and for `last_3_months`, with `dimensions: ["page"]`
    - flag large declines and suggest checking them with the `site-audit` skill

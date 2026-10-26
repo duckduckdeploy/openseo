@@ -15,10 +15,10 @@ GOOGLE_CLIENT_SECRET=GOCSPX-...`;
 
 export default function GoogleSetupPage() {
   return (
-    <DocArticle slug={slug} brands={['googlesearchconsole', 'googleanalytics']}>
+    <DocArticle slug={slug} brands={['googlesearchconsole']}>
       <p>
-        Users connect Search Console and Google Analytics through an OAuth client that belongs to whoever runs the
-        OpenSEO install. Without one, the Search performance page explains that Google is not set up, and nothing else
+        Users connect Google Search Console through an OAuth client that belongs to whoever runs the OpenSEO
+        install. Without one, the Search performance page explains that Google is not set up, and nothing else
         is affected. It takes about ten minutes in Google Cloud.
       </p>
 
@@ -31,26 +31,23 @@ export default function GoogleSetupPage() {
         </Step>
         <Step title="Enable the APIs">
           <p>
-            Under <Ui>APIs and services</Ui>, enable the <strong>Google Search Console API</strong>, the{' '}
-            <strong>Google Analytics Admin API</strong> and the <strong>Google Analytics Data API</strong>.
+            Under <Ui>APIs and services</Ui>, enable the <strong>Google Search Console API</strong>.
           </p>
         </Step>
         <Step title="Configure the consent screen">
           <p>
-            Set the app name, support email and your domain. Add the scopes{' '}
-            <code>https://www.googleapis.com/auth/webmasters</code> and{' '}
-            <code>https://www.googleapis.com/auth/analytics.readonly</code>, plus <code>openid</code> and{' '}
-            <code>email</code>. While the app is in testing, only test users you list can connect; publishing it for
+            Set the app name, support email and your domain. Add the scope{' '}
+            <code>https://www.googleapis.com/auth/webmasters</code>, plus <code>openid</code> and <code>email</code>. While the app is in testing, only test users you list can connect; publishing it for
             other users may need Google&apos;s verification.
           </p>
         </Step>
         <Step title="Create a web application client">
           <p>
-            Create an <strong>OAuth client ID</strong> of type <strong>Web application</strong> with these authorised
-            redirect URIs, where <code>APP_URL</code> is your dashboard&apos;s address:
+            Create an <strong>OAuth client ID</strong> of type <strong>Web application</strong> with this authorised
+            redirect URI, where <code>APP_URL</code> is your dashboard&apos;s address:
           </p>
-          <CodeBlock label="Redirect URIs" code={'{APP_URL}/api/google/gsc/callback\n{APP_URL}/api/google/ga4/callback'} />
-          <p>The Search performance page lists the exact URIs for your install while Google is not set up.</p>
+          <CodeBlock label="Redirect URI" code={'{APP_URL}/api/google/gsc/callback'} />
+          <p>The Search performance page shows the exact URI for your install while Google is not set up.</p>
         </Step>
         <Step title="Add the client to the API's environment">
           <CodeBlock label=".env" code={envExample} />
@@ -61,9 +58,8 @@ export default function GoogleSetupPage() {
       <h2 id="how">How the connection works</h2>
       <ul>
         <li>
-          Each product is a separate grant, apart from signing in to OpenSEO: full Search Console access (so the
-          Indexing page can submit sitemaps) and read-only Analytics. Connecting Search Console never grants
-          Analytics, or the other way round. Grants made when OpenSEO asked only for read-only Search Console keep
+          Connecting is a separate grant, apart from signing in to OpenSEO, with full Search Console access so the
+          Indexing page can submit sitemaps. Grants made when OpenSEO asked only for read-only Search Console keep
           working for everything except submitting sitemaps.
         </li>
         <li>

@@ -28,7 +28,7 @@ const everything = [
   'Backlinks, domain overview and competitors',
   'AI visibility tracking',
   'Local rank tracker with geo-grids',
-  'Search Console and GA4 reports',
+  'Search Console reports',
   'MCP server and REST API for AI agents',
 ];
 

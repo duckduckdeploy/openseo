@@ -11,11 +11,11 @@ export const metadata = pageMeta({ title: doc.seoTitle, description: doc.descrip
 
 export default function SearchConsoleTutorial() {
   return (
-    <DocArticle slug={slug} brands={['googlesearchconsole', 'googleanalytics']}>
+    <DocArticle slug={slug} brands={['googlesearchconsole']}>
       <p>
         Search Console is the one source of search data that comes from Google itself: the queries people typed, how
-        often you appeared, where, and how often they clicked. Google Analytics adds what those visitors did on your
-        site. OpenSEO reads both, syncs your Search Console data daily, and nothing here spends from your YepAPI balance.
+        often you appeared, where, and how often they clicked. OpenSEO syncs your Search Console data daily, and
+        nothing here spends from your YepAPI balance.
       </p>
 
       <h2 id="connect">Connect Google Search Console</h2>
@@ -30,8 +30,6 @@ export default function SearchConsoleTutorial() {
           <p>
             Under <strong>Google Search Console</strong>, click <Ui>Connect a Google account</Ui>. Google asks you to
             choose an account and allow access. Leave the permissions ticked: without them nothing is connected.
-            Search Console and Analytics are separate permissions, so each has its own button, and connecting one never
-            grants the other.
           </p>
         </Step>
         <Step title="Choose the property">
@@ -39,12 +37,6 @@ export default function SearchConsoleTutorial() {
             Back in OpenSEO, pick the account and the property this project should read. A{' '}
             <code>sc-domain:</code> property covers the whole domain; a URL property covers one prefix. Properties you
             can see but have no verified access to are listed and greyed out, because Google returns no data for them.
-          </p>
-        </Step>
-        <Step title="Optionally, add Google Analytics">
-          <p>
-            Under <strong>Google Analytics</strong>, connect an account the same way and choose a GA4 property. It adds
-            organic traffic figures and makes the opportunity scores below use the value of each page&apos;s visits.
           </p>
         </Step>
       </Steps>
@@ -96,31 +88,19 @@ export default function SearchConsoleTutorial() {
         caption="Opportunity score"
         head={['Part', 'Weight', 'Measured by']}
         rows={[
-          ['Demand', '0.5', 'Impressions, on a log scale, so one huge page does not flatten the rest.'],
-          ['Value', '0.3', "The page's key-event rate from GA4 (conversions per session), or its engagement rate when the property has no key events."],
-          ['Reachability', '0.2', 'How close the page is to the top: 20 minus its position.'],
+          ['Demand', '0.7', 'Impressions, on a log scale, so one huge page does not flatten the rest.'],
+          ['Reachability', '0.3', 'How close the page is to the top: 20 minus its position.'],
         ]}
       />
       <p>
         Each part is a percentile among the pages listed, so scores compare pages with each other, not with other
-        sites. Pages are matched to GA4 by host and path. Without Google Analytics the value part is left out and the
-        other two are rescaled, and the page says so. Search Console counts days in Pacific time and GA4 in the
-        property&apos;s time zone, so the two line up only roughly; the page warns when they differ.
-      </p>
-
-      <h2 id="analytics">Organic traffic from GA4</h2>
-      <p>
-        With Google Analytics connected, the page also shows organic-search sessions, engagement rate, key events and
-        revenue against the previous period, and the landing pages search visitors arrive on. Periods are complete days
-        up to yesterday in the property&apos;s time zone. When Google sampled or thresholded the data, the page says the
-        figures are approximate.
+        sites.
       </p>
 
       <Callout title="With an agent">
         <p>
           Agents read the same data with <code>get_search_performance</code>, <code>get_search_console_rows</code>,{' '}
-          <code>inspect_urls</code>, <code>get_analytics_overview</code>, <code>get_analytics_landing_pages</code> and{' '}
-          <code>get_search_opportunities</code>. They cannot connect Google themselves. See{' '}
+          <code>inspect_urls</code> and <code>get_search_opportunities</code>. They cannot connect Google themselves. See{' '}
           <Link href="/docs/mcp-tools#google">MCP tools</Link>.
         </p>
       </Callout>

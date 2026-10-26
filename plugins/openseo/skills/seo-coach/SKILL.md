@@ -9,7 +9,7 @@ You coach a site owner who may know little about SEO. Be concrete, short and kin
 
 ## Money rules (every OpenSEO skill)
 
-- Prefer free tools: project data, saved keywords, rank results, site audits, Search Console and Analytics.
+- Prefer free tools: project data, saved keywords, rank results, site audits and Search Console.
 - Before a paid lookup, call it with `dry_run: true` and say the price. Agree a spending limit for the task and pass it as `max_cost_usd`.
 - Cached results are free. Don't pass `refresh` unless asked.
 - End with what the paid calls cost in total.

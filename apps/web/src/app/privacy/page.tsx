@@ -6,7 +6,7 @@ import { CONTACT_EMAIL, YEPAPI_URL } from '@/lib/site';
 export const metadata = pageMeta({
   title: 'Privacy policy',
   description:
-    'How OpenSEO handles your data: what the hosted app stores, how Google Search Console and Analytics data is used, who it is shared with, and how to delete it.',
+    'How OpenSEO handles your data: what the hosted app stores, how Google Search Console data is used, who it is shared with, and how to delete it.',
   path: '/privacy',
 });
 
@@ -66,14 +66,14 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
-      <h3>Google Search Console and Google Analytics</h3>
-      <p>Connecting Google is optional. If you connect it, we store:</p>
+      <h3>Google Search Console</h3>
+      <p>Connecting Search Console is optional. If you connect it, we store:</p>
       <ul>
         <li>
           Which Google account you connected (its ID and email address), the scopes you granted, and the access and
           refresh tokens Google issues, encrypted.
         </li>
-        <li>The Search Console property and Analytics property you choose for each project.</li>
+        <li>The Search Console property you choose for each project.</li>
         <li>
           Search Console performance data for that property: clicks, impressions, click-through rate and position per
           day, query and page, up to 16 months back, refreshed daily.
@@ -85,8 +85,7 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>
-        Google Analytics reports are fetched from Google when you open them and are not stored. More on how we use
-        Google data is under <a href="#google">Google user data</a> below.
+        More on how we use Google data is under <a href="#google">Google user data</a> below.
       </p>
 
       <h3>Indexing</h3>
@@ -138,8 +137,8 @@ export default function PrivacyPage() {
       <ul>
         <li>
           <strong>What we access.</strong> With the Search Console scope, we read your properties, performance data,
-          URL inspection results and sitemaps, and submit sitemaps when you ask us to. With the Analytics read-only
-          scope, we read your properties and reports. We do not change any other Search Console or Analytics setting.
+          URL inspection results and sitemaps, and submit sitemaps when you ask us to. We do not change any other
+          Search Console setting. We do not access Google Analytics or any other Google product.
         </li>
         <li>
           <strong>How we use it.</strong> Only to provide and improve the features you use: Search Console reports,
@@ -189,8 +188,8 @@ export default function PrivacyPage() {
           . OpenSEO does not process payments.
         </li>
         <li>
-          <strong>Google</strong>, when you connect Search Console or Analytics, to fetch your data and submit sitemaps
-          you choose.
+          <strong>Google</strong>, when you connect Search Console, to fetch your data and submit sitemaps you
+          choose.
         </li>
         <li>
           <strong>IndexNow</strong> (api.indexnow.org), when you submit pages. The URLs you submit are passed on to the

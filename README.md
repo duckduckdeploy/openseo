@@ -5,7 +5,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge" alt="MIT licence"></a>
   <a href="#-self-host-with-docker"><img src="https://img.shields.io/badge/self--host-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Self-host with Docker"></a>
-  <a href="https://openseo.gg/docs/mcp"><img src="https://img.shields.io/badge/MCP-78%20tools-7c3aed?style=for-the-badge" alt="78 MCP tools"></a>
+  <a href="https://openseo.gg/docs/mcp"><img src="https://img.shields.io/badge/MCP-76%20tools-7c3aed?style=for-the-badge" alt="76 MCP tools"></a>
   <a href="https://openseo.gg"><img src="https://img.shields.io/badge/openseo.gg-live-2563eb?style=for-the-badge" alt="openseo.gg"></a>
 </p>
 
@@ -83,8 +83,8 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 - 🔓 **Open source, all of it.** The app, the API, the crawler and the agent server are MIT licensed. Change what you need and keep your changes.
 - 🏠 **Your server, your data.** One Docker command runs the whole suite on your own computer or server. Your keywords, rankings and audits stay in your own database.
 - 💸 **No surprise bills.** Every call is listed with its cost, and a monthly limit stops all spending once it is reached.
-- 🤖 **Agents on a leash.** 78 MCP tools cover the whole workspace. Every paid tool takes `dry_run` and `max_cost_usd`, so an agent cannot spend more than you agreed.
-- 📈 **Your own Google data.** Connect Search Console and GA4 read-only. You get queries one push from page one, and pages scored by where improving them is most worth it.
+- 🤖 **Agents on a leash.** 76 MCP tools cover the whole workspace. Every paid tool takes `dry_run` and `max_cost_usd`, so an agent cannot spend more than you agreed.
+- 📈 **Your own Google data.** Connect Search Console. You get queries one push from page one, and pages scored by where improving them is most worth it.
 - 🎯 **Focused workflows.** The SEO work most sites actually do, without the hundred reports nobody opens.
 
 ## 🧰 Workflows
@@ -116,7 +116,7 @@ Six tools run right on the website, a few free checks a day, no sign-up:
   </tr>
   <tr>
     <td width="26%">📊 <a href="https://openseo.gg/features/search-console-dashboard">Search performance</a></td>
-    <td>Search Console and GA4: totals against the previous period, striking-distance queries, organic landing pages, opportunity scores</td>
+    <td>Search Console: totals against the previous period, striking-distance queries, every keyword synced daily, opportunity scores</td>
   </tr>
   <tr>
     <td width="26%">🌐 <a href="https://openseo.gg/tools/website-seo-analysis">Domain overview</a></td>
@@ -167,7 +167,7 @@ Six tools run right on the website, a few free checks a day, no sign-up:
 | Where it runs | Their cloud | openseo.gg, or your own server with Docker |
 | Price | Monthly plans from $49 (Moz) to $140 (Semrush) to start | Free software; data paid per lookup |
 | Seats | Paid per user | No seats |
-| AI agents | API or MCP on some plans | 78 MCP tools and a REST API, spending capped per call |
+| AI agents | API or MCP on some plans | 76 MCP tools and a REST API, spending capped per call |
 | Data depth | Their own crawlers and indexes, the deepest | A large commercial dataset through a provider |
 
 Honest side-by-sides, including when each one is the better buy: [Ahrefs](https://openseo.gg/compare/ahrefs-alternative) · [Semrush](https://openseo.gg/compare/semrush-alternative) · [SE Ranking](https://openseo.gg/compare/se-ranking-alternative) · [Mangools](https://openseo.gg/compare/mangools-alternative) · [Ubersuggest](https://openseo.gg/compare/ubersuggest-alternative) · [Moz](https://openseo.gg/compare/moz-alternative) · [Screaming Frog](https://openseo.gg/compare/screaming-frog-alternative) · [Otterly.AI](https://openseo.gg/compare/otterly-alternative)
@@ -203,7 +203,7 @@ The [self-hosting guide](https://openseo.gg/docs/self-hosting) covers servers, u
 
 ## 🤖 Connect your AI agent
 
-The [SEO MCP server](https://openseo.gg/features/seo-mcp-server) gives agents the whole workspace as 78 tools, listed with their prices in [MCP tools](https://openseo.gg/docs/mcp-tools).
+The [SEO MCP server](https://openseo.gg/features/seo-mcp-server) gives agents the whole workspace as 76 tools, listed with their prices in [MCP tools](https://openseo.gg/docs/mcp-tools).
 
 **ChatGPT and Claude (web and desktop):** add a custom connector with the URL `{API_URL}/mcp` and OAuth sign-in. You sign in with your OpenSEO account and approve; no key needed. Connected apps can be revoked in Settings.
 
@@ -231,7 +231,7 @@ Set `OPENSEO_MCP_URL` to point it at a self-hosted install.
 
 ### 🧩 Skills
 
-Ready-made SEO workflows in [`plugins/openseo/skills`](plugins/openseo/skills), built on the 78 MCP tools:
+Ready-made SEO workflows in [`plugins/openseo/skills`](plugins/openseo/skills), built on the 76 MCP tools:
 
 | Skill | What it does |
 |---|---|

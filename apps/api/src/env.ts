@@ -42,8 +42,8 @@ const schema = z.object({
   PUBLIC_TOOLS_DAILY_USD: z.coerce.number().min(0).default(2),
   PUBLIC_TOOLS_PER_DAY: z.coerce.number().int().min(1).max(1000).default(5),
 
-  // Optional: Google Search Console and Analytics. An OAuth client from Google Cloud with
-  // ${APP_URL}/api/google/gsc/callback and ${APP_URL}/api/google/ga4/callback as redirect URIs.
+  // Optional: Google Search Console. An OAuth client from Google Cloud with
+  // ${APP_URL}/api/google/gsc/callback as the redirect URI.
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   // Tests and development: send every Google request to this server instead.

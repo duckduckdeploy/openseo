@@ -3,27 +3,27 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { db, schema } from "../src/db";
 import { decrypt, encrypt } from "../src/lib/crypto";
-import { gscPeriods, pageKey, percentileRanks, safeReturnTo, strikingDistance, totalsOf } from "../src/services/google";
+import { gscPeriods, percentileRanks, safeReturnTo, strikingDistance, totalsOf } from "../src/services/google";
 import { readyUser, signUp } from "./client";
 import { harness } from "./harness";
 
 type User = Awaited<ReturnType<typeof readyUser>>;
 
 /** Runs the dashboard side of a connection: start, then Google's redirect back with a code. */
-async function startConnect(user: { api: User["api"] }, provider: "gsc" | "ga4", returnTo = "/p/x/search") {
+async function startConnect(user: { api: User["api"] }, provider: "gsc", returnTo = "/p/x/search") {
   const res = await user.api.request("GET", `/api/google/${provider}/connect?returnTo=${encodeURIComponent(returnTo)}`);
   expect(res.status).toBe(302);
   const url = new URL(String(res.headers.location));
   return { url, state: url.searchParams.get("state") as string };
 }
 
-async function callback(user: { api: User["api"] }, provider: "gsc" | "ga4", query: Record<string, string>) {
+async function callback(user: { api: User["api"] }, provider: "gsc", query: Record<string, string>) {
   const res = await user.api.request("GET", `/api/google/${provider}/callback?${new URLSearchParams(query)}`);
   expect(res.status).toBe(302);
   return new URL(String(res.headers.location));
 }
 
-async function connected(provider: "gsc" | "ga4", sub = "sub-1") {
+async function connected(provider: "gsc", sub = "sub-1") {
   const user = await readyUser();
   const { state } = await startConnect(user, provider, `/p/${user.project.id}/search`);
   await callback(user, provider, { code: `code:${sub}:owner@example.test:${provider}`, state });
@@ -125,7 +125,7 @@ describe("Search Console", () => {
     expect((await user.api.put(`/projects/${user.project.id}/google/gsc`, { accountId: user.account.id, siteUrl: "sc-domain:nope.com" })).status).toBe(400);
     await user.api.ok("PUT", `/projects/${user.project.id}/google/gsc`, { accountId: user.account.id, siteUrl: "sc-domain:acme.com" });
     const state = await user.api.ok("GET", `/projects/${user.project.id}/google`);
-    expect(state).toMatchObject({ configured: true, gsc: { siteUrl: "sc-domain:acme.com", email: "owner@example.test" }, ga4: null });
+    expect(state).toMatchObject({ configured: true, gsc: { siteUrl: "sc-domain:acme.com", email: "owner@example.test" } });
     expect(state.accounts).toHaveLength(1);
   });
 
@@ -135,7 +135,6 @@ describe("Search Console", () => {
     const agent = (await import("./client")).client({ apiKey: key });
     const base = `/api/projects/${user.project.id}/google`;
     expect((await agent.request("PUT", `${base}/gsc`, { accountId: user.account.id, siteUrl: "sc-domain:acme.com" })).status).toBe(403);
-    expect((await agent.request("PUT", `${base}/ga4`, { accountId: user.account.id, propertyId: "properties/1" })).status).toBe(403);
     await user.api.ok("PUT", `/projects/${user.project.id}/google/gsc`, { accountId: user.account.id, siteUrl: "sc-domain:acme.com" });
     expect((await agent.request("DELETE", `${base}/gsc`)).status).toBe(403);
     expect((await user.api.ok("GET", `/projects/${user.project.id}/google`)).gsc).toMatchObject({ siteUrl: "sc-domain:acme.com" });
@@ -217,61 +216,18 @@ describe("Search Console", () => {
   });
 });
 
-describe("Google Analytics", () => {
-  it("lists properties, connects one and reports organic sessions against the previous period", async () => {
-    const user = await connected("ga4");
-    const properties = await user.api.ok("GET", `/projects/${user.project.id}/google/ga4/properties?accountId=${user.account.id}`);
-    expect(properties).toEqual([
-      { propertyId: "properties/123", displayName: "acme.com - GA4", account: "Acme Inc" },
-      { propertyId: "properties/456", displayName: "Old site", account: "Acme Inc" },
-    ]);
-    expect((await user.api.put(`/projects/${user.project.id}/google/ga4`, { accountId: user.account.id, propertyId: "properties/999" })).status).toBe(400);
-    const saved = await user.api.ok("PUT", `/projects/${user.project.id}/google/ga4`, { accountId: user.account.id, propertyId: "properties/123" });
-    expect(saved).toMatchObject({ timeZone: "America/New_York", currencyCode: "USD" });
-
-    const overview = await user.api.ok("GET", `/projects/${user.project.id}/analytics/overview?range=last_28_days`);
-    expect(overview.current.sessions).toBeGreaterThan(0);
-    expect(overview.previous.sessions).toBeGreaterThan(0);
-    expect(overview.current.sessions).not.toBe(overview.previous.sessions);
-    expect(overview.daily).toHaveLength(28);
-    expect(overview.daily[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    const sent = harness.google.requests.filter((r) => r.path.endsWith(":runReport")).slice(-2);
-    expect(sent[0]!.body.dateRanges).toEqual([
-      { startDate: "28daysAgo", endDate: "yesterday" },
-      { startDate: "56daysAgo", endDate: "29daysAgo" },
-    ]);
-    expect(sent.every((r) => r.body.dimensionFilter.filter.stringFilter.value === "Organic Search")).toBe(true);
-
-    const pages = await user.api.ok("GET", `/projects/${user.project.id}/analytics/landing-pages?channel=all`);
-    expect(pages.rows.length).toBeGreaterThan(0);
-    expect(harness.google.requests.filter((r) => r.path.endsWith(":runReport")).at(-1)!.body.dimensionFilter).toBeUndefined();
-  });
-});
-
 describe("search opportunities", () => {
-  it("scores pages at positions 4 to 20, using GA4 for value when connected", async () => {
+  it("scores pages at positions 4 to 20 on demand and reachability", async () => {
     const user = await withSearchConsole();
-    const gscOnly = await user.api.ok("GET", `/projects/${user.project.id}/search-opportunities`);
-    expect(gscOnly.analytics).toBe(false);
-    expect(gscOnly.warnings[0]).toMatch(/Connect Google Analytics/);
-    for (const page of gscOnly.pages) {
+    const { pages } = await user.api.ok("GET", `/projects/${user.project.id}/search-opportunities`);
+    expect(pages.length).toBeGreaterThan(0);
+    for (const page of pages) {
       expect(page.position).toBeGreaterThanOrEqual(4);
       expect(page.position).toBeLessThanOrEqual(20);
-      expect(page.parts.value).toBeNull();
+      expect(Object.keys(page.parts)).toEqual(["demand", "reachability"]);
     }
-
-    // Same Google account kind is separate per product, so connect Analytics too.
-    const { state } = await startConnect(user, "ga4");
-    await callback(user, "ga4", { code: "code:sub-1:owner@example.test:ga4", state });
-    const ga4Account = (await db.select().from(schema.googleAccounts).where(eq(schema.googleAccounts.userId, user.userId))).find((a) => a.provider === "ga4");
-    await user.api.ok("PUT", `/projects/${user.project.id}/google/ga4`, { accountId: ga4Account!.id, propertyId: "properties/123" });
-    const both = await user.api.ok("GET", `/projects/${user.project.id}/search-opportunities`);
-    expect(both.analytics).toBe(true);
-    expect(both.valueMetric).toBe("sessionKeyEventRate");
-    expect(both.warnings.some((w: string) => w.includes("America/New_York"))).toBe(true);
-    const scores = both.pages.map((p: { score: number }) => p.score);
+    const scores = pages.map((p: { score: number }) => p.score);
     expect(scores).toEqual([...scores].sort((a, b) => b - a));
-    expect(both.pages.some((p: { sessions: number | null }) => p.sessions !== null)).toBe(true);
   });
 });
 
@@ -299,9 +255,7 @@ describe("Google helpers", () => {
     ]);
   });
 
-  it("matches pages across products and ranks values", () => {
-    expect(pageKey("WWW.Acme.com", "/pricing/?ref=x")).toBe("acme.com/pricing");
-    expect(pageKey("acme.com", "")).toBe("acme.com/");
+  it("ranks values", () => {
     expect(percentileRanks([10, 20, 20, 40])).toEqual([0, 1 / 3, 1 / 3, 1]);
     expect(percentileRanks([5])).toEqual([1]);
   });

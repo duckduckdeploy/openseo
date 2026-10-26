@@ -95,8 +95,8 @@ export default function TermsPage() {
 
       <h2>Google and other connected services</h2>
       <p>
-        When you connect Google Search Console or Google Analytics, you confirm you are allowed to access that
-        property, and your use of Google&apos;s data stays subject to Google&apos;s own terms. You can disconnect at any
+        When you connect Google Search Console, you confirm you are allowed to access that property, and your use
+        of Google&apos;s data stays subject to Google&apos;s own terms. You can disconnect at any
         time in the app or from your Google account. When you set up IndexNow, you are responsible for the key file on
         your site and the pages you submit.
       </p>

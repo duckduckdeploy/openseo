@@ -50,6 +50,13 @@
       "when": 1792971086049,
       "tag": "0006_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792987761251,
+      "tag": "0007_drop_ga4_accounts",
+      "breakpoints": true
     }
   ]
 }

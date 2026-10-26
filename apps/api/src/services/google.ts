@@ -1,8 +1,7 @@
 /**
- * Google Search Console and Google Analytics 4.
+ * Google Search Console.
  *
- * Connecting is a separate OAuth grant per product (webmasters or analytics.readonly), apart from
- * signing in to OpenSEO. Search Console asks for full access so OpenSEO can submit sitemaps; grants
+ * Connecting is a separate OAuth grant (the webmasters scope), apart from signing in to OpenSEO. Search Console asks for full access so OpenSEO can submit sitemaps; grants
  * made before that are read-only and still work for everything else. The flow:
  * - a single-use random state, stored for 10 minutes in the verification table with the user it
  *   was issued to
@@ -23,12 +22,9 @@ import { AppError, badRequest, notFound } from "../lib/errors";
 type Project = typeof schema.projects.$inferSelect;
 type Account = typeof schema.googleAccounts.$inferSelect;
 
-export const PROVIDERS: GoogleProvider[] = ["gsc", "ga4"];
-export const PRODUCT: Record<GoogleProvider, string> = { gsc: "Google Search Console", ga4: "Google Analytics" };
-const SCOPE: Record<GoogleProvider, string> = {
-  gsc: "https://www.googleapis.com/auth/webmasters",
-  ga4: "https://www.googleapis.com/auth/analytics.readonly",
-};
+export const PROVIDERS: GoogleProvider[] = ["gsc"];
+export const PRODUCT: Record<GoogleProvider, string> = { gsc: "Google Search Console" };
+const SCOPE: Record<GoogleProvider, string> = { gsc: "https://www.googleapis.com/auth/webmasters" };
 const GSC_READONLY = "https://www.googleapis.com/auth/webmasters.readonly";
 
 const HOSTS = {
@@ -36,8 +32,6 @@ const HOSTS = {
   token: "https://oauth2.googleapis.com",
   webmasters: "https://www.googleapis.com",
   searchconsole: "https://searchconsole.googleapis.com",
-  admin: "https://analyticsadmin.googleapis.com",
-  data: "https://analyticsdata.googleapis.com",
 } as const;
 
 function googleUrl(host: keyof typeof HOSTS, path: string): string {
@@ -286,8 +280,7 @@ export async function removeAccount(userId: string, accountId: string): Promise<
   const lost = await dataDb.transaction(async (tx) => {
     const gsc = await tx.delete(schema.gscConnections).where(eq(schema.gscConnections.googleAccountId, account.id)).returning({ id: schema.gscConnections.projectId });
     for (const { id } of gsc) await deleteStoredGsc(tx, id);
-    const ga4 = await tx.delete(schema.ga4Connections).where(eq(schema.ga4Connections.googleAccountId, account.id)).returning({ id: schema.ga4Connections.projectId });
-    return new Set([...gsc, ...ga4].map((row) => row.id)).size;
+    return gsc.length;
   });
   await db.delete(schema.googleAccounts).where(eq(schema.googleAccounts.id, account.id));
   return { projects: lost };
@@ -332,54 +325,10 @@ async function deleteStoredGsc(tx: Tx, projectId: string) {
     .where(eq(schema.sitePages.projectId, projectId));
 }
 
-export type Ga4Property = { propertyId: string; displayName: string; account: string };
-
-export async function listProperties(userId: string, accountId: string): Promise<Ga4Property[]> {
-  const account = await ownAccount(userId, accountId, "ga4");
-  const out: Ga4Property[] = [];
-  let pageToken: string | undefined;
-  for (let page = 0; page < 20; page++) {
-    const res = await googleCall<{
-      accountSummaries?: { displayName?: string; propertySummaries?: { property: string; displayName?: string }[] }[];
-      nextPageToken?: string;
-    }>(account, "admin", `/v1beta/accountSummaries?pageSize=200${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}`);
-    for (const summary of res.accountSummaries ?? []) {
-      for (const property of summary.propertySummaries ?? []) {
-        out.push({ propertyId: property.property, displayName: property.displayName ?? property.property, account: summary.displayName ?? "" });
-      }
-    }
-    pageToken = res.nextPageToken;
-    if (!pageToken) break;
-  }
-  return out;
-}
-
-export async function connectGa4(project: Project, userId: string, accountId: string, propertyId: string) {
-  if (!/^properties\/\d+$/.test(propertyId)) throw badRequest("A GA4 property ID looks like properties/123456789");
-  const properties = await listProperties(userId, accountId);
-  if (!properties.some((p) => p.propertyId === propertyId)) throw badRequest("That property is not in this Google account's Analytics");
-  const account = await ownAccount(userId, accountId, "ga4");
-  const details = await googleCall<{ displayName?: string; timeZone?: string; currencyCode?: string }>(account, "admin", `/v1beta/${propertyId}`);
-  const values = {
-    projectId: project.id,
-    googleAccountId: accountId,
-    propertyId,
-    displayName: details.displayName ?? propertyId,
-    timeZone: details.timeZone ?? null,
-    currencyCode: details.currencyCode ?? null,
-  };
-  await dataDb.insert(schema.ga4Connections).values(values).onConflictDoUpdate({ target: schema.ga4Connections.projectId, set: values });
-  return values;
-}
-
-export async function disconnect(project: Project, provider: GoogleProvider) {
+export async function disconnect(project: Project) {
   await dataDb.transaction(async (tx) => {
-    if (provider === "gsc") {
-      await tx.delete(schema.gscConnections).where(eq(schema.gscConnections.projectId, project.id));
-      await deleteStoredGsc(tx, project.id);
-    } else {
-      await tx.delete(schema.ga4Connections).where(eq(schema.ga4Connections.projectId, project.id));
-    }
+    await tx.delete(schema.gscConnections).where(eq(schema.gscConnections.projectId, project.id));
+    await deleteStoredGsc(tx, project.id);
   });
 }
 
@@ -389,12 +338,10 @@ async function accountById(id: string) {
   return account ?? null;
 }
 
-/** The project's connections, with the email of the Google account each one reads through. */
+/** The project's Search Console connection, with the email of the Google account it reads through. */
 export async function connections(project: Project) {
   const [gscRow] = await dataDb.select().from(schema.gscConnections).where(eq(schema.gscConnections.projectId, project.id)).limit(1);
-  const [ga4Row] = await dataDb.select().from(schema.ga4Connections).where(eq(schema.ga4Connections.projectId, project.id)).limit(1);
   const gscAccount = gscRow ? await accountById(gscRow.googleAccountId) : null;
-  const ga4Account = ga4Row ? await accountById(ga4Row.googleAccountId) : null;
   // A connection whose grant is gone counts as not connected, as the join used to.
   const gsc =
     gscRow && gscAccount
@@ -407,19 +354,7 @@ export async function connections(project: Project) {
           createdAt: gscRow.createdAt,
         }
       : null;
-  const ga4 =
-    ga4Row && ga4Account
-      ? {
-          propertyId: ga4Row.propertyId,
-          displayName: ga4Row.displayName,
-          timeZone: ga4Row.timeZone,
-          currencyCode: ga4Row.currencyCode,
-          accountId: ga4Row.googleAccountId,
-          email: ga4Account.email,
-          createdAt: ga4Row.createdAt,
-        }
-      : null;
-  return { gsc, ga4 };
+  return { gsc };
 }
 
 export async function gscFor(project: Pick<Project, "id">) {
@@ -430,13 +365,6 @@ export async function gscFor(project: Pick<Project, "id">) {
   return { connection, account };
 }
 
-async function ga4For(project: Project) {
-  const [connection] = await dataDb.select().from(schema.ga4Connections).where(eq(schema.ga4Connections.projectId, project.id)).limit(1);
-  const account = connection ? await accountById(connection.googleAccountId) : null;
-  if (!connection || !account) throw notConnected("ga4");
-  config();
-  return { connection, account };
-}
 
 // ── Search Console reports ──────────────────────────────────────────────────
 
@@ -664,107 +592,7 @@ export async function inspectUrls(project: Project, urls: string[]) {
   return { siteUrl: connection.siteUrl, results };
 }
 
-// ── Analytics (GA4) reports ─────────────────────────────────────────────────
-
-const ORGANIC = { filter: { fieldName: "sessionDefaultChannelGroup", stringFilter: { matchType: "EXACT", value: "Organic Search" } } };
-
-/** Complete days in the property's own time zone, ending yesterday; the previous period is the same length. */
-export function ga4Periods(range: Range) {
-  const days = RANGES[range];
-  return {
-    current: { startDate: `${days}daysAgo`, endDate: "yesterday" },
-    previous: { startDate: `${days * 2}daysAgo`, endDate: `${days + 1}daysAgo` },
-  };
-}
-
-type Ga4Report = {
-  dimensionHeaders?: { name: string }[];
-  metricHeaders?: { name: string }[];
-  rows?: { dimensionValues?: { value: string }[]; metricValues?: { value: string }[] }[];
-  metadata?: { dataLossFromOtherRow?: boolean; subjectToThresholding?: boolean; samplingMetadatas?: unknown[] };
-};
-
-/** Rows as plain objects: dimensions as strings, metrics as numbers. */
-export function ga4Rows(report: Ga4Report): Record<string, string | number>[] {
-  const dims = (report.dimensionHeaders ?? []).map((h) => h.name);
-  const metrics = (report.metricHeaders ?? []).map((h) => h.name);
-  return (report.rows ?? []).map((row) => ({
-    ...Object.fromEntries(dims.map((name, i) => [name, row.dimensionValues?.[i]?.value ?? ""])),
-    ...Object.fromEntries(metrics.map((name, i) => [name, Number(row.metricValues?.[i]?.value ?? 0)])),
-  }));
-}
-
-/** Google trims or samples reports in some cases; say so rather than present the numbers as exact. */
-const limitedData = (report: Ga4Report) =>
-  Boolean(report.metadata?.dataLossFromOtherRow || report.metadata?.subjectToThresholding || report.metadata?.samplingMetadatas?.length);
-
-async function runReport(account: Account, propertyId: string, body: Record<string, unknown>): Promise<Ga4Report> {
-  return googleCall<Ga4Report>(account, "data", `/v1beta/${propertyId}:runReport`, body);
-}
-
-const OVERVIEW_METRICS = ["sessions", "activeUsers", "engagedSessions", "engagementRate", "keyEvents", "purchaseRevenue"];
-
-/** Sessions, users, engagement, key events and revenue for this period and the last, plus a daily series. */
-export async function analyticsOverview(project: Project, range: Range, channel: "organic" | "all" = "organic") {
-  const { connection, account } = await ga4For(project);
-  const periods = ga4Periods(range);
-  const filter = channel === "organic" ? { dimensionFilter: ORGANIC } : {};
-  const [totals, daily] = await Promise.all([
-    runReport(account, connection.propertyId, { dateRanges: [periods.current, periods.previous], metrics: OVERVIEW_METRICS.map((name) => ({ name })), ...filter }),
-    runReport(account, connection.propertyId, {
-      dateRanges: [periods.current],
-      dimensions: [{ name: "date" }],
-      metrics: [{ name: "sessions" }, { name: "keyEvents" }],
-      orderBys: [{ dimension: { dimensionName: "date" } }],
-      limit: 400,
-      ...filter,
-    }),
-  ]);
-  // With two date ranges Google adds a dateRange dimension: date_range_0 is the first.
-  const rows = ga4Rows(totals);
-  const pick = (name: string) => {
-    const row = rows.find((r) => r.dateRange === name) ?? (rows.length === 1 && name === "date_range_0" ? rows[0] : undefined);
-    return Object.fromEntries(OVERVIEW_METRICS.map((m) => [m, Number(row?.[m] ?? 0)]));
-  };
-  return {
-    property: { propertyId: connection.propertyId, displayName: connection.displayName, timeZone: connection.timeZone, currencyCode: connection.currencyCode },
-    channel,
-    range,
-    current: pick("date_range_0"),
-    previous: pick("date_range_1"),
-    daily: ga4Rows(daily).map((r) => ({ date: String(r.date).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"), sessions: Number(r.sessions), keyEvents: Number(r.keyEvents) })),
-    limitedData: limitedData(totals) || limitedData(daily),
-  };
-}
-
-/** Landing pages by sessions, with engagement and key events. */
-export async function landingPages(project: Project, range: Range, channel: "organic" | "all" = "organic", limit = 100) {
-  const { connection, account } = await ga4For(project);
-  const report = await runReport(account, connection.propertyId, {
-    dateRanges: [ga4Periods(range).current],
-    dimensions: [{ name: "hostName" }, { name: "landingPage" }],
-    metrics: ["sessions", "activeUsers", "engagedSessions", "engagementRate", "keyEvents", "sessionKeyEventRate"].map((name) => ({ name })),
-    orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
-    limit,
-    ...(channel === "organic" ? { dimensionFilter: ORGANIC } : {}),
-  });
-  return {
-    property: { propertyId: connection.propertyId, displayName: connection.displayName },
-    channel,
-    range,
-    rows: ga4Rows(report),
-    limitedData: limitedData(report),
-  };
-}
-
 // ── Search opportunities ────────────────────────────────────────────────────
-
-/** host (without www) plus path (without a trailing slash): how a Search Console URL and a GA4 landing page are matched. */
-export function pageKey(host: string, path: string): string {
-  const cleanHost = host.toLowerCase().replace(/^www\./, "");
-  const cleanPath = (path.split(/[?#]/)[0] ?? "/").replace(/\/+$/, "") || "/";
-  return `${cleanHost}${cleanPath}`;
-}
 
 /** Share of the other values strictly below this one, 0 to 1. A single value ranks 1. */
 export function percentileRanks(values: number[]): number[] {
@@ -774,10 +602,8 @@ export function percentileRanks(values: number[]): number[] {
 
 /**
  * Pages ranking at positions 4 to 20, scored 0 to 100 on where a push is most worth it:
- * 0.5 × demand (impressions, on a log scale) + 0.3 × value (the page's key-event rate from GA4,
- * or its engagement rate when the property has no key events) + 0.2 × reachability (20 − position).
- * Each part is a percentile rank among the candidates. Without GA4 the value part is left out
- * and the other two are rescaled.
+ * 0.7 × demand (impressions, on a log scale) + 0.3 × reachability (20 − position).
+ * Each part is a percentile rank among the candidates.
  */
 export async function searchOpportunities(project: Project, range: Range = "last_28_days") {
   const { connection, account } = await gscFor(project);
@@ -787,52 +613,15 @@ export async function searchOpportunities(project: Project, range: Range = "last
     .map((r) => ({ url: r.keys?.[0] ?? "", clicks: r.clicks, impressions: r.impressions, position: round(r.position, 1) }))
     .filter((r) => r.url && r.position >= 4 && r.position <= 20);
 
-  const warnings: string[] = [];
-  let analytics: Map<string, { sessions: number; keyEventRate: number; engagementRate: number }> | null = null;
-  let useKeyEvents = false;
-  const [ga4] = await dataDb.select().from(schema.ga4Connections).where(eq(schema.ga4Connections.projectId, project.id)).limit(1);
-  if (ga4) {
-    const pages = await landingPages(project, range, "organic", 1000);
-    useKeyEvents = pages.rows.some((r) => Number(r.keyEvents) > 0);
-    analytics = new Map(
-      pages.rows.map((r) => [pageKey(String(r.hostName), String(r.landingPage)), { sessions: Number(r.sessions), keyEventRate: Number(r.sessionKeyEventRate), engagementRate: Number(r.engagementRate) }]),
-    );
-    if (!useKeyEvents) warnings.push("No key events are set up in GA4, so value uses engagement rate instead.");
-    // Search Console days are Pacific time; GA4 days follow the property.
-    if (ga4.timeZone && ga4.timeZone !== "America/Los_Angeles") warnings.push(`Search Console counts days in Pacific time and this GA4 property in ${ga4.timeZone}, so the two line up only roughly.`);
-  } else {
-    warnings.push("Connect Google Analytics to weigh pages by the value of their visits; until then, scores use demand and reachability only.");
-  }
-
-  const matched = candidates.map((c) => {
-    let host = "";
-    let path = "/";
-    try {
-      const url = new URL(c.url);
-      host = url.hostname;
-      path = url.pathname;
-    } catch {
-      // A sc-domain property can still return odd keys; such rows simply do not match GA4.
-    }
-    const ga = analytics?.get(pageKey(host, path));
-    return { ...c, sessions: ga?.sessions ?? null, value: ga ? (useKeyEvents ? ga.keyEventRate : ga.engagementRate) : null };
-  });
-  const demand = percentileRanks(matched.map((m) => Math.log1p(m.impressions)));
-  const value = percentileRanks(matched.map((m) => m.value ?? 0));
-  const reach = percentileRanks(matched.map((m) => 20 - m.position));
-  const scored = matched.map((m, i) => {
-    const parts = { demand: round(demand[i] ?? 0, 2), value: analytics ? round(value[i] ?? 0, 2) : null, reachability: round(reach[i] ?? 0, 2) };
-    const score = analytics
-      ? 100 * (0.5 * parts.demand + 0.3 * (parts.value ?? 0) + 0.2 * parts.reachability)
-      : (100 * (0.5 * parts.demand + 0.2 * parts.reachability)) / 0.7;
-    return { ...m, score: Math.round(score), parts };
+  const demand = percentileRanks(candidates.map((c) => Math.log1p(c.impressions)));
+  const reach = percentileRanks(candidates.map((c) => 20 - c.position));
+  const scored = candidates.map((c, i) => {
+    const parts = { demand: round(demand[i] ?? 0, 2), reachability: round(reach[i] ?? 0, 2) };
+    return { ...c, score: Math.round(100 * (0.7 * parts.demand + 0.3 * parts.reachability)), parts };
   });
   return {
     siteUrl: connection.siteUrl,
     period: periods.current,
-    analytics: Boolean(analytics),
-    valueMetric: analytics ? (useKeyEvents ? "sessionKeyEventRate" : "engagementRate") : null,
-    warnings,
     pages: scored.sort((a, b) => b.score - a.score || b.impressions - a.impressions).slice(0, 100),
   };
 }
