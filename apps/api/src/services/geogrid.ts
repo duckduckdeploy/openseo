@@ -1,5 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { dataDb, schema } from "../db";
+import { track } from "../lib/analytics";
 import { notFound } from "../lib/errors";
 import { buildGrid } from "../lib/geo";
 import { mapLimit } from "../lib/pool";
@@ -119,4 +120,5 @@ export async function processGrid(gridId: string) {
     .update(schema.geoGrids)
     .set({ status: fatal ? "failed" : "completed", error: fatal, finishedAt: new Date() })
     .where(and(eq(schema.geoGrids.id, gridId), eq(schema.geoGrids.status, "running")));
+  track(project.userId, "geo_grid_finished", { project_id: project.id, status: fatal ? "failed" : "completed", points: stored.length, found_in: stats.foundIn, error: fatal });
 }

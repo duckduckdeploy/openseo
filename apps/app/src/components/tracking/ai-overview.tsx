@@ -141,7 +141,10 @@ function CellChip({ state, position }: { state: CellState; position?: number | n
   );
 }
 
-function AnswersPanel({ projectId, prompt, onClose }: { projectId: string; prompt: { id: string; text: string } | null; onClose: () => void }) {
+/** A prompt opened from the grid; `answerId` and `model` when one cell was clicked. */
+type OpenPrompt = { id: string; text: string; model?: string; answerId?: string | null };
+
+function AnswersPanel({ projectId, prompt, onClose, onShowAll }: { projectId: string; prompt: OpenPrompt | null; onClose: () => void; onShowAll: () => void }) {
   const answers = useQuery({
     queryKey: ["ai", projectId, "answers", prompt?.id],
     queryFn: () => api<{ prompt: AiPrompt; answers: AiAnswer[] }>(`/projects/${projectId}/ai/prompts/${prompt?.id}/answers`),
@@ -150,13 +153,26 @@ function AnswersPanel({ projectId, prompt, onClose }: { projectId: string; promp
   // Answers arrive newest first; keep the most recent one per model.
   const latest = new Map<string, AiAnswer>();
   for (const answer of answers.data?.answers ?? []) if (!latest.has(answer.model)) latest.set(answer.model, answer);
+  // One cell clicked: exactly that answer, else the model's latest.
+  const single = prompt?.model ? (answers.data?.answers.find((answer) => answer.id === prompt.answerId) ?? latest.get(prompt.model)) : undefined;
+  const shown = prompt?.model ? (single ? [single] : []) : [...latest.values()];
 
   return (
-    <SidePanel open={prompt !== null} onClose={onClose} title={prompt?.text ?? ""} subtitle="Latest answer from each model">
+    <SidePanel
+      open={prompt !== null}
+      onClose={onClose}
+      title={prompt?.text ?? ""}
+      subtitle={prompt?.model ? `${assistantName(prompt.model)}'s answer in the latest run` : "Latest answer from each model"}
+    >
       {answers.isPending && <Spinner />}
       <ErrorNote error={answers.error} />
-      {answers.data && latest.size === 0 && <p className="text-[13px] text-muted">No answers stored for this prompt yet. It is included from the next run.</p>}
-      {[...latest.values()].map((answer) => (
+      {answers.data && shown.length === 0 && <p className="text-[13px] text-muted">{prompt?.model ? "This model has no stored answer for this prompt yet." : "No answers stored for this prompt yet. It is included from the next run."}</p>}
+      {prompt?.model && answers.data && latest.size > 1 && (
+        <button type="button" onClick={onShowAll} className="text-left text-[13px] font-medium underline underline-offset-2">
+          Show every model&apos;s answer ({latest.size})
+        </button>
+      )}
+      {shown.map((answer) => (
         <article key={answer.id} className="rounded-lg border border-line">
           <header className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-3 py-2 text-[13px]">
             <ModelName id={answer.model} />
@@ -217,7 +233,7 @@ function AnswersPanel({ projectId, prompt, onClose }: { projectId: string; promp
 
 export function AiOverview({ projectId, webSearch }: { projectId: string; webSearch: boolean }) {
   const results = useQuery({ queryKey: ["ai", projectId, "results"], queryFn: () => api<AiResults>(`/projects/${projectId}/ai/results`) });
-  const [open, setOpen] = useState<{ id: string; text: string } | null>(null);
+  const [open, setOpen] = useState<OpenPrompt | null>(null);
 
   if (results.isPending) return <Spinner />;
   if (results.error) return <ErrorNote error={results.error} />;
@@ -356,7 +372,7 @@ export function AiOverview({ projectId, webSearch }: { projectId: string; webSea
       </div>
 
       <Card>
-        <CardHeader title="Prompts by model" description="Latest run. Select a prompt to read the full answers and their sources." />
+        <CardHeader title="Prompts by model" description="Latest run. Select a result to read that model's answer and sources, or a prompt for every model's answer." />
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-4 py-2.5 text-xs text-muted" aria-label="Legend">
           {(Object.keys(CELL) as CellState[]).map((state) => (
             <li key={state} className="flex items-center gap-1.5">
@@ -391,9 +407,21 @@ export function AiOverview({ projectId, webSearch }: { projectId: string; webSea
                 </td>
                 {latest.models.map((model) => {
                   const cell = row.cells.find((c) => c.model === model);
+                  const state = cellState(cell);
                   return (
                     <td key={model}>
-                      <CellChip state={cellState(cell)} position={cell?.position} />
+                      {state === "none" ? (
+                        <CellChip state={state} />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setOpen({ id: row.promptId, text: row.prompt, model, answerId: cell?.answerId })}
+                          aria-label={`${assistantName(model)}'s answer to "${row.prompt}": ${CELL[state].label}`}
+                          className="rounded-sm hover:brightness-95 focus-visible:outline-2 focus-visible:outline-accent"
+                        >
+                          <CellChip state={state} position={cell?.position} />
+                        </button>
+                      )}
                     </td>
                   );
                 })}
@@ -403,7 +431,7 @@ export function AiOverview({ projectId, webSearch }: { projectId: string; webSea
         </Table>
       </Card>
 
-      <AnswersPanel projectId={projectId} prompt={open} onClose={() => setOpen(null)} />
+      <AnswersPanel projectId={projectId} prompt={open} onClose={() => setOpen(null)} onShowAll={() => setOpen(open && { id: open.id, text: open.text })} />
     </div>
   );
 }

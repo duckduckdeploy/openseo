@@ -6,6 +6,7 @@ import { toHeaders } from "./lib/context";
 import { AppError, isInvalidInput } from "./lib/errors";
 import { toAppError } from "./lib/yep";
 import { registerMcp } from "./mcp/server";
+import { registerRequestAnalytics } from "./lib/request-analytics";
 import { accountRoutes } from "./routes/account";
 import { aiRoutes } from "./routes/ai";
 import { auditRoutes } from "./routes/audit";
@@ -104,6 +105,7 @@ export async function buildApp(): Promise<FastifyInstance> {
         const origin = request.headers.origin;
         if (origin && origin !== env.APP_URL) throw new AppError(403, "forbidden_origin", "Requests from this origin are not allowed");
       });
+      registerRequestAnalytics(api);
       await api.register(accountRoutes);
       await api.register(projectRoutes);
       await api.register(keywordRoutes);

@@ -13,7 +13,7 @@
 import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { dataDb, schema } from "../db";
 import { AppError } from "../lib/errors";
-import { DAY_MS, gscFor, isoDate, searchAnalytics, type GscRow } from "./google";
+import { cleanQueryRows, DAY_MS, gscFor, isoDate, searchAnalytics, type GscRow } from "./google";
 
 const BACKFILL_DAYS = 30;
 const REFRESH_DAYS = 5;
@@ -105,7 +105,7 @@ async function dayRows(account: Parameters<typeof searchAnalytics>[0], siteUrl: 
 async function storeDay(projectId: string, day: string, total: GscRow | null, pairs: GscRow[], final: boolean) {
   await dataDb.transaction(async (tx) => {
     await tx.delete(schema.gscDaily).where(and(eq(schema.gscDaily.projectId, projectId), eq(schema.gscDaily.date, day)));
-    const values = pairs
+    const values = cleanQueryRows(pairs, 0)
       .filter((r) => r.keys?.[0] && r.keys?.[1])
       .map((r) => ({ projectId, date: day, query: r.keys![0]!, page: r.keys![1]!, clicks: r.clicks, impressions: r.impressions, position: r.position }));
     for (let i = 0; i < values.length; i += INSERT_CHUNK) await tx.insert(schema.gscDaily).values(values.slice(i, i + INSERT_CHUNK)).onConflictDoNothing();

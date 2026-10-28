@@ -1,25 +1,19 @@
 "use client";
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, ExternalLink, Plug, Star, Trash2 } from "lucide-react";
-import { useParams, usePathname, useSearchParams } from "next/navigation";
+import { Download, Settings, Star } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { propertyLabel, projectSettingsHref, useGoogleState } from "@/components/google/connection";
 import { type Column, DataTable } from "@/components/research/data-table";
 import { Pagination } from "@/components/research/pagination";
 import { type SyncState, StoredKeywords } from "@/components/search/stored-keywords";
-import { ConfirmDialog, ExtLink, Note, Segmented, TabPanel, Tabs, useQueryState } from "@/components/tracking/kit";
-import { Badge, Button, Card, CardHeader, EmptyState, ErrorNote, Field, PageHeader, Select, Spinner, Stat } from "@/components/ui";
-import { api, dateOnly, num } from "@/lib/api";
+import { ExtLink, Segmented, TabPanel, Tabs, useQueryState } from "@/components/tracking/kit";
+import { Button, Card, CardHeader, EmptyState, ErrorNote, PageHeader, Select, Spinner, Stat } from "@/components/ui";
+import { api, num } from "@/lib/api";
 import { downloadCsv } from "@/lib/lookup";
 
-type Provider = "gsc";
-type GoogleAccount = { id: string; provider: Provider; email: string | null; createdAt: string };
-type GoogleState = {
-  configured: boolean;
-  redirectUris: Record<Provider, string>;
-  gsc: { siteUrl: string; accountId: string; email: string | null; canWrite: boolean; sync: SyncState; createdAt: string } | null;
-  accounts: GoogleAccount[];
-};
 type Range = "last_7_days" | "last_28_days" | "last_3_months";
 type Totals = { clicks: number; impressions: number; ctr: number | null; position: number | null };
 type StrikingRow = { query: string; page: string; clicks: number; impressions: number; position: number };
@@ -35,22 +29,11 @@ type TablePage = { page: number; size: number; hasMore: boolean; rows: TableRow[
 type Opportunity = { url: string; clicks: number; impressions: number; position: number; score: number; parts: { demand: number; reachability: number } };
 type Opportunities = { pages: Opportunity[] };
 
-const PRODUCT: Record<Provider, string> = { gsc: "Google Search Console" };
 const RANGES: { id: Range; label: string }[] = [
   { id: "last_7_days", label: "7 days" },
   { id: "last_28_days", label: "28 days" },
   { id: "last_3_months", label: "3 months" },
 ];
-const LINK_ERRORS: Record<string, string> = {
-  state_mismatch: "The connection link expired or was opened in another session. Try again from this page.",
-  access_denied: "Google access was not granted.",
-  scope_denied: "A permission was unticked on Google's consent screen, so nothing was connected. Try again and leave the boxes ticked.",
-  token_exchange_failed: "Google did not accept the sign-in. Check that the OAuth client's redirect URIs match this server, then try again.",
-  invalid_id_token: "Google's reply could not be verified. Check GOOGLE_CLIENT_ID, then try again.",
-  signed_out: "You were signed out. Sign in and try again.",
-  failed: "Connecting failed. Try again.",
-};
-
 /** Percentage change, or the change in position (a lower position is better, so it reads as up). */
 function change(current: number | null, previous: number | null, kind: "pct" | "position" = "pct"): { text: string; good: boolean | null } | null {
   if (current == null || previous == null) return null;
@@ -66,188 +49,6 @@ function change(current: number | null, previous: number | null, kind: "pct" | "
 function Change({ value }: { value: ReturnType<typeof change> }) {
   if (!value) return <span>no earlier data</span>;
   return <span className={value.good === null ? "" : value.good ? "text-pos" : "text-neg"}>{value.text}</span>;
-}
-
-const connectUrl = (provider: Provider, returnTo: string) => `/api/google/${provider}/connect?returnTo=${encodeURIComponent(returnTo)}`;
-
-// ── Connections ─────────────────────────────────────────────────────────────
-
-function PropertyPicker({ projectId, provider, accounts, onDone }: { projectId: string; provider: Provider; accounts: GoogleAccount[]; onDone: () => void }) {
-  const queryClient = useQueryClient();
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
-  const [choice, setChoice] = useState("");
-  const options = useQuery({
-    queryKey: ["google-options", projectId, provider, accountId],
-    queryFn: () =>
-      api<{ siteUrl: string; verified: boolean }[]>(`/projects/${projectId}/google/${provider}/sites`, { query: { accountId } }).then((rows) => rows.map((r) => ({ id: r.siteUrl, label: r.siteUrl, disabled: !r.verified }))),
-    enabled: Boolean(accountId),
-  });
-  const save = useMutation({
-    mutationFn: () => api(`/projects/${projectId}/google/${provider}`, { method: "PUT", body: { accountId, siteUrl: choice } }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["google", projectId] });
-      void queryClient.invalidateQueries({ queryKey: ["search", projectId] });
-      onDone();
-    },
-  });
-  return (
-    <form
-      className="grid gap-3 sm:grid-cols-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (choice) save.mutate();
-      }}
-    >
-      <Field label="Google account">
-        <Select
-          value={accountId}
-          onChange={(event) => {
-            setAccountId(event.target.value);
-            setChoice("");
-          }}
-        >
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.email ?? account.id}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Field label="Property" hint="Properties without verified access are listed but cannot be chosen.">
-        <Select value={choice} onChange={(event) => setChoice(event.target.value)} disabled={!options.data?.length}>
-          <option value="">{options.isPending ? "Loading…" : options.data?.length ? "Choose…" : "None in this account"}</option>
-          {options.data?.map((option) => (
-            <option key={option.id} value={option.id} disabled={option.disabled}>
-              {option.label}
-              {option.disabled ? " (no verified access)" : ""}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <div className="flex flex-wrap gap-2 sm:col-span-2">
-        <Button type="submit" variant="primary" disabled={!choice} loading={save.isPending}>
-          Use this property
-        </Button>
-        <Button variant="ghost" onClick={onDone}>
-          Cancel
-        </Button>
-      </div>
-      <div className="sm:col-span-2">
-        <ErrorNote error={options.error ?? save.error} />
-      </div>
-    </form>
-  );
-}
-
-function ProviderCard({ projectId, provider, state }: { projectId: string; provider: Provider; state: GoogleState }) {
-  const queryClient = useQueryClient();
-  const pathname = usePathname();
-  const [picking, setPicking] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const connection = state[provider];
-  const accounts = state.accounts.filter((a) => a.provider === provider);
-  const disconnect = useMutation({
-    mutationFn: () => api(`/projects/${projectId}/google/${provider}`, { method: "DELETE" }),
-    onSuccess: () => {
-      setConfirming(false);
-      void queryClient.invalidateQueries({ queryKey: ["google", projectId] });
-    },
-  });
-  const label = connection?.siteUrl ?? null;
-
-  return (
-    <Card>
-      <CardHeader
-        title={PRODUCT[provider]}
-        description="Clicks, impressions and positions from Google itself."
-        action={<Badge tone={connection ? "pos" : "neutral"}>{connection ? "Connected" : "Not connected"}</Badge>}
-      />
-      <div className="space-y-3 p-4 text-[13px]">
-        {connection && !picking && (
-          <>
-            <p>
-              <span className="font-medium break-all">{label}</span>
-              <span className="block text-xs text-muted">Read through {connection.email ?? "a Google account"}, since {dateOnly(connection.createdAt)}.</span>
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => setPicking(true)}>
-                Change property
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setConfirming(true)}>
-                Disconnect from this project
-              </Button>
-            </div>
-          </>
-        )}
-        {(!connection || picking) &&
-          (accounts.length ? (
-            <PropertyPicker projectId={projectId} provider={provider} accounts={accounts} onDone={() => setPicking(false)} />
-          ) : (
-            <p className="text-muted">No Google account connected for {PRODUCT[provider]} yet.</p>
-          ))}
-        <a href={connectUrl(provider, pathname)} className="inline-flex items-center gap-1.5 text-[13px] font-medium underline underline-offset-2">
-          <Plug className="size-3.5" aria-hidden /> {accounts.length ? "Add another Google account" : "Connect a Google account"}
-        </a>
-      </div>
-      <ConfirmDialog
-        open={confirming}
-        onClose={() => setConfirming(false)}
-        onConfirm={() => disconnect.mutate()}
-        title={`Disconnect ${PRODUCT[provider]}?`}
-        confirmLabel="Disconnect"
-        danger
-        pending={disconnect.isPending}
-        error={disconnect.error}
-      >
-        <p>This project stops reading {label ?? "this property"}. The Google account stays connected, so you can pick the property again later.</p>
-      </ConfirmDialog>
-    </Card>
-  );
-}
-
-function AccountsCard({ state, projectId }: { state: GoogleState; projectId: string }) {
-  const queryClient = useQueryClient();
-  const [removing, setRemoving] = useState<GoogleAccount | null>(null);
-  const remove = useMutation({
-    mutationFn: (id: string) => api<{ projects: number }>(`/google/accounts/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      setRemoving(null);
-      void queryClient.invalidateQueries({ queryKey: ["google", projectId] });
-    },
-  });
-  if (!state.accounts.length) return null;
-  return (
-    <Card>
-      <CardHeader title="Google accounts" description="Google grants you have given OpenSEO. Removing one disconnects it from every project that uses it." />
-      <ul className="divide-y divide-line">
-        {state.accounts.map((account) => (
-          <li key={account.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-[13px]">
-            <span>
-              <span className="font-medium">{account.email ?? account.id}</span> <span className="text-muted">· {PRODUCT[account.provider]}</span>
-            </span>
-            <Button size="sm" variant="ghost" onClick={() => setRemoving(account)}>
-              <Trash2 className="size-3.5" aria-hidden /> Remove
-            </Button>
-          </li>
-        ))}
-      </ul>
-      <ConfirmDialog
-        open={removing !== null}
-        onClose={() => setRemoving(null)}
-        onConfirm={() => removing && remove.mutate(removing.id)}
-        title="Remove this Google account?"
-        confirmLabel="Remove"
-        danger
-        pending={remove.isPending}
-        error={remove.error}
-      >
-        <p>
-          OpenSEO deletes its tokens for {removing?.email ?? "this account"} and disconnects it from every project that reads {removing ? PRODUCT[removing.provider] : ""} through it. To revoke
-          access on Google&apos;s side too, visit your Google account&apos;s security settings.
-        </p>
-      </ConfirmDialog>
-    </Card>
-  );
 }
 
 // ── Search Console report ───────────────────────────────────────────────────
@@ -418,7 +219,7 @@ function SearchConsoleReport({ projectId, sync }: { projectId: string; sync: Syn
         </label>
         {report.data && (
           <p className="font-mono text-xs text-muted">
-            {report.data.siteUrl} · {report.data.periods.current.startDate} to {report.data.periods.current.endDate} · Search Console data lags about 3 days
+            {propertyLabel(report.data.siteUrl)} · {report.data.periods.current.startDate} to {report.data.periods.current.endDate} · Search Console data lags about 3 days
           </p>
         )}
       </div>
@@ -467,54 +268,30 @@ function SearchConsoleReport({ projectId, sync }: { projectId: string; sync: Syn
 
 function SearchPerformance() {
   const { projectId } = useParams<{ projectId: string }>();
-  const params = useSearchParams();
-  const google = useQuery({ queryKey: ["google", projectId], queryFn: () => api<GoogleState>(`/projects/${projectId}/google`) });
-  const linkError = params.get("google_error");
-  const linked = params.get("google_connected") as Provider | null;
+  const google = useGoogleState(projectId);
   const state = google.data;
 
   return (
     <>
-      <PageHeader
-        title="Search performance"
-        description="From your own Google Search Console."
-      />
+      <PageHeader title="Search performance" description="From your own Google Search Console." />
       <div className="space-y-6">
-        {linkError && <ErrorNote error={new Error(LINK_ERRORS[linkError] ?? "Connecting Google failed. Try again.")} />}
-        {linked && PRODUCT[linked] && <Note>Google account connected for {PRODUCT[linked]}. Choose the property this project should read.</Note>}
         {google.isPending && <Spinner />}
         <ErrorNote error={google.error} />
-        {state && !state.configured && (
-          <EmptyState title="Google is not set up on this server">
-            Whoever runs this OpenSEO needs a Google OAuth client: set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, with this redirect URI: {state.redirectUris.gsc}. The self-hosting docs walk through it.
-          </EmptyState>
-        )}
-        {state?.configured && (
-          <>
-            <ProviderCard projectId={projectId} provider="gsc" state={state} />
-            {state.gsc && !state.gsc.canWrite && (
-              <Note>
-                This Search Console connection is read-only, from before OpenSEO could submit sitemaps. Everything here works; to let the Indexing page submit sitemaps to Google,{" "}
-                <a href={connectUrl("gsc", `/p/${projectId}/search`)} className="font-medium underline underline-offset-2">
-                  reconnect Search Console
-                </a>{" "}
-                and allow full access.
-              </Note>
-            )}
-            {state.gsc ? (
-              <SearchConsoleReport projectId={projectId} sync={state.gsc.sync} />
-            ) : (
-              <EmptyState title="Connect Search Console to see your search data">
-                Clicks, impressions, positions and every query you rank for, synced daily from Google. Connecting also lets the Indexing page check Google&apos;s index status and submit your sitemaps.
-              </EmptyState>
-            )}
-            <AccountsCard state={state} projectId={projectId} />
-            <p className="flex items-center gap-1.5 text-xs text-muted">
-              <ExternalLink className="size-3.5" aria-hidden />
-              Search Console data is synced into this project daily (up to 16 months back) so keyword suggestions, rank tracking and indexing can use it. Disconnecting deletes it.
-            </p>
-          </>
-        )}
+        {state &&
+          (state.gsc ? (
+            <SearchConsoleReport projectId={projectId} sync={state.gsc.sync} />
+          ) : (
+            <EmptyState
+              title="Connect Search Console to see your search data"
+              action={
+                <Link href={projectSettingsHref(projectId)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-accent bg-accent px-2.5 text-[13px] font-medium text-accent-fg shadow-card hover:brightness-95">
+                  <Settings className="size-3.5" aria-hidden /> Connect in project settings
+                </Link>
+              }
+            >
+              Clicks, impressions, positions and every query you rank for, synced daily from Google. Connecting also lets the Indexing page check Google&apos;s index status and submit your sitemaps.
+            </EmptyState>
+          ))}
       </div>
     </>
   );

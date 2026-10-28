@@ -1,4 +1,4 @@
-import { defaultFetch, transport, type FetchLike, type TransportConfig } from './core';
+import { appHeaders, defaultFetch, transport, type FetchLike, type TransportConfig, type YepAppInfo } from './core';
 import { YepApiError } from './errors';
 import { computeCost, estimateCost, pricing } from './pricing';
 import type { EndpointData, EndpointParams, YepEndpoint } from './types/index';
@@ -44,6 +44,8 @@ export interface YepApiOptions {
   retryBaseDelayMs?: number;
   /** Cap for backoff. A longer `Retry-After` stops retrying and throws the 429. Default 30000. */
   retryMaxDelayMs?: number;
+  /** Identifies the calling app in YepAPI's usage logs, on every request. Optional; costs nothing. */
+  app?: YepAppInfo;
 }
 
 export interface CallOptions {
@@ -160,6 +162,7 @@ export function createYepApi(options: YepApiOptions): YepApi {
     maxRetries: options.maxRetries ?? 2,
     retryBaseDelayMs: options.retryBaseDelayMs ?? 500,
     retryMaxDelayMs: options.retryMaxDelayMs ?? 30_000,
+    appHeaders: appHeaders(options.app),
   };
   const { onCall } = options;
 

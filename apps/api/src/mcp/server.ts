@@ -164,8 +164,11 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
     },
   );
 
+  // The tool being run, so analytics can tell agent calls from the dashboard's (lib/request-analytics.ts).
+  let currentTool: string | null = null;
   async function rest(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, body?: unknown): Promise<unknown> {
-    const response = await app.inject({ method, url: `/api${url}`, headers: { authorization }, payload: body === undefined ? undefined : (body as Json) });
+    const headers: Record<string, string> = { authorization, ...(currentTool ? { "x-openseo-mcp-tool": currentTool } : {}) };
+    const response = await app.inject({ method, url: `/api${url}`, headers, payload: body === undefined ? undefined : (body as Json) });
     const json = response.json() as { ok?: boolean; data?: unknown; error?: { message?: string } };
     if (response.statusCode >= 400 || json.ok === false) throw new Error(json.error?.message ?? `Request failed (${response.statusCode})`);
     return json.data ?? json;
@@ -187,6 +190,7 @@ function buildServer(app: FastifyInstance, authorization: string): McpServer {
   ) {
     server.registerTool(name, { description, inputSchema: shape, annotations: { readOnlyHint: readOnly } }, (async (args: unknown) => {
       try {
+        currentTool = name;
         const value = withoutUserIds(await handler(args as z.infer<z.ZodObject<S>>));
         // A dry run says outright that it spent nothing, like a paid result says what it spent.
         const isDryRun = value !== null && typeof value === "object" && (value as Json).dryRun === true;

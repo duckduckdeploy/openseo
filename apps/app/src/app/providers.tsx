@@ -1,7 +1,8 @@
 "use client";
 
 import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { initAnalytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -23,5 +24,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       return client;
     },
   );
+  useEffect(() => initAnalytics(), []);
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }

@@ -4,6 +4,7 @@ import type { CrawlOptions, Issue, PageResult, PageTraffic } from "@openseo/craw
 import type { YepApi } from "@openseo/yepapi";
 import { and, desc, eq, gte, inArray, isNull, lt, notInArray, sql } from "drizzle-orm";
 import { dataDb, schema } from "../db";
+import { track } from "../lib/analytics";
 import type { AuditLinkKind, AuditOptions, AuditTrigger, RenderMode } from "../db/data-schema";
 import { AppError, notFound, runInProgress } from "../lib/errors";
 import { errorMessage, getYep, isFatalForRun } from "../lib/yep";
@@ -210,10 +211,12 @@ export function linkRows(auditId: string, pages: PageResult[]): LinkRow[] {
 
 /** Marks a queued or running audit failed; a finished or cancelled one is left as it is. */
 export async function failAudit(auditId: string, message: string) {
-  await dataDb
+  const [failed] = await dataDb
     .update(schema.audits)
     .set({ status: "failed", error: message, finishedAt: new Date() })
-    .where(and(eq(schema.audits.id, auditId), inArray(schema.audits.status, ["queued", "running"])));
+    .where(and(eq(schema.audits.id, auditId), inArray(schema.audits.status, ["queued", "running"])))
+    .returning({ userId: schema.audits.userId, projectId: schema.audits.projectId });
+  if (failed) track(failed.userId, "site_audit_finished", { project_id: failed.projectId, status: "failed", error: message });
 }
 
 /** How often a running audit touches its heartbeat, and how long a silent one is given before it is restarted. */
@@ -540,6 +543,13 @@ async function storeAudit(audit: Audit, result: CrawlResult, cancelled: boolean,
       .where(and(eq(schema.audits.id, auditId), inArray(schema.audits.status, ["running", "cancelled"])));
     // A finished crawl may have found new or changed pages: sync the indexing page list at the next tick.
     if (audit.projectId && !cancelled) await tx.update(schema.indexingSettings).set({ nextSyncAt: new Date() }).where(eq(schema.indexingSettings.projectId, audit.projectId));
+  });
+  track(audit.userId, "site_audit_finished", {
+    project_id: audit.projectId,
+    status: cancelled ? "cancelled" : "completed",
+    pages: summary.pagesTotal,
+    health_score: summary.healthScore,
+    cost_usd: paid.spent,
   });
 }
 

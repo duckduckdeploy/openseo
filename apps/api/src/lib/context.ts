@@ -18,7 +18,18 @@ function toHeaders(request: FastifyRequest): Headers {
   return headers;
 }
 
+const resolved = new WeakMap<FastifyRequest, AuthedUser>();
+
+/** The user a request authenticated as, once a route has resolved it (for analytics). */
+export const requestUser = (request: FastifyRequest): AuthedUser | undefined => resolved.get(request);
+
 export async function resolveUser(request: FastifyRequest): Promise<AuthedUser | null> {
+  const user = await authenticate(request);
+  if (user) resolved.set(request, user);
+  return user;
+}
+
+async function authenticate(request: FastifyRequest): Promise<AuthedUser | null> {
   const authorization = request.headers.authorization;
   // An OAuth access token, issued to an MCP client such as ChatGPT. Checked before API keys,
   // which share the oseo_ prefix; an API key whose random part happens to start with at_ falls

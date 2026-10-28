@@ -8,6 +8,7 @@ import { buildGrid } from "../lib/geo";
 import { locationInfo } from "../lib/locations";
 import { mapLimit } from "../lib/pool";
 import { serpFeatures } from "../lib/serp";
+import { withUpstreamRetry } from "../lib/yep";
 import { backlinkGap, type CompetitorRow, findings, keywordGapOpportunities, pickCompetitors, strikingDistance, topicWords } from "../lib/seo-audit";
 
 /**
@@ -789,7 +790,7 @@ export const lookups: Lookup[] = [
           return { model, answer: "", sources: [] as { url: string; title?: string }[], costUsd: 0, error: `Skipped: the $${maxCostUsd.toFixed(2)} cost ceiling was reached` as string | null, reason: undefined as unknown };
         }
         try {
-          const res = await yep.ai.chat({ model, messages: [{ role: "user", content: i.prompt }], webSearch: true, maxTokens: 1200 });
+          const res = await withUpstreamRetry(() => yep.ai.chat({ model, messages: [{ role: "user", content: i.prompt }], webSearch: true, maxTokens: 1200 }));
           spent += res.costUsd;
           const content = res.data.message.content;
           const resolved = await Promise.all((res.data.sources ?? []).map(resolveCitation));
@@ -832,7 +833,7 @@ export const lookups: Lookup[] = [
           return { model, answer: "", sources: [], costUsd: 0, error: `Skipped: the $${maxCostUsd.toFixed(2)} cost ceiling was reached` as string | null };
         }
         try {
-          const res = await yep.ai.chat({ model, messages: [{ role: "user", content: i.prompt }], webSearch: i.webSearch || undefined, maxTokens: 1200 });
+          const res = await withUpstreamRetry(() => yep.ai.chat({ model, messages: [{ role: "user", content: i.prompt }], webSearch: i.webSearch || undefined, maxTokens: 1200 }));
           spent += res.costUsd;
           const content = res.data.message.content;
           return { model, answer: typeof content === "string" ? content : "", sources: res.data.sources ?? [], costUsd: res.costUsd, error: null as string | null };

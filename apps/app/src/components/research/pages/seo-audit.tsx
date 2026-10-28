@@ -8,7 +8,7 @@ import { PositionDistribution } from "@/components/research/charts";
 import { type Column, DataTable } from "@/components/research/data-table";
 import { ExportButton, RunPrompt, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { UrlCell } from "@/components/research/pills";
-import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
+import { ProjectRunBar, SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { RatingRing, Skeleton } from "@/components/research/serp-overview";
 import { KeywordLink, OpenInTool } from "@/components/research/tool-link";
 import type { N } from "@/components/research/types";
@@ -17,7 +17,7 @@ import { Badge, Card, cx, PageHeader } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
-import { lookupMarket, type Market, toolLinks } from "@/lib/scope";
+import { isToolsScope, lookupMarket, type Market, toolLinks } from "@/lib/scope";
 import { big, cleanDomain, Metric, Movement, validDomain } from "./domain";
 
 type Finding = { id: string; severity: "high" | "medium" | "low"; title: string; detail: string };
@@ -170,7 +170,9 @@ export function SeoAudit({ project }: { project: Project }) {
   const nav = useToolNav();
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
-  const domain = cleanDomain(params.get("domain")?.trim() || project.domain || "");
+  // In a project the audit is of its own website, run from a button; the tool takes any domain.
+  const inProject = !isToolsScope(project.id);
+  const domain = cleanDomain(params.get("domain")?.trim() || (inProject ? "" : project.domain) || "");
   const input = useMemo(() => (validDomain(domain) ? { domain, ...lookupMarket(market) } : null), [domain, market]);
   const audit = useLookupQuery<SeoAuditData, object>(project.id, "seo_audit", input);
   const lookups = [audit] as LookupQuery<unknown>[];
@@ -178,6 +180,11 @@ export function SeoAudit({ project }: { project: Project }) {
 
   return (
     <>
+      {inProject ? (
+        <ProjectRunBar project={project} market={market} button="Run audit" pending={audit.loading} onRun={(own) => nav({ domain: own }, { reset: true })}>
+          <span className="text-xs text-muted">Rankings are for the project&apos;s market. Backlinks are worldwide.</span>
+        </ProjectRunBar>
+      ) : (
       <SearchBar
         value={params.get("domain") ?? project.domain ?? ""}
         onSearch={(text) => nav({ domain: cleanDomain(text) }, { reset: true })}
@@ -191,6 +198,7 @@ export function SeoAudit({ project }: { project: Project }) {
       >
         <span className="text-xs text-muted">Rankings are for the country you pick. Backlinks are worldwide.</span>
       </SearchBar>
+      )}
 
       <ViewErrors lookups={lookups} />
 
@@ -198,9 +206,15 @@ export function SeoAudit({ project }: { project: Project }) {
         <>
           <PageHeader title="SEO audit" description="A full SEO audit of any website: traffic, keywords, backlinks, competitors and what to do first." />
           <Card>
-            <RunPrompt title="Start with a domain">
-              Type a domain and press Enter. The audit reads search data, so it works for any site, yours or a competitor&apos;s. For technical issues on your own pages, run a Site audit.
-            </RunPrompt>
+            {inProject ? (
+              <RunPrompt title={`Audit ${project.domain || "your website"}`}>
+                Press Run audit for traffic, keywords, backlinks, competitors and what to do first, from search data. For technical issues on your pages, run a Site audit.
+              </RunPrompt>
+            ) : (
+              <RunPrompt title="Start with a domain">
+                Type a domain and press Enter. The audit reads search data, so it works for any site, yours or a competitor&apos;s. For technical issues on your own pages, run a Site audit.
+              </RunPrompt>
+            )}
           </Card>
         </>
       )}

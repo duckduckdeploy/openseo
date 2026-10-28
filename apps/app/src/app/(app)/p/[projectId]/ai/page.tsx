@@ -40,7 +40,7 @@ const titleCase = (text: string) => (text[0]?.toUpperCase() ?? "") + text.slice(
 
 // ── Run control ─────────────────────────────────────────────────────────────
 
-function RunControl({ projectId, state }: { projectId: string; state: AiState }) {
+function RunControl({ projectId, state, onGo }: { projectId: string; state: AiState; onGo: (tab: TabId) => void }) {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
   const [startedRunId, setStartedRunId] = useState<string | null>(null);
@@ -66,7 +66,13 @@ function RunControl({ projectId, state }: { projectId: string; state: AiState })
   const runsPerMonth = RUNS_PER_MONTH[settings.schedule];
   const running = isActive(run.data?.status);
   const finished = run.data && !running && startedRunId === run.data.id ? run.data : null;
-  const blocked = !settings.brand.trim() ? "Set your brand name under Setup." : settings.models.length === 0 ? "Select at least one model under Setup." : activePrompts === 0 ? "Add at least one active prompt." : null;
+  const blocked: { text: string; tab: TabId; action: string } | null = !settings.brand.trim()
+    ? { text: "Set your brand name first.", tab: "setup", action: "Open setup" }
+    : settings.models.length === 0
+      ? { text: "Select at least one model first.", tab: "setup", action: "Open setup" }
+      : activePrompts === 0
+        ? { text: "Add at least one active prompt first.", tab: "prompts", action: "Add prompts" }
+        : null;
 
   return (
     <>
@@ -92,7 +98,14 @@ function RunControl({ projectId, state }: { projectId: string; state: AiState })
             <Button variant="primary" onClick={() => setConfirming(true)} disabled={running || blocked !== null}>
               <Play className="size-4" aria-hidden /> Run now
             </Button>
-            {blocked && <span className="max-w-48 text-xs text-muted">{blocked}</span>}
+            {blocked && (
+              <span className="max-w-56 text-xs text-muted">
+                {blocked.text}{" "}
+                <button type="button" onClick={() => onGo(blocked.tab)} className="font-medium text-ink underline underline-offset-2">
+                  {blocked.action}
+                </button>
+              </span>
+            )}
           </div>
         </div>
       </Card>
@@ -692,6 +705,36 @@ function ExplorerTab({ projectId, settings }: { projectId: string; settings: AiS
 
 // ── Page ────────────────────────────────────────────────────────────────────
 
+/** The overview before any prompt exists: the steps to a first run, each a click away. */
+function GetStarted({ state, onGo }: { state: AiState; onGo: (tab: TabId) => void }) {
+  const steps: { done: boolean; title: string; text: string; tab: TabId; action: string }[] = [
+    { done: Boolean(state.settings.brand.trim()), title: "Your brand and competitors", text: "The names and domains to look for in each answer.", tab: "setup", action: "Open setup" },
+    { done: state.settings.models.length > 0, title: "Models", text: "The assistants to ask: ChatGPT, Claude, Gemini, Perplexity and more.", tab: "setup", action: "Choose models" },
+    { done: false, title: "Prompts", text: "The questions your customers ask. Write them, pick from Search Console, or let a model suggest some.", tab: "prompts", action: "Add prompts" },
+  ];
+  return (
+    <div className="rounded-lg border border-dashed border-line px-6 py-10 text-center">
+      <p className="font-display text-base font-semibold">Set up AI visibility</p>
+      <p className="mx-auto mt-1 max-w-md text-sm text-muted">Three steps to your first run. Then Run now asks every prompt to every model and records who gets mentioned and cited.</p>
+      <ol className="mx-auto mt-5 max-w-xl space-y-2 text-left">
+        {steps.map((step, index) => (
+          <li key={step.title} className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface px-3 py-2">
+            <span className="min-w-0">
+              <span className="flex items-center gap-2 text-[13px] font-medium">
+                {index + 1}. {step.title} {step.done && <Badge tone="pos">Done</Badge>}
+              </span>
+              <span className="block text-xs text-muted">{step.text}</span>
+            </span>
+            <Button size="sm" variant={step.tab === "prompts" ? "primary" : "secondary"} onClick={() => onGo(step.tab)}>
+              {step.tab === "prompts" && <Plus className="size-3.5" aria-hidden />} {step.action}
+            </Button>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function AiView() {
   const { projectId } = useParams<{ projectId: string }>();
   const [tab, setTab] = useQueryState<TabId>("tab", TABS, "overview");
@@ -707,7 +750,7 @@ function AiView() {
       <ErrorNote error={state.error} />
       {state.data && (
         <>
-          <RunControl projectId={projectId} state={state.data} />
+          <RunControl projectId={projectId} state={state.data} onGo={setTab} />
           <Tabs
             label="AI visibility sections"
             value={tab}
@@ -721,7 +764,12 @@ function AiView() {
           />
           {tab !== "explorer" && (
             <TabPanel id={tab}>
-              {tab === "overview" && <AiOverview projectId={projectId} webSearch={state.data.settings.webSearch} />}
+              {tab === "overview" &&
+                (state.data.prompts.length === 0 ? (
+                  <GetStarted state={state.data} onGo={setTab} />
+                ) : (
+                  <AiOverview projectId={projectId} webSearch={state.data.settings.webSearch} />
+                ))}
               {tab === "prompts" && <PromptsTab projectId={projectId} state={state.data} />}
               {tab === "setup" && <SetupTab projectId={projectId} settings={state.data.settings} />}
             </TabPanel>

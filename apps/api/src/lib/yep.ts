@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { createYepApi, estimateCost, isYepApiError, pricing, type YepApi, type YepEndpoint } from "@openseo/yepapi";
+import { createYepApi, estimateCost, isYepApiError, pricing, type YepApi, type YepAppInfo, type YepEndpoint } from "@openseo/yepapi";
 import { and, eq, gt, gte, sql } from "drizzle-orm";
 import { dataDb, db, schema } from "../db";
 import { env } from "../env";
@@ -166,6 +166,13 @@ function guarded<T extends object>(target: T, before: (path: string, args: unkno
  * only being checked when it starts. A call is allowed while that total is under the limit, so
  * the month can end above it by about one call's price.
  */
+/** Sent with every YepAPI request as X-App-* headers, so calls show up as OpenSEO in YepAPI's usage logs. */
+export const YEPAPI_APP: YepAppInfo = {
+  name: "OpenSEO",
+  website: env.WEB_URL,
+  description: "Open-source SEO suite: keyword research, rank tracking, site audits, backlinks and AI visibility.",
+};
+
 export async function getYep(context: CallContext): Promise<YepApi> {
   const [settings] = await db
     .select()
@@ -185,6 +192,7 @@ export async function getYep(context: CallContext): Promise<YepApi> {
   const client = createYepApi({
     apiKey: decrypt(settings.yepapiKeyEnc),
     baseUrl: env.YEPAPI_BASE_URL,
+    app: YEPAPI_APP,
     onCall: (call) => {
       // Free and unbilled calls are not worth a row, except failures, which help debugging.
       if (call.ok && call.costUsd === 0) return;
@@ -246,7 +254,7 @@ export function isFatalForRun(error: unknown): boolean {
  * only to a valid key. 401 means a bad key and 403 a frozen account.
  */
 export async function verifyYepKey(apiKey: string): Promise<{ ok: true; warning?: string } | { ok: false; message: string }> {
-  const yep = createYepApi({ apiKey, baseUrl: env.YEPAPI_BASE_URL, maxRetries: 1, timeoutMs: 15_000 });
+  const yep = createYepApi({ apiKey, baseUrl: env.YEPAPI_BASE_URL, app: YEPAPI_APP, maxRetries: 1, timeoutMs: 15_000 });
   try {
     await yep.ai.models();
     return { ok: true };
@@ -277,9 +285,25 @@ export function toAppError(error: unknown): AppError | null {
   if (error.isValidation) return new AppError(400, "yepapi_validation", `YepAPI rejected the request: ${error.message}`);
   if (error.isRateLimited) return new AppError(429, "yepapi_rate_limited", "YepAPI is rate limiting requests. Try again shortly.");
   if (error.isTimeout) return new AppError(504, "yepapi_timeout", "YepAPI took too long to respond. You were not charged if the call failed.");
+  if (error.code === "UPSTREAM_TIMEOUT") return new AppError(504, "yepapi_upstream_timeout", "The model took too long to answer, even after retrying. You were not charged; it is asked again on the next run.");
   // e.g. backlinks/summary for a site with no known links: "Backlinks summary failed: Empty backlinks summary".
   if (/\bempty\b/i.test(error.message)) return new AppError(404, "yepapi_no_data", "YepAPI has no data for this target yet. New or small sites often have none.");
   return new AppError(502, "yepapi_error", `YepAPI returned an error: ${error.message}`);
+}
+
+/**
+ * YepAPI answers UPSTREAM_TIMEOUT when a model provider (often Gemini with web search) is slow.
+ * It is YepAPI's own error and never billed, so asking again cannot charge twice. Up to two retries.
+ */
+export async function withUpstreamRetry<T>(call: () => Promise<T>, retries = 2): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await call();
+    } catch (error) {
+      if (!isYepApiError(error) || error.code !== "UPSTREAM_TIMEOUT" || attempt >= retries) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
+    }
+  }
 }
 
 export const errorMessage = (error: unknown): string => toAppError(error)?.message ?? (error instanceof Error ? error.message : "Unknown error");

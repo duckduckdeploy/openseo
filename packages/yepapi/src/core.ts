@@ -33,6 +33,32 @@ export interface TransportConfig {
   maxRetries: number;
   retryBaseDelayMs: number;
   retryMaxDelayMs: number;
+  /** Identification headers sent with every request (see `YepApiOptions.app`). */
+  appHeaders?: Record<string, string>;
+}
+
+/** Who is calling, for YepAPI's usage logs: X-App-Name, X-App-Website and X-App-Description. */
+export interface YepAppInfo {
+  /** Up to 100 characters. */
+  name?: string;
+  /** Up to 300 characters. */
+  website?: string;
+  /** Up to 500 characters. */
+  description?: string;
+}
+
+/** The X-App-* headers for `app`, trimmed to YepAPI's limits; empty values are left out. */
+export function appHeaders(app: YepAppInfo | undefined): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const set = (name: string, value: string | undefined, max: number) => {
+    // Header values cannot hold line breaks or non-Latin-1 characters.
+    const clean = value?.replace(/\s+/g, ' ').replace(/[^\x20-\x7e]/g, '').trim();
+    if (clean) headers[name] = clean.slice(0, max);
+  };
+  set('X-App-Name', app?.name, 100);
+  set('X-App-Website', app?.website, 300);
+  set('X-App-Description', app?.description, 500);
+  return headers;
 }
 
 export interface TransportRequest {
@@ -177,7 +203,7 @@ async function attemptOnce(
   const onCallerAbort = (): void => controller.abort();
   req.signal?.addEventListener('abort', onCallerAbort, { once: true });
 
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = { ...cfg.appHeaders, Accept: 'application/json' };
   if (req.auth) headers['x-api-key'] = cfg.apiKey;
   if (req.body !== undefined) headers['Content-Type'] = 'application/json';
 

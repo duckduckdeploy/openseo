@@ -2,6 +2,7 @@ import { rankCheckUsd } from "@openseo/shared";
 import type { GoogleSerpData } from "@openseo/yepapi";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { dataDb, db, schema } from "../db";
+import { track } from "../lib/analytics";
 import type { Device, SerpCompetitor } from "../db/schema";
 import { hostMatches, hostOf } from "../lib/domain";
 import { conflict, isUniqueViolation, notFound, runInProgress } from "../lib/errors";
@@ -122,6 +123,7 @@ export async function processRankRun(runId: string) {
       .update(schema.rankRuns)
       .set({ status, error: error ?? null, finishedAt: new Date() })
       .where(and(eq(schema.rankRuns.id, runId), inArray(schema.rankRuns.status, ["queued", "running"])));
+    track(userId, "rank_check_finished", { project_id: tracker.projectId, tracker_id: tracker.id, status, checks: checks.length, error: error ?? null });
   };
 
   let yep: Awaited<ReturnType<typeof getYep>>;

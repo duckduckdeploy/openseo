@@ -14,7 +14,7 @@ const mail = <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy policy" updated="2026-10-26">
+    <LegalPage title="Privacy policy" updated="2026-10-28">
       <p>
         This policy explains what data the hosted version of OpenSEO collects, why, who it is shared with and the
         choices you have. It covers openseo.gg, app.openseo.gg, api.openseo.gg and news.openseo.gg. In this policy,
@@ -28,7 +28,8 @@ export default function PrivacyPage() {
       <h2>Summary</h2>
       <ul>
         <li>We store what the app needs to work: your account, your projects and the results of the actions you run.</li>
-        <li>We do not sell your data, show ads or put tracking or advertising scripts on our sites.</li>
+        <li>We do not sell your data, show ads or use advertising scripts.</li>
+        <li>We use PostHog for product analytics, to see how our sites and the app are used and make them better.</li>
         <li>Google data you connect is used only to show you your own reports and power your project&apos;s features.</li>
         <li>You can delete projects and Google connections yourself at any time, and ask us to delete your account.</li>
       </ul>
@@ -95,6 +96,20 @@ export default function PrivacyPage() {
         IndexNow.
       </p>
 
+      <h3>How you use OpenSEO</h3>
+      <ul>
+        <li>
+          Product analytics: the pages you view, the buttons you click (without their text), and the actions you take in
+          the app or through the API and MCP server, such as signing up, creating a project or running a tool, with the
+          tool&apos;s name, whether it worked and what it cost. Events are linked to your account ID, name and email
+          address so we can see how the service is used over time.
+        </li>
+        <li>
+          We do not record your screen or sessions, and we never send the contents of your projects, your results or any
+          Google data to our analytics provider.
+        </li>
+      </ul>
+
       <h3>Visitors to our websites</h3>
       <ul>
         <li>
@@ -106,7 +121,12 @@ export default function PrivacyPage() {
           The free SEO tools on openseo.gg use your IP address to apply daily limits. It is held in memory only and is
           not stored.
         </li>
-        <li>We do not use Google Analytics or any other analytics or advertising scripts on our sites.</li>
+        <li>
+          Our sites use PostHog for analytics: the pages you visit, the links and buttons you click, the page that sent
+          you and your browser, device and approximate location. It sets a cookie to recognise repeat visits, shared
+          with the app so a visit and a later sign-up count as one person. We do not use Google Analytics or any
+          advertising scripts.
+        </li>
       </ul>
 
       <h3>When you contact us</h3>
@@ -117,13 +137,14 @@ export default function PrivacyPage() {
         <li>To run the service: sign you in, run the actions you ask for, show your results and run scheduled jobs such as rank checks and daily Search Console syncs.</li>
         <li>To show you what you have spent and enforce the limits you set.</li>
         <li>To keep the service secure: rate limits, spotting abuse and investigating problems.</li>
+        <li>To understand how the service is used, with product analytics, so we can fix problems and improve it.</li>
         <li>To contact you about your account or important changes to the service.</li>
       </ul>
       <p>
         We do not sell your personal data, use it for advertising or use it to train AI models. Where data protection
         law asks for a legal basis, we rely on performing our contract with you (running the service you signed up
-        for), our legitimate interest in keeping it secure and working, and your consent where you give it, such as
-        when you connect Google.
+        for), our legitimate interest in keeping it secure, working and improving, and your consent where you give it,
+        such as when you connect Google.
       </p>
 
       <h2 id="google">Google user data</h2>
@@ -146,7 +167,7 @@ export default function PrivacyPage() {
           submission, all for your own projects.
         </li>
         <li>
-          <strong>Who we share it with.</strong> No one, except when you ask: for example when you export a CSV, or
+          <strong>Who we share it with.</strong> No one, including our analytics provider, except when you ask: for example when you export a CSV, or
           when an AI assistant you have connected to your account requests your data through the OpenSEO API or MCP
           server. It is not sent to YepAPI or any other provider.
         </li>
@@ -196,6 +217,10 @@ export default function PrivacyPage() {
           search engines that take part, such as Bing, Yandex, Seznam, Naver and Yep.
         </li>
         <li>
+          <strong>PostHog</strong> (US cloud) provides our product analytics and receives the usage events described
+          above. It never receives Google user data.
+        </li>
+        <li>
           <strong>Google Workspace</strong> hosts our email, so it holds the messages you send us.
         </li>
       </ul>
@@ -218,7 +243,15 @@ export default function PrivacyPage() {
           used to identify or track you.
         </li>
         <li>Cloudflare may set a strictly necessary cookie to protect the sites from bots.</li>
-        <li>We do not use analytics, advertising or tracking cookies, so there is no cookie banner.</li>
+        <li>
+          PostHog, our analytics provider, sets a first-party cookie on openseo.gg and app.openseo.gg to recognise
+          returning visitors. It lasts up to a year. We do not use advertising cookies.
+        </li>
+        <li>
+          With Do Not Track turned on in your browser, our sites and the app send no analytics from your browser.
+          Actions you take in the app are still recorded by our servers, as described above. To opt out of those too,
+          email {mail}.
+        </li>
       </ul>
 
       <h2>How long we keep it</h2>
@@ -228,6 +261,7 @@ export default function PrivacyPage() {
         <li>Google data: until you disconnect it, delete the project or delete your account.</li>
         <li>Sign-in sessions: 30 days. Cached YepAPI responses: until they expire, usually within days.</li>
         <li>Server logs: a short time, after which they are rotated away.</li>
+        <li>Analytics events: in PostHog until they are no longer useful. If you delete your account, we delete your analytics profile and its events too.</li>
         <li>Database backups: 14 days. Deleted data disappears from backups as they roll over.</li>
       </ul>
 

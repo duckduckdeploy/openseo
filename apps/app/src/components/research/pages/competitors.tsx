@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { type Column, DataTable } from "@/components/research/data-table";
 import { ExportButton, RunPrompt, SaveSelected, ViewErrors, ViewMeta } from "@/components/research/lookup-ui";
 import { DifficultyPill, IntentBadge, UrlCell } from "@/components/research/pills";
-import { SearchBar, useChangeMarket, useMarket, useToolNav, useUrlText } from "@/components/research/search-bar";
+import { ProjectRunBar, SearchBar, useChangeMarket, useMarket, useToolNav, useUrlText } from "@/components/research/search-bar";
 import { Skeleton } from "@/components/research/serp-overview";
 import { Tabs } from "@/components/research/tabs";
 import { domainToolLabel, KeywordLink, OpenInTool } from "@/components/research/tool-link";
@@ -52,7 +52,9 @@ export function Competitors({ project }: { project: Project }) {
   const nav = useToolNav();
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
-  const domainText = params.get("domain") ?? project.domain ?? "";
+  // In a project the competitors are its own website's, found from a button; the tool takes any domain.
+  const inProject = !isToolsScope(project.id);
+  const domainText = params.get("domain") ?? (inProject ? "" : project.domain) ?? "";
   const domain = domainText ? cleanDomain(domainText) : "";
   const vs = params.get("vs") ? cleanDomain(params.get("vs") as string) : "";
   const keywords = splitLines(params.get("keywords") ?? "").slice(0, 200);
@@ -69,6 +71,11 @@ export function Competitors({ project }: { project: Project }) {
 
   return (
     <>
+      {inProject ? (
+        <ProjectRunBar project={project} market={market} button="Analyze" pending={organic.loading} onRun={(own) => nav({ domain: own, tab: null }, { reset: true })}>
+          <span className="text-xs text-muted">Competitor data is for the project&apos;s whole market.</span>
+        </ProjectRunBar>
+      ) : (
       <SearchBar
         value={domainText}
         onSearch={(text) => nav({ domain: cleanDomain(text), tab: null }, { reset: true })}
@@ -82,6 +89,7 @@ export function Competitors({ project }: { project: Project }) {
       >
         <span className="text-xs text-muted">Competitor data is for the whole country.</span>
       </SearchBar>
+      )}
 
       <ViewErrors lookups={lookups} />
 
@@ -89,7 +97,11 @@ export function Competitors({ project }: { project: Project }) {
         <>
           <PageHeader title="Competitors" description="Find who you compete with in Google, then see the keywords they rank for and you do not." />
           <Card>
-            <RunPrompt title="Start with your domain">Type your domain and press Enter to see the sites that compete with it. Pick one to see the keyword gap.</RunPrompt>
+            {inProject ? (
+              <RunPrompt title="Find your competitors">Press Analyze to see the sites that compete with {project.domain || "your website"} in Google. Pick one to see the keyword gap.</RunPrompt>
+            ) : (
+              <RunPrompt title="Start with your domain">Type your domain and press Enter to see the sites that compete with it. Pick one to see the keyword gap.</RunPrompt>
+            )}
           </Card>
         </>
       ) : (
@@ -120,7 +132,7 @@ export function Competitors({ project }: { project: Project }) {
 
 
 function OrganicTable({ domain, market, lookup, ok }: { domain: string; market: Market; lookup: LookupQuery<DomainCompetitorsData>; ok: boolean }) {
-  if (!ok) return <Card><RunPrompt title="Enter your domain">Organic competitors are found from the domain in the search bar.</RunPrompt></Card>;
+  if (!ok) return <Card><RunPrompt title="Enter your domain">Organic competitors are found from your domain: press the button at the top.</RunPrompt></Card>;
   if (lookup.loading) return <Card><TableSkeleton /></Card>;
   // YepAPI lists the domain itself first; it is not its own competitor.
   const rows = (lookup.data?.competitors ?? []).filter((row) => cleanDomain(row.domain) !== domain);

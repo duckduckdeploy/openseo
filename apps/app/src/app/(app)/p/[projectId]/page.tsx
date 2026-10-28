@@ -1,15 +1,14 @@
 "use client";
 
-import { useMutation, useQueries, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import { useQueries, useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { type ReactNode, useState } from "react";
-import { LocationPicker, type LocationChoice } from "@/components/location-picker";
+import type { ReactNode } from "react";
 import { DifficultyPill } from "@/components/research/pills";
 import { ProjectPage } from "@/components/research/project-page";
 import type { SavedKeywordsList } from "@/components/research/types";
 import { finite, fixed, percent } from "@/components/research/util";
-import { Badge, Button, Card, ErrorNote, Field, Input, Spinner, Stat } from "@/components/ui";
+import { Badge, Card, ErrorNote, Spinner, Stat } from "@/components/ui";
 import { api, dateOnly, dateTime, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 
@@ -100,37 +99,10 @@ const TOOLS = [
   { href: "/competitors", title: "Competitors", text: "Who you compete with, and the keywords they have that you do not." },
 ];
 
-function ProjectSettings({ project }: { project: Project }) {
-  const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState(project.name);
-  const [domain, setDomain] = useState(project.domain ?? "");
-  const [language, setLanguage] = useState(project.language);
-  // No country here: unless a market is picked, the API works it out from the code, which also
-  // repairs projects created before the country was stored correctly.
-  const [location, setLocation] = useState<LocationChoice>({ code: project.locationCode, name: project.locationName });
-  const save = useMutation({
-    mutationFn: () =>
-      api<Project>(`/projects/${project.id}`, {
-        method: "PATCH",
-        body: {
-          name: name.trim(),
-          domain: domain.trim() || null,
-          language: language.trim(),
-          locationCode: location.code,
-          locationName: location.name,
-          ...(location.country ? { country: location.country.toLowerCase() } : {}),
-        },
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["project", project.id] });
-      void queryClient.invalidateQueries({ queryKey: ["projects"] });
-    },
-  });
-
+function ProjectSummary({ project }: { project: Project }) {
   return (
     <Card>
-      <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
+      <header className="flex items-start justify-between gap-3 px-4 py-3">
         <div className="min-w-0">
           <h2 className="font-display text-base font-semibold">Project settings</h2>
           <p className="text-[13px] text-muted">
@@ -138,46 +110,10 @@ function ProjectSettings({ project }: { project: Project }) {
             <span className="font-mono uppercase">{project.language}</span>
           </p>
         </div>
-        <Button size="sm" onClick={() => setOpen(!open)} aria-expanded={open}>
-          {open ? "Close" : "Edit"}
-        </Button>
+        <Link href={`/p/${project.id}/settings`} className="inline-flex h-7 shrink-0 items-center rounded-md border border-line px-2.5 text-[13px] font-medium hover:bg-sunken">
+          Edit
+        </Link>
       </header>
-      {open && (
-        <form
-          className="grid gap-4 p-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            save.mutate();
-          }}
-        >
-          <Field label="Project name">
-            <Input value={name} onChange={(event) => setName(event.target.value)} required maxLength={120} />
-          </Field>
-          <Field label="Website" hint="Default for audits, rankings and backlinks.">
-            <Input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="acme.com" maxLength={253} />
-          </Field>
-          <Field label="Default market" hint="Country used for keyword data, trends, domain distribution and Maps.">
-            <LocationPicker value={location} onChange={setLocation} countriesOnly />
-          </Field>
-          <Field label="Language" hint="Language code, for example en or de.">
-            <Input value={language} onChange={(event) => setLanguage(event.target.value)} required minLength={2} maxLength={10} />
-          </Field>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" variant="primary" loading={save.isPending} disabled={!name.trim() || language.trim().length < 2}>
-              Save settings
-            </Button>
-            <span className="text-xs text-muted">Cached lookups for the old market are not reused.</span>
-            {save.isSuccess && (
-              <span role="status" className="text-[13px] text-pos">
-                Saved
-              </span>
-            )}
-          </div>
-          <div>
-            <ErrorNote error={save.error} />
-          </div>
-        </form>
-      )}
     </Card>
   );
 }
@@ -229,7 +165,7 @@ function Overview({ project }: { project: Project }) {
             <Stat label="Tracked keywords" value={trackers.isPending ? "…" : num(trackedKeywords)} sub={trackers.data ? `${num(trackers.data.length)} ${trackers.data.length === 1 ? "tracker" : "trackers"}` : undefined} />
           </div>
         </div>
-        <ProjectSettings key={`${project.id}:${project.locationCode}:${project.country}`} project={project} />
+        <ProjectSummary project={project} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

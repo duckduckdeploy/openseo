@@ -52,6 +52,22 @@ describe('request construction', () => {
     });
   });
 
+  it('identifies the app with X-App-* headers, trimmed to their limits', async () => {
+    const { fetch, requests } = fakeFetch(ok({}));
+    const yep = createYepApi({ apiKey: KEY, fetch, app: { name: 'OpenSEO', website: 'https://openseo.gg', description: `Line one
+line two ${'x'.repeat(600)}` } });
+    await yep.ai.models();
+    expect(requests[0]?.headers).toMatchObject({ 'X-App-Name': 'OpenSEO', 'X-App-Website': 'https://openseo.gg' });
+    expect(requests[0]?.headers['X-App-Description']).toMatch(/^Line one line two x+$/);
+    expect(requests[0]?.headers['X-App-Description']).toHaveLength(500);
+  });
+
+  it('sends no X-App-* headers without app info', async () => {
+    const { fetch, requests } = fakeFetch(ok({}));
+    await createYepApi({ apiKey: KEY, fetch }).ai.models();
+    expect(Object.keys(requests[0]?.headers ?? {}).filter((name) => name.startsWith('X-App-'))).toEqual([]);
+  });
+
   it('sends keyword filters, backlink options and maps options with documented names', async () => {
     const { fetch, requests } = fakeFetch(ok({}));
     const yep = createYepApi({ apiKey: KEY, fetch, baseUrl: 'https://proxy.test/' });

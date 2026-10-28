@@ -52,6 +52,10 @@ const schema = z.object({
   // Tests point it at a fake.
   INDEXNOW_ENDPOINT: z.string().url().default("https://api.indexnow.org/indexnow"),
 
+  // Optional: product analytics with PostHog (lib/analytics.ts). Unset: nothing is sent.
+  POSTHOG_KEY: z.string().optional(),
+  POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
+
 });
 
 const parsed = schema.safeParse(process.env);

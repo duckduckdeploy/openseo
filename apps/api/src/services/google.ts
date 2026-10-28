@@ -414,6 +414,35 @@ function filterGroups(filters: GscFilters, skip: ("country" | "device")[] = []) 
 
 export type GscRow = { keys?: string[]; clicks: number; impressions: number; ctr: number; position: number };
 
+/** Rank-tracker bots search with a numeric job id in front of the keyword: "6689: yahoo serp tracker". */
+const BOT_PREFIX = /^\d+:\s+/;
+export const cleanQuery = (query: string) => query.replace(BOT_PREFIX, "");
+
+/**
+ * Strips bot job ids from the query key at `index` and merges rows that then share every key:
+ * clicks and impressions summed, position weighted by impressions. Order is kept, first row wins.
+ */
+export function cleanQueryRows(rows: GscRow[], index: number): GscRow[] {
+  if (index < 0 || !rows.some((r) => BOT_PREFIX.test(r.keys?.[index] ?? ""))) return rows;
+  const merged = new Map<string, GscRow>();
+  for (const r of rows) {
+    const keys = r.keys?.map((key, i) => (i === index ? cleanQuery(key) : key));
+    if (keys && !keys[index]) continue;
+    const id = JSON.stringify(keys ?? []);
+    const seen = merged.get(id);
+    if (!seen) {
+      merged.set(id, { ...r, keys });
+      continue;
+    }
+    const impressions = seen.impressions + r.impressions;
+    seen.position = impressions ? (seen.position * seen.impressions + r.position * r.impressions) / impressions : seen.position;
+    seen.clicks += r.clicks;
+    seen.impressions = impressions;
+    seen.ctr = impressions ? seen.clicks / impressions : 0;
+  }
+  return [...merged.values()];
+}
+
 export async function searchAnalytics(
   account: Account,
   siteUrl: string,
@@ -508,7 +537,7 @@ export async function performanceReport(project: Project, range: Range, filters:
     daily: current
       .map((r) => ({ date: r.keys?.[0] ?? "", clicks: r.clicks, impressions: r.impressions, position: round(r.position, 1) }))
       .sort((a, b) => a.date.localeCompare(b.date)),
-    striking: strikingDistance(pairs),
+    striking: strikingDistance(cleanQueryRows(pairs, 0)),
     countries: countries.map((r) => ({ country: r.keys?.[0] ?? "", clicks: r.clicks, impressions: r.impressions })),
   };
 }
@@ -517,17 +546,19 @@ export async function performanceReport(project: Project, range: Range, filters:
 export async function performanceTable(project: Project, options: { range: Range; dimension: "query" | "page"; filters?: GscFilters; page: number; size: number }) {
   const { connection, account } = await gscFor(project);
   const { current } = gscPeriods(options.range);
-  const rows = await searchAnalytics(account, connection.siteUrl, current, {
+  const raw = await searchAnalytics(account, connection.siteUrl, current, {
     dimensions: [options.dimension],
     filters: options.filters,
     rowLimit: options.size + 1,
     startRow: (options.page - 1) * options.size,
   });
+  // Merging bot-prefixed queries can leave a page a row or two short; `hasMore` still uses the raw count.
+  const rows = options.dimension === "query" ? cleanQueryRows(raw, 0) : raw;
   return {
     period: current,
     page: options.page,
     size: options.size,
-    hasMore: rows.length > options.size,
+    hasMore: raw.length > options.size,
     rows: rows.slice(0, options.size).map((r) => ({ key: r.keys?.[0] ?? "", clicks: r.clicks, impressions: r.impressions, ctr: round(r.ctr * 100, 2), position: round(r.position, 1) })),
   };
 }
@@ -539,7 +570,7 @@ export async function searchConsoleQuery(
 ) {
   const { connection, account } = await gscFor(project);
   const { current } = gscPeriods(options.range);
-  const rows = await searchAnalytics(account, connection.siteUrl, current, { dimensions: options.dimensions, filters: options.filters, rowLimit: 1000 });
+  const rows = cleanQueryRows(await searchAnalytics(account, connection.siteUrl, current, { dimensions: options.dimensions, filters: options.filters, rowLimit: 1000 }), options.dimensions.indexOf("query"));
   return {
     siteUrl: connection.siteUrl,
     period: current,

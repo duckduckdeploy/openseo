@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Globe, Languages, type LucideIcon, MapPin, Search } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { LocationPicker } from "@/components/location-picker";
@@ -224,5 +225,57 @@ export function SearchBar({
       </div>
       {children && <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-1">{children}</div>}
     </form>
+  );
+}
+
+/**
+ * The top bar of a project tool that only runs on the project's own website: no fields, the
+ * project's domain and market, and one button. Without a website it links to project settings.
+ */
+export function ProjectRunBar({
+  project,
+  market,
+  button,
+  pending,
+  onRun,
+  children,
+}: {
+  project: Project;
+  market: Market;
+  button: string;
+  pending?: boolean;
+  onRun: (domain: string) => void;
+  children?: ReactNode;
+}) {
+  const domain = project.domain?.trim();
+  return (
+    <div className="mb-8 rounded-xl border border-line bg-surface p-3 shadow-card sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {domain ? (
+          <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <Globe className="size-4 shrink-0 text-muted" aria-hidden strokeWidth={1.75} />
+            <span className="truncate font-mono font-medium">{domain}</span>
+            <span className="text-muted" aria-hidden>
+              ·
+            </span>
+            <span className="text-muted">
+              {market.locationName.replaceAll(",", ", ")} · <span className="font-mono uppercase">{market.language}</span>
+            </span>
+          </p>
+        ) : (
+          <p className="text-sm text-muted">
+            This project has no website yet.{" "}
+            <Link href={`/p/${project.id}/settings`} className="font-medium text-ink underline underline-offset-2">
+              Add it in project settings
+            </Link>
+            .
+          </p>
+        )}
+        <Button variant="primary" loading={pending} disabled={!domain} onClick={() => domain && onRun(domain)} className="h-11 w-full shrink-0 px-5 sm:w-auto">
+          {button}
+        </Button>
+      </div>
+      {children && <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-1">{children}</div>}
+    </div>
   );
 }

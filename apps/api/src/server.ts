@@ -2,6 +2,7 @@ import { buildApp } from "./app";
 import { dataPool, pool } from "./db";
 import { env } from "./env";
 import { startWorker, stopWorker } from "./jobs/queue";
+import { flushAnalytics } from "./lib/analytics";
 import { ensurePublicToolsAccount } from "./services/public-tools";
 
 const app = await buildApp();
@@ -17,6 +18,7 @@ async function shutdown() {
   closing = true;
   await app.close();
   await stopWorker();
+  await flushAnalytics();
   await Promise.all([pool.end(), dataPool.end()]);
   process.exit(0);
 }

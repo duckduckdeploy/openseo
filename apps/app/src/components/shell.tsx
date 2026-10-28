@@ -1,10 +1,11 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Activity, BarChart3, Bot, ChevronLeft, ClipboardCheck, FolderKanban, Gauge, Globe, KeyRound, LayoutDashboard, Link2, LogOut, MapPin, Menu, Network, ScanSearch, Search, Settings, Sparkles, Star, Swords, TrendingUp, Wrench, X } from "lucide-react";
+import { Activity, BarChart3, Bot, ChevronLeft, ClipboardCheck, FolderKanban, Gauge, Globe, KeyRound, LayoutDashboard, Link2, LogOut, MapPin, Menu, Network, ScanSearch, Search, Settings, SlidersHorizontal, Sparkles, Star, Swords, TrendingUp, Wrench, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { identify, resetAnalytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api";
 import { signOut } from "@/lib/auth";
 import { useMe, useProject } from "@/lib/hooks";
@@ -31,6 +32,7 @@ const projectNav = [
   { href: "/indexing", label: "Indexing", icon: ScanSearch },
   { href: "/ai", label: "AI visibility", icon: Bot },
   { href: "/local", label: "Local rank tracker", icon: MapPin },
+  { href: "/settings", label: "Project settings", icon: SlidersHorizontal },
 ];
 
 function NavLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Search; active: boolean }) {
@@ -90,6 +92,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
     if (needsWelcome) router.replace("/welcome");
   }, [needsWelcome, router]);
   useEffect(() => setOpen(false), [pathname]);
+  const user = me.data?.user;
+  const hasKey = me.data?.settings.hasYepapiKey;
+  useEffect(() => {
+    if (user) identify(user, { has_yepapi_key: hasKey ?? false });
+  }, [user, hasKey]);
   // Keep the current page's item in view when the nav list scrolls.
   useEffect(() => {
     document.querySelector('aside [aria-current="page"]')?.scrollIntoView({ block: "nearest" });
@@ -115,6 +122,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   async function onSignOut() {
     await signOut().catch(() => {});
+    resetAnalytics();
     queryClient.clear();
     router.replace("/sign-in");
   }

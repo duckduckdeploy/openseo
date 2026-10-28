@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { track } from "@/lib/analytics";
+import { ApiError } from "@/lib/api";
 import { signIn, signUp } from "@/lib/auth";
 import { Button, ErrorNote, Field, Input } from "./ui";
 
@@ -30,9 +32,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     try {
       if (isSignUp) await signUp(String(form.get("name") ?? ""), email, password);
       else await signIn(email, password);
+      track(isSignUp ? "sign_up_form_completed" : "sign_in_form_completed");
       // New accounts start with the welcome flow; the app sends unfinished ones there too.
       router.replace(next ?? (isSignUp ? "/welcome" : "/projects"));
     } catch (caught) {
+      track(isSignUp ? "sign_up_form_failed" : "sign_in_form_failed", { error: caught instanceof ApiError ? caught.code || String(caught.status) : "network" });
       setError(caught);
       setPending(false);
     }

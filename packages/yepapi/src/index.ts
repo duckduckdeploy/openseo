@@ -12,5 +12,5 @@ export type {
 } from './errors';
 export { computeCost, estimateCost, pricing } from './pricing';
 export type { CallCost, CostEstimate, PriceRule } from './pricing';
-export type { FetchLike, FetchResponseLike } from './core';
+export type { FetchLike, FetchResponseLike, YepAppInfo } from './core';
 export type * from './types/index';

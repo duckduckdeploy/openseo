@@ -1,12 +1,13 @@
 import { DEFAULT_MODEL_IDS } from "@openseo/shared";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { dataDb, db, schema } from "../db";
+import { track } from "../lib/analytics";
 import type { AiBrandHit } from "../db/schema";
 import { analyseAnswer, brandKey, cleanSourceUrl, cleanSources, isBrandedPrompt, resolveCitation, type Source, type TrackedBrand } from "../lib/brand-analysis";
 import { hostOf } from "../lib/domain";
 import { conflict, isUniqueViolation, runInProgress } from "../lib/errors";
 import { mapLimit } from "../lib/pool";
-import { errorMessage, getYep, isFatalForRun } from "../lib/yep";
+import { errorMessage, getYep, isFatalForRun, withUpstreamRetry } from "../lib/yep";
 
 type Project = typeof schema.projects.$inferSelect;
 type Settings = typeof schema.aiSettings.$inferSelect;
@@ -105,6 +106,18 @@ export async function processAiRun(runId: string) {
       .update(schema.aiRuns)
       .set({ status, error: error ?? null, finishedAt: new Date() })
       .where(and(eq(schema.aiRuns.id, runId), inArray(schema.aiRuns.status, ["queued", "running"])));
+    const [row] = await dataDb.select({ done: schema.aiRuns.done, failed: schema.aiRuns.failed, costUsd: schema.aiRuns.costUsd }).from(schema.aiRuns).where(eq(schema.aiRuns.id, runId));
+    track(project.userId, "ai_visibility_run_finished", {
+      project_id: project.id,
+      status,
+      answers: row?.done ?? null,
+      failed: row?.failed ?? null,
+      cost_usd: row?.costUsd ?? null,
+      prompts: new Set(jobs.map((job) => job.prompt.id)).size,
+      models: settings.models,
+      web_search: settings.webSearch,
+      error: error ?? null,
+    });
   };
 
   let yep: Awaited<ReturnType<typeof getYep>>;
@@ -161,12 +174,14 @@ export async function processAiRun(runId: string) {
       brandKey: ownKey,
     };
     try {
-      const res = await yep.ai.chat({
-        model,
-        messages: [{ role: "user", content: prompt.prompt }],
-        webSearch: settings.webSearch || undefined,
-        maxTokens: 1500,
-      });
+      const res = await withUpstreamRetry(() =>
+        yep.ai.chat({
+          model,
+          messages: [{ role: "user", content: prompt.prompt }],
+          webSearch: settings.webSearch || undefined,
+          maxTokens: 1500,
+        }),
+      );
       paid = res.costUsd;
       spent += res.costUsd;
       const content = res.data.message.content;

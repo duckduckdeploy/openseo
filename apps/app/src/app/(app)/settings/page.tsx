@@ -5,6 +5,7 @@ import { Check, Copy, RefreshCw, Trash2 } from "lucide-react";
 import { agentSetupPrompt } from "@openseo/shared";
 import { useId, useState } from "react";
 import { useBalance } from "@/components/balance";
+import { GoogleAccountsCard } from "@/components/google/connection";
 import { ConfirmDialog } from "@/components/tracking/kit";
 import { Badge, Button, Card, CardHeader, ErrorNote, Field, Input, PageHeader, Spinner, Stat, Table } from "@/components/ui";
 import { api, dateTime, num, usd } from "@/lib/api";
@@ -453,6 +454,7 @@ export default function SettingsPage() {
         <UsageCard />
         <BudgetCard settings={me.data.settings} />
         {me.data.links && <AgentCard links={me.data.links} />}
+        <GoogleAccountsCard />
         <ConnectedAppsCard />
         <ApiKeysCard />
       </div>

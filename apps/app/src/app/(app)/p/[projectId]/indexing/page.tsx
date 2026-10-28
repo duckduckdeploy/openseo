@@ -198,8 +198,8 @@ function GoogleCard({ projectId, summary, google }: { projectId: string; summary
         {!connected ? (
           <EmptyState title="Connect Search Console">
             Google&apos;s index status per page and sitemap submission need this project&apos;s Search Console.{" "}
-            <Link href={`/p/${projectId}/search`} className="underline underline-offset-2">
-              Connect it under Search performance
+            <Link href={`/p/${projectId}/settings`} className="underline underline-offset-2">
+              Connect it in project settings
             </Link>
             .
           </EmptyState>
@@ -472,7 +472,7 @@ function Indexing() {
         {project.data && !project.data.domain && (
           <EmptyState title="Add the website first">
             Indexing needs the project&apos;s website. Set it in{" "}
-            <Link href={`/p/${projectId}`} className="underline underline-offset-2">
+            <Link href={`/p/${projectId}/settings`} className="underline underline-offset-2">
               project settings
             </Link>
             .

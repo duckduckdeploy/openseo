@@ -1,3 +1,4 @@
+import { track } from "../lib/analytics";
 import { AppError, notFound, parse } from "../lib/errors";
 import { cached, getYep } from "../lib/yep";
 import { type Estimate, lookupByName, type Market } from "./lookups";
@@ -37,6 +38,19 @@ export async function runLookup(userId: string, project: Market, name: string, r
     assertWithinCeiling(estimate, options.maxCostUsd);
     const yep = await getYep({ userId, projectId: project.id, feature: lookup.feature });
     return lookup.run(yep, input, project, { maxCostUsd: estimate.max == null ? options.maxCostUsd : undefined });
+  });
+  // The website's free tools run as their own account (services/public-tools.ts): anonymous visitors.
+  const publicTool = userId === "public-tools";
+  const inProject = Boolean(project.id) && !project.id?.startsWith("tools");
+  track(publicTool ? null : userId, publicTool ? "public_tool_run" : "lookup_run", {
+    lookup: name,
+    feature: lookup.feature,
+    scope: publicTool ? "website" : inProject ? "project" : "tools",
+    project_id: inProject ? project.id : null,
+    country: project.country,
+    cached: result.cached,
+    refresh: options.refresh ?? false,
+    cost_usd: result.costUsd,
   });
   return { name, estimate, ...result };
 }
