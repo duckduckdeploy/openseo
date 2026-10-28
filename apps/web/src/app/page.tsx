@@ -8,6 +8,7 @@ import { ButtonLink } from '@/components/button';
 import { CodeBlock } from '@/components/code-block';
 import { CtaBand } from '@/components/cta-band';
 import { FeatureGrid } from '@/components/feature-grid';
+import { HeroVideo } from '@/components/hero-video';
 import { JsonLd } from '@/components/json-ld';
 import { Screenshot } from '@/components/screenshot';
 import { SectionHeader } from '@/components/section';
@@ -123,14 +124,7 @@ export default function HomePage() {
           </div>
 
           <div className="animate-rise mx-auto mt-14 max-w-6xl [animation-delay:200ms] md:mt-16">
-            <Screenshot
-              name="keyword-overview"
-              window
-              glow
-              label="app.openseo.gg/tools/keyword-overview?q=standing+desk&country=us"
-              priority
-              alt="The Keyword overview for standing desk: difficulty 38, 135K searches a month, traffic potential, volume in six countries and keyword ideas"
-            />
+            <HeroVideo label="A 22-second tour of OpenSEO: keyword research for standing desk, the sites AI assistants cite, a domain overview of zapier.com, and an AI agent finding keywords through the MCP server within a spending limit" />
           </div>
         </div>
       </section>
