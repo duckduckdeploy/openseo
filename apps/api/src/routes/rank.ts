@@ -1,4 +1,4 @@
-import { RANK_DEPTH, RANK_DEPTHS } from "@openseo/shared";
+import { RANK_DEPTH, RANK_DEPTHS, zDomain, zKeywords } from "@openseo/shared";
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -10,14 +10,14 @@ import { firstRunAt } from "../lib/pool";
 import { dispatch } from "../jobs/dispatch";
 import { activeKeywordCount, estimateRun, failRankRun, requireTracker, startRankRun, trackerCompetitors, trackerResults } from "../services/rank";
 
-const keywordList = z.array(z.string().trim().toLowerCase().min(1).max(200)).min(1).max(1000);
+const keywordList = zKeywords(1000);
 const device = z.enum(["desktop", "mobile"]);
 const schedule = z.enum(["manual", "daily", "weekly", "monthly"]);
 const depth = z.union(RANK_DEPTHS.map((d) => z.literal(d)) as unknown as [z.ZodLiteral<20>, z.ZodLiteral<50>, z.ZodLiteral<100>]);
 
 const trackerInput = z.object({
   name: z.string().trim().min(1).max(120).optional(),
-  domain: z.string().trim().min(3).max(253),
+  domain: zDomain(),
   locationCode: z.number().int().positive().nullable().optional(),
   locationName: z.string().trim().min(1).max(200),
   latitude: z.number().min(-90).max(90).nullable().optional(),

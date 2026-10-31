@@ -1,3 +1,4 @@
+import { cleanText } from "@openseo/shared";
 import { CHANGE_ISSUE_TYPES, INDEXABILITY_SPLIT, ISSUE_CATALOG, ISSUE_CATEGORIES, ISSUE_CATEGORY } from "@openseo/crawler";
 import { and, asc, desc, eq, exists, gte, ilike, inArray, isNull, lt, notExists, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
@@ -40,9 +41,11 @@ import { groupKey, hostKey } from "../services/audit-history";
 const renderMode = z.enum(["off", "auto", "always"]);
 const patterns = z.array(z.string().trim().min(1).max(300)).max(50);
 const schedule = z.enum(["manual", "daily", "weekly", "monthly"]);
+const startUrl = z.string().transform(cleanText).pipe(z.string().min(3, "Enter the address to start from, e.g. example.com.").max(2000));
 
 const auditInput = z.object({
-  startUrl: z.string().trim().min(3).max(2000).optional(),
+  // Text cleanup only: the crawler checks the address itself (and refuses private ones with its own message).
+  startUrl: startUrl.optional(),
   maxPages: z.number().int().min(1).max(MAX_AUDIT_PAGES).optional(),
   renderMode: renderMode.optional(),
   // Older clients: true means render every page.
@@ -55,7 +58,7 @@ const auditInput = z.object({
 });
 
 const settingsInput = z.object({
-  startUrl: z.string().trim().min(3).max(2000).nullable().optional(),
+  startUrl: startUrl.nullable().optional(),
   maxPages: z.number().int().min(1).max(MAX_AUDIT_PAGES).optional(),
   renderMode: renderMode.optional(),
   useFallback: z.boolean().optional(),

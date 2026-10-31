@@ -1,3 +1,5 @@
+import { zDomain, zDomainOrNull, zKeyword, zKeywords, zQuery } from "@openseo/shared";
+import { isYepApiError } from "@openseo/yepapi";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "../db";
@@ -19,9 +21,8 @@ import { runLookup } from "./run-lookup";
 export const PUBLIC_USER_ID = "public-tools";
 
 const domainList = (max: number) =>
-  z.array(z.string().trim().min(3).max(253)).min(1).max(max, `Up to ${max} at a time here; sign in for more.`);
-const keywordList = (max: number) =>
-  z.array(z.string().trim().min(1).max(200)).min(1).max(max, `Up to ${max} at a time here; sign in for more.`);
+  z.array(zDomain()).min(1, "Enter at least one domain.").max(max, `Up to ${max} at a time here; sign in for more.`);
+const keywordList = (max: number) => zKeywords(max, { tooMany: `Up to ${max} at a time here; sign in for more.` });
 const country = z.string().trim().toLowerCase().length(2).default("us");
 
 /** Countries the free tools offer, with their Google location codes. The app covers every country. */
@@ -50,7 +51,7 @@ const TOOLS = {
     lookup: (i: { domains: string[] }) => ({ name: "url_metrics", input: { urls: i.domains } }),
   },
   "keyword-ideas": {
-    input: z.object({ keyword: z.string().trim().min(1).max(200), country }),
+    input: z.object({ keyword: zKeyword(), country }),
     lookup: (i: { keyword: string; country: string }) => ({ name: "keyword_ideas", input: { keyword: i.keyword, source: "ideas", limit: 50 } }),
     shape: (data: { keywords?: { keyword: string; volume?: number; difficulty?: number | null; cpc?: number; intent?: string }[] }) => ({
       keywords: (data.keywords ?? []).map((k) => ({ keyword: k.keyword, volume: k.volume ?? null, difficulty: k.difficulty ?? null, cpc: k.cpc ?? null, intent: k.intent ?? null })),
@@ -61,7 +62,7 @@ const TOOLS = {
     lookup: (i: { keywords: string[]; country: string }) => ({ name: "keyword_difficulty", input: { keywords: i.keywords, country: i.country } }),
   },
   serp: {
-    input: z.object({ keyword: z.string().trim().min(1).max(200), country }),
+    input: z.object({ keyword: zQuery(200), country }),
     lookup: (i: { keyword: string; country: string }) => ({ name: "serp", input: { query: i.keyword, depth: 20 } }),
     // The page needs the organic list only, not the whole results page.
     shape: (data: { results?: { type: string; url?: string; title?: string; domain?: string }[] }) => ({
@@ -69,7 +70,7 @@ const TOOLS = {
     }),
   },
   "ai-overview": {
-    input: z.object({ keywords: keywordList(3), domain: z.string().trim().min(3).max(253).optional(), country }),
+    input: z.object({ keywords: keywordList(3), domain: zDomainOrNull().transform((d) => d ?? undefined), country }),
     lookup: (i: { keywords: string[]; domain?: string; country: string }) => ({ name: "serp_features", input: { keywords: i.keywords, domain: i.domain } }),
   },
 } as const;
@@ -156,6 +157,11 @@ export async function runPublicTool(tool: string, body: unknown, visitor: string
   } catch (error) {
     // A failed run doesn't count against the visitor.
     runsByVisitor.set(visitor, Math.max(0, (runsByVisitor.get(visitor) ?? 1) - 1));
+    // The site's own key ran dry or broke: that is not the visitor's account, so do not say "your".
+    if ((isYepApiError(error) && (error.isInsufficientBalance || error.isAuthError)) || (error instanceof AppError && error.code.startsWith("yepapi_") && error.status === 402)) {
+      console.warn(`Free tools: the site's YepAPI key failed (${error instanceof Error ? error.message : String(error)})`);
+      throw new AppError(503, "resting", "The free tools are resting for now. Sign up to run this on your own YepAPI account.");
+    }
     throw error;
   } finally {
     // Settled: what the run actually spent is now in usage_log, or in unwrittenSpend until it is.

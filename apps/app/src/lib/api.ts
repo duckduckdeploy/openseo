@@ -1,3 +1,5 @@
+import { announceNoCredits, NO_CREDITS_CODE } from "./credits";
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -36,6 +38,8 @@ export async function api<T>(path: string, { method = "GET", body, signal, query
   const envelope = json as { ok?: boolean; data?: T; error?: { code?: string; message?: string; details?: unknown }; message?: string } | null;
   if (!response.ok || envelope?.ok === false) {
     const error = envelope?.error;
+    // Whichever tool hit it, an empty YepAPI balance opens the one top-up prompt.
+    if (error?.code === NO_CREDITS_CODE) announceNoCredits();
     throw new ApiError(
       response.status,
       error?.code ?? "request_failed",

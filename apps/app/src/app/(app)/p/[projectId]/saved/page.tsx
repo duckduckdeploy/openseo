@@ -11,7 +11,7 @@ import { Competition, DifficultyPill, IntentBadge } from "@/components/research/
 import { ProjectPage } from "@/components/research/project-page";
 import { Sparkline } from "@/components/research/sparkline";
 import type { SavedKeyword, SavedKeywordsList } from "@/components/research/types";
-import { csvDate, money, oneOf, optInt, shortDate, slug, splitLines, useSetUrl } from "@/components/research/util";
+import { csvDate, money, oneOf, optInt, shortDate, slug, splitKeywords, splitLines, useSetUrl } from "@/components/research/util";
 import { Button, Card, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Textarea } from "@/components/ui";
 import { api, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
@@ -27,7 +27,7 @@ function AddKeywords({ projectId, onDone }: { projectId: string; onDone: () => v
   const queryClient = useQueryClient();
   const [value, setValue] = useState("");
   const [tags, setTags] = useState("");
-  const keywords = splitLines(value).map((keyword) => keyword.toLowerCase());
+  const keywords = splitKeywords(value);
   const tagList = splitLines(tags, { commas: true });
   const tooMany = keywords.length > 1000;
   const tooLong = keywords.find((keyword) => keyword.length > 200);

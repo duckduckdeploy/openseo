@@ -1,3 +1,4 @@
+import { zKeywords, zUrl } from "@openseo/shared";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -110,7 +111,7 @@ export async function indexingRoutes(app: FastifyInstance) {
   app.post<P>("/projects/:projectId/indexing/pages", async (request) => {
     const user = await requireUser(request);
     const project = await requireProject(user.id, request.params.projectId);
-    const { urls } = parse(z.object({ urls: z.array(z.string().url().max(2000)).min(1).max(1000) }), request.body);
+    const { urls } = parse(z.object({ urls: z.array(zUrl()).min(1).max(1000) }), request.body);
     return { ok: true, data: await addPages(project, urls) };
   });
 
@@ -118,7 +119,7 @@ export async function indexingRoutes(app: FastifyInstance) {
     const user = await requireUser(request);
     const project = await requireProject(user.id, request.params.projectId);
     const input = parse(
-      z.union([z.object({ suggested: z.literal(true) }), z.object({ urls: z.array(z.string().url().max(2000)).min(1).max(10_000) })]),
+      z.union([z.object({ suggested: z.literal(true) }), z.object({ urls: z.array(zUrl()).min(1).max(10_000) })]),
       request.body,
     );
     const trigger = user.via === "session" ? "manual" : "agent";
@@ -134,7 +135,7 @@ export async function indexingRoutes(app: FastifyInstance) {
   app.post<P>("/projects/:projectId/indexing/inspect", async (request) => {
     const user = await requireUser(request);
     const project = await requireProject(user.id, request.params.projectId);
-    const { urls } = parse(z.object({ urls: z.array(z.string().url().max(2000)).min(1).max(50) }), request.body);
+    const { urls } = parse(z.object({ urls: z.array(zUrl()).min(1).max(50) }), request.body);
     return { ok: true, data: await inspectPages(project, urls) };
   });
 
@@ -147,7 +148,7 @@ export async function indexingRoutes(app: FastifyInstance) {
   app.post<P>("/projects/:projectId/indexing/google-sitemaps", async (request) => {
     const user = await requireUser(request);
     const project = await requireProject(user.id, request.params.projectId);
-    const { paths } = parse(z.object({ paths: z.array(z.string().url().max(2000)).max(50).optional() }), request.body ?? {});
+    const { paths } = parse(z.object({ paths: z.array(zUrl()).max(50).optional() }), request.body ?? {});
     return { ok: true, data: await submitGoogleSitemaps(project, paths) };
   });
 
@@ -210,7 +211,7 @@ export async function indexingRoutes(app: FastifyInstance) {
   app.post<P>("/projects/:projectId/search-console/positions", async (request) => {
     const user = await requireUser(request);
     const project = await requireProject(user.id, request.params.projectId);
-    const { keywords } = parse(z.object({ keywords: z.array(z.string().trim().min(1).max(200)).min(1).max(1000) }), request.body);
+    const { keywords } = parse(z.object({ keywords: zKeywords(1000) }), request.body);
     return { ok: true, data: Object.fromEntries(await positionsFor(project.id, keywords)) };
   });
 }

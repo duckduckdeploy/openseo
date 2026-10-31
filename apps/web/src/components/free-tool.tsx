@@ -1,5 +1,6 @@
 'use client';
 
+import { cleanDomain as toDomain, serpResultHost, splitEntries } from '@openseo/shared';
 import { ArrowRight, LoaderCircle } from 'lucide-react';
 import { type FormEvent, type ReactNode, useState } from 'react';
 import { buttonClasses } from './button';
@@ -46,7 +47,8 @@ const hostOf = (url: unknown) => {
     return String(url ?? '');
   }
 };
-const cleanDomain = (value: string) => hostOf(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+// Invalid input is sent as typed, so the API's message can name it.
+const cleanDomain = (value: string) => toDomain(value) ?? value;
 const band = (kd: unknown) => (typeof kd !== 'number' ? '—' : kd < 30 ? 'Easy' : kd < 60 ? 'Medium' : 'Hard');
 
 function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
@@ -151,8 +153,8 @@ const SPECS: Record<FreeToolKind, Spec> = {
           .filter((row) => row.type === 'organic' && row.url)
           .map((row, index) => [
             <a key="link" href={String(row.url)} target="_blank" rel="noreferrer noopener nofollow" className="underline-offset-4 hover:underline">
-              {String(row.title || hostOf(row.url))}
-              <span className="block truncate font-mono text-xs font-normal text-muted">{hostOf(row.url)}</span>
+              {String(row.title || serpResultHost(row as { url?: string; domain?: string }) || 'Result')}
+              <span className="block truncate font-mono text-xs font-normal text-muted">{serpResultHost(row as { url?: string; domain?: string }) ?? 'Site not shown by Google'}</span>
             </a>,
             index + 1,
           ])}
@@ -191,10 +193,7 @@ export function FreeTool({ kind, apiUrl, appHref, signUpHref }: { kind: FreeTool
   const [country, setCountry] = useState('us');
   const [state, setState] = useState<{ status: 'idle' | 'loading' | 'done' | 'error'; data?: Row; message?: string; remaining?: number; domain?: string }>({ status: 'idle' });
 
-  const items = text
-    .split(spec.max === 1 ? /\n/ : /[\n,]/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const items = splitEntries(text, { commas: spec.max !== 1 });
 
   async function submit(event: FormEvent) {
     event.preventDefault();

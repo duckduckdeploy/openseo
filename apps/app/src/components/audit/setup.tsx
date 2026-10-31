@@ -4,7 +4,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { Check, ConfirmDialog, SCHEDULES, type Schedule, Segmented, StatusBadge } from "@/components/tracking/kit";
-import { Button, Card, CardHeader, ErrorNote, Field, Input, Select, Table, Textarea } from "@/components/ui";
+import { Button, Card, CardHeader, ErrorNote, Field, Input, Select, Table, Textarea, TopUpNote } from "@/components/ui";
+import { isNoCredits } from "@/lib/credits";
 import { api, dateTime, num } from "@/lib/api";
 import type { AuditRow, AuditSettings, RenderMode } from "./types";
 
@@ -298,7 +299,7 @@ export function HistoryTable({ audits, hrefOf, currentId }: { audits: AuditRow[]
                 <Link href={hrefOf(audit.id)} className="underline decoration-line underline-offset-2 hover:decoration-ink">
                   {dateTime(audit.createdAt)}
                 </Link>
-                {audit.error && <p className="text-xs text-neg">{audit.error}</p>}
+                {audit.error && <p className="text-xs text-neg">{audit.error}{isNoCredits(audit.error) && <> <TopUpNote /></>}</p>}
               </td>
               <td>
                 <StatusBadge status={audit.status} />

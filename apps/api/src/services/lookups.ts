@@ -1,4 +1,4 @@
-import { sortLighthouseAudits } from "@openseo/shared";
+import { cleanTarget, serpResultHost, sortLighthouseAudits, zDomain, zKeyword, zKeywords, zQuery, zTarget, zUrl } from "@openseo/shared";
 import { estimateCost, type KeywordFilter, type YepApi } from "@openseo/yepapi";
 import { z } from "zod";
 import { cleanSources, resolveCitation } from "../lib/brand-analysis";
@@ -7,7 +7,7 @@ import { AppError, badRequest } from "../lib/errors";
 import { buildGrid } from "../lib/geo";
 import { locationInfo } from "../lib/locations";
 import { mapLimit } from "../lib/pool";
-import { serpFeatures } from "../lib/serp";
+import { normalizeSerp, serpFeatures } from "../lib/serp";
 import { withUpstreamRetry } from "../lib/yep";
 import { backlinkGap, type CompetitorRow, findings, keywordGapOpportunities, pickCompetitors, strikingDistance, topicWords } from "../lib/seo-audit";
 
@@ -41,8 +41,8 @@ const DAY = 24 * HOUR;
 
 const locationCode = z.number().int().positive().optional().describe("YepAPI location code. Defaults to the project's market.");
 const language = z.string().min(2).max(10).optional().describe("Language code, e.g. en. Defaults to the project's language.");
-const domain = z.string().trim().min(3).max(253).transform(toDomain).describe("Domain, e.g. example.com");
-const target = z.string().trim().min(3).max(2000).describe("Domain, subdomain, or a full URL for one exact page");
+const domain = zDomain().describe("Domain, e.g. example.com");
+const target = zTarget().describe("Domain, subdomain, or a full URL for one exact page");
 const limit = (max: number, fallback: number) => z.number().int().min(1).max(max).default(fallback);
 const offset = z.number().int().min(0).max(20000).default(0);
 
@@ -82,7 +82,7 @@ export const lookups: Lookup[] = [
     feature: "keyword_research",
     ttl: 7 * DAY,
     input: z.object({
-      keyword: z.string().trim().min(1).max(200),
+      keyword: zKeyword(),
       source: z.enum(["ideas", "related"]).default("ideas"),
       limit: limit(1000, 150),
       includeClickstream: z.boolean().default(false).describe("Adds clickstream-based volume. Only with source=related; doubles the price."),
@@ -113,7 +113,7 @@ export const lookups: Lookup[] = [
     feature: "keyword_research",
     ttl: 7 * DAY,
     input: z.object({
-      keywords: z.array(z.string().trim().min(1).max(200)).min(1).max(700),
+      keywords: zKeywords(700),
       includeClickstream: z.boolean().default(false).describe("Doubles the price. Not available with cityLocationCode."),
       cityLocationCode: z.number().int().positive().optional().describe("City or region location code for local volume"),
       country: z.string().length(2).optional().describe("ISO country code, e.g. us. Defaults to the project's country."),
@@ -150,7 +150,7 @@ export const lookups: Lookup[] = [
     feature: "serp",
     ttl: HOUR,
     input: z.object({
-      query: z.string().trim().min(1).max(300),
+      query: zQuery(),
       depth: z.number().int().min(10).max(100).default(20),
       device: z.enum(["desktop", "mobile"]).default("desktop"),
       locationName: z.string().max(200).optional().describe('e.g. "Austin,Texas,United States"'),
@@ -168,7 +168,7 @@ export const lookups: Lookup[] = [
             ? { location_name: i.locationName }
             : { location_code: i.locationCode ?? p.locationCode };
       const res = await yep.serp.google({ query: i.query, depth: i.depth, device: i.device, language: i.language ?? p.language, ...where });
-      return { data: res.data, costUsd: res.costUsd };
+      return { data: normalizeSerp(res.data), costUsd: res.costUsd };
     },
   }),
   define({
@@ -177,7 +177,7 @@ export const lookups: Lookup[] = [
     description: "Google autocomplete suggestions for a query. $0.01.",
     feature: "keyword_research",
     ttl: DAY,
-    input: z.object({ query: z.string().trim().min(1).max(200), locationCode, language }),
+    input: z.object({ query: zQuery(200), locationCode, language }),
     estimate: (i) => est(estimateCost("/v1/serp/google-autocomplete", { query: i.query })),
     run: async (yep, i, p) => {
       const res = await yep.serp.googleAutocomplete({ query: i.query, ...loc(i, p) });
@@ -192,7 +192,7 @@ export const lookups: Lookup[] = [
     feature: "serp",
     ttl: 6 * HOUR,
     input: z.object({
-      keywords: z.array(z.string().trim().min(1).max(300)).min(1).max(100),
+      keywords: zKeywords(100, { itemMax: 300 }),
       domain: domain.optional().describe("Optional: your domain, to see which features you own and whether AI Overviews cite you"),
       device: z.enum(["desktop", "mobile"]).default("desktop"),
       locationCode,
@@ -210,7 +210,7 @@ export const lookups: Lookup[] = [
           const res = await yep.serp.google({ query: keyword, depth: 10, device: i.device, ...loc(i, p) });
           const { features, ownedFeatures, aiOverview } = serpFeatures(res.data, own);
           const organic = res.data.results.filter((r) => r.type === "organic");
-          const index = own ? organic.findIndex((r) => hostMatches(hostOf(r.url) ?? r.domain?.toLowerCase() ?? null, own)) : -1;
+          const index = own ? organic.findIndex((r) => hostMatches(serpResultHost(r), own)) : -1;
           return {
             keyword,
             features,
@@ -243,7 +243,7 @@ export const lookups: Lookup[] = [
     feature: "keyword_research",
     ttl: 7 * DAY,
     input: z.object({
-      keywords: z.array(z.string().trim().min(1).max(200)).min(1).max(1000),
+      keywords: zKeywords(1000),
       country: z.string().length(2).optional().describe("ISO country code, e.g. us. Defaults to the project's country."),
       language,
     }),
@@ -259,7 +259,7 @@ export const lookups: Lookup[] = [
     description: "Google Trends interest over time for up to 5 keywords. $0.02.",
     feature: "keyword_research",
     ttl: DAY,
-    input: z.object({ keywords: z.array(z.string().trim().min(1).max(100)).min(1).max(5), country: z.string().length(2).optional() }),
+    input: z.object({ keywords: zKeywords(5, { itemMax: 100 }), country: z.string().length(2).optional() }),
     estimate: (i) => est(estimateCost("/v1/seo/trends", { keywords: i.keywords })),
     run: async (yep, i, p) => {
       const res = await yep.keywords.trends({ keywords: i.keywords, location: (i.country ?? p.country).toLowerCase() });
@@ -391,7 +391,8 @@ export const lookups: Lookup[] = [
       "For up to 10 URLs (or domains): the page's URL Rating, backlinks, referring domains, organic traffic and keywords, and the site's Domain Rating. $0.02 per URL. Use it on the top results of a SERP.",
     feature: "serp",
     ttl: 7 * DAY,
-    input: z.object({ urls: z.array(target).min(1).max(10) }),
+    // Validated but not rewritten: each row echoes the URL as sent, which is how pages match their metrics.
+    input: z.object({ urls: z.array(z.string().trim().max(2000).refine((url) => cleanTarget(url) !== null, "Enter a domain like example.com, or a full page URL.")).min(1).max(10) }),
     estimate: (i) => {
       const each = estimateCost("/v1/seo/domain/metrics", { domain: i.urls[0] ?? "" });
       return { min: sum(...i.urls.map(() => each.min)), max: sum(...i.urls.map(() => each.max ?? each.min)), formula: `$${each.min.toFixed(2)} per URL` };
@@ -400,7 +401,7 @@ export const lookups: Lookup[] = [
       // Each URL is billed separately; failed ones are reported, the rest returned (and not cached).
       const results = await mapLimit(i.urls, 4, async (url) => {
         try {
-          const res = await yep.domain.metrics({ domain: url });
+          const res = await yep.domain.metrics({ domain: cleanTarget(url) ?? url });
           return { url, page: res.data.page ?? null, domain: res.data.domainMetrics ?? null, costUsd: res.costUsd };
         } catch (error) {
           return { url, page: null, domain: null, costUsd: 0, error: errorText(error), reason: error };
@@ -450,7 +451,7 @@ export const lookups: Lookup[] = [
     description: "Domains that rank most often for a set of keywords (up to 200), with average position and visibility.",
     feature: "competitors",
     ttl: 7 * DAY,
-    input: z.object({ keywords: z.array(z.string().trim().min(1).max(200)).min(1).max(200), limit: limit(1000, 50), locationCode, language }),
+    input: z.object({ keywords: zKeywords(200), limit: limit(1000, 50), locationCode, language }),
     estimate: (i) => est(estimateCost("/v1/seo/competitors/serp", { keywords: i.keywords, limit: i.limit })),
     run: async (yep, i, p) => {
       const res = await yep.competitors.serp({ keywords: i.keywords, limit: i.limit, ...loc(i, p) });
@@ -615,7 +616,7 @@ export const lookups: Lookup[] = [
     description: "Quick check of one URL: status, title, description, headings, word count, link and image counts. $0.03.",
     feature: "site_audit",
     ttl: HOUR,
-    input: z.object({ url: z.string().url() }),
+    input: z.object({ url: zUrl() }),
     estimate: (i) => est(estimateCost("/v1/seo/onpage/instant", { url: i.url })),
     run: async (yep, i) => {
       const res = await yep.onpage.instant({ url: i.url });
@@ -629,7 +630,7 @@ export const lookups: Lookup[] = [
       "Lighthouse scores and Core Web Vitals for a URL on mobile or desktop, with every failed audit, its estimated saving and a severity (critical: saves 300 ms+ or scores under 0.5; warning: saves 100 ms+ or scores under 0.9), most serious first. $0.05.",
     feature: "site_audit",
     ttl: HOUR,
-    input: z.object({ url: z.string().url(), device: z.enum(["mobile", "desktop"]).default("mobile") }),
+    input: z.object({ url: zUrl(), device: z.enum(["mobile", "desktop"]).default("mobile") }),
     estimate: (i) => est(estimateCost("/v1/seo/onpage/lighthouse", { url: i.url })),
     run: async (yep, i) => {
       const res = await yep.onpage.lighthouse({ url: i.url, device: i.device, include_audits: true });
@@ -647,7 +648,7 @@ export const lookups: Lookup[] = [
     feature: "local_seo",
     ttl: DAY,
     input: z.object({
-      query: z.string().trim().min(1).max(200),
+      query: zQuery(200),
       limit: z.number().int().min(1).max(20).default(10),
       latitude: z.number().min(-90).max(90).optional(),
       longitude: z.number().min(-180).max(180).optional(),
@@ -673,7 +674,7 @@ export const lookups: Lookup[] = [
     ttl: DAY,
     input: z
       .object({
-        keyword: z.string().trim().min(1).max(200),
+        keyword: zKeyword(),
         near: z.string().trim().min(2).max(300).optional().describe('Place the grid centres on, e.g. "Austin, Texas, United States"'),
         latitude: z.number().min(-90).max(90).optional(),
         longitude: z.number().min(-180).max(180).optional(),

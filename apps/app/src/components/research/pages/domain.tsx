@@ -13,13 +13,13 @@ import { RatingRing, Skeleton } from "@/components/research/serp-overview";
 import { Tabs } from "@/components/research/tabs";
 import { KeywordLink, OpenInTool } from "@/components/research/tool-link";
 import type { DomainCompetitor, DomainCompetitorsData, DomainKeyword, DomainKeywordsData, DomainKeywordsInput, DomainOverviewData, DomainPage, DomainPagesData, N } from "@/components/research/types";
-import { csvDate, finite, fixed, money, oneOf, percent, slug, toSave } from "@/components/research/util";
+import { cleanDomain, csvDate, finite, fixed, money, oneOf, percent, slug, toSave, validDomain } from "@/components/research/util";
+export { cleanDomain, validDomain };
 import { Card, cx, Input, PageHeader, Select } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { lookupMarket, type Market, toolLinks } from "@/lib/scope";
-import { hostOf } from "@/lib/url";
 
 const TABS = ["keywords", "pages", "competitors"] as const;
 const ROWS = 100;
@@ -32,13 +32,6 @@ const POSITIONS = [
 ] as const;
 
 export const big = (value: N) => (finite(value) && Math.abs(value) >= 1_000_000 ? compact(value) : num(value));
-export const validDomain = (value: string) => value.length >= 3 && !/\s/.test(value) && value.includes(".");
-
-/** "https://www.Example.com/path" → "example.com". */
-export function cleanDomain(value: string) {
-  const host = hostOf(/^https?:\/\//i.test(value) ? value : `https://${value}`) ?? value;
-  return host.toLowerCase().replace(/^www\./, "");
-}
 
 /** Every lookup the overview runs for a domain. Domain data is country-level only. */
 function inputsFor(domain: string, market: Market) {

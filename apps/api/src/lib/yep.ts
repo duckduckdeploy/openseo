@@ -280,7 +280,7 @@ export function toAppError(error: unknown): AppError | null {
   if (error.isInvalidKey) return new AppError(400, "yepapi_key_invalid", "YepAPI rejected your API key. Update it in Settings.");
   if (error.isAccountFrozen) return new AppError(402, "yepapi_account_frozen", "YepAPI reports your account as frozen. Contact YepAPI support.");
   if (error.isInsufficientBalance) {
-    return new AppError(402, "yepapi_no_credits", "Your YepAPI account is out of credits. Top up at yepapi.com, then try again.");
+    return new AppError(402, "yepapi_no_credits", "Your YepAPI account is out of credits. Top up your YepAPI balance at yepapi.com to keep using the tools. Failed calls are not charged.");
   }
   if (error.isValidation) return new AppError(400, "yepapi_validation", `YepAPI rejected the request: ${error.message}`);
   if (error.isRateLimited) return new AppError(429, "yepapi_rate_limited", "YepAPI is rate limiting requests. Try again shortly.");

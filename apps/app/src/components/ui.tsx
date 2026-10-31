@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, type LucideIcon } from "lucide-react";
+import { ExternalLink, Loader2, type LucideIcon } from "lucide-react";
+import { isNoCredits, YEPAPI_TOP_UP_URL } from "@/lib/credits";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 export const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(" ");
@@ -141,11 +142,27 @@ export function EmptyState({ title, children, action }: { title: string; childre
 
 export function ErrorNote({ error }: { error: unknown }) {
   if (!error) return null;
-  const message = error instanceof Error ? error.message : "Something went wrong";
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : "Something went wrong";
   return (
     <p role="alert" className="rounded-md border border-neg/40 bg-neg/5 px-3 py-2 text-sm text-neg">
       {message}
+      {isNoCredits(error) && (
+        <>
+          {" "}
+          <TopUpNote />
+        </>
+      )}
     </p>
+  );
+}
+
+/** Next to an out-of-credits error: where to top up. */
+export function TopUpNote({ className }: { className?: string }) {
+  return (
+    <a href={YEPAPI_TOP_UP_URL} target="_blank" rel="noreferrer" className={cx("inline-flex items-center gap-1 font-semibold whitespace-nowrap underline underline-offset-2", className)}>
+      Top up on YepAPI
+      <ExternalLink className="size-3.5" aria-hidden />
+    </a>
   );
 }
 

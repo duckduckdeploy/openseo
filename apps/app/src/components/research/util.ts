@@ -1,5 +1,6 @@
 "use client";
 
+import { cleanKeyword, cleanKeywords, cleanQuery, cleanUrl, cleanDomain as toDomain, cleanTarget as toTarget, splitEntries } from "@openseo/shared";
 import { useCallback } from "react";
 import type { KeywordToSave, N, S, TrendPoint } from "./types";
 
@@ -92,11 +93,29 @@ export const chronological = <T extends { month: string; volume?: number | null 
 export const csvDate = () => new Date().toISOString().slice(0, 10);
 export const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "export";
 
-/** Splits pasted text (one per line, or comma separated) into unique trimmed entries. */
-export function splitLines(value: string, { commas = false }: { commas?: boolean } = {}) {
-  const parts = value.split(commas ? /[\n,]+/ : /\n+/).map((part) => part.trim()).filter(Boolean);
-  return [...new Set(parts)];
-}
+/** Splits pasted text (one per line, or also comma, semicolon or tab separated) into unique cleaned entries. */
+export const splitLines = splitEntries;
+
+/**
+ * Pasted keywords cleaned the way the API cleans them (see @openseo/shared clean.ts), so rows
+ * that come back match what was sent.
+ */
+export const splitKeywords = (value: string) => cleanKeywords(splitEntries(value));
+
+/** A keyword or a search query from the URL, cleaned the way the API cleans it. */
+export const keywordParam = (value: string | null | undefined) => cleanKeyword(value ?? "");
+export const queryParam = (value: string | null | undefined) => cleanQuery(value ?? "");
+
+/** "https://www.Example.com/path" → "example.com". Input that is no domain stays as typed, and fails validDomain. */
+export const cleanDomain = (value: string) => toDomain(value) ?? value.trim();
+export const validDomain = (value: string) => Boolean(value) && toDomain(value) === value;
+
+/** A domain, or a URL with a path for one exact page; input that is neither stays as typed, and fails validTarget. */
+export const cleanTarget = (value: string) => toTarget(value) ?? value.trim();
+export const validTarget = (value: string) => Boolean(value) && toTarget(value) === value;
+
+/** A full URL from what was typed ("example.com/page" → "https://example.com/page"); null when invalid. */
+export const toUrl = (value: string) => cleanUrl(value);
 
 /**
  * Share of searches that click an organic result at positions 1 to 100. Positions 1 to 10 follow

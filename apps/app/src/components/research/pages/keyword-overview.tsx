@@ -1,5 +1,6 @@
 "use client";
 
+import { serpResultPageUrl } from "@openseo/shared";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -17,11 +18,12 @@ import {
   serpInput,
   Skeleton,
   suggestionsOf,
+  metricsTarget,
   topOrganic,
 } from "@/components/research/serp-overview";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { KeywordIdeasData, KeywordIdeasInput, KeywordMetrics, SerpData, SerpInput, TrendPoint, UrlMetricsData, UrlMetricsInput } from "@/components/research/types";
-import { chronological, difficultyLevel, estimatedVisits, finite, isQuestion, money } from "@/components/research/util";
+import { chronological, difficultyLevel, estimatedVisits, finite, isQuestion, keywordParam, money } from "@/components/research/util";
 import { Badge, Card, cx, PageHeader } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
@@ -312,7 +314,7 @@ export function KeywordOverview({ project }: { project: Project }) {
   const nav = useToolNav();
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
-  const keyword = params.get("q")?.trim() ?? "";
+  const keyword = keywordParam(params.get("q"));
 
   const inputs = useMemo(() => inputsFor(keyword, market), [keyword, market]);
   const metrics = useLookupQuery<MetricsData, MetricsInput>(project.id, "keyword_metrics", inputs?.metrics ?? null);
@@ -376,16 +378,17 @@ export function KeywordOverview({ project }: { project: Project }) {
     [row, serp.data],
   );
   const first = topOrganic(serp.data)[0];
-  const firstMetrics = urlMetrics.data?.urls?.find((m) => m.url === first?.url);
+  const firstPage = first ? serpResultPageUrl(first) : null;
+  const firstMetrics = firstPage ? urlMetrics.data?.urls?.find((m) => m.url === firstPage) : undefined;
   // Traffic potential: what the #1 page gets from all its keywords, when known; else an estimate
   // from this keyword alone. Metrics of a URL with a query string ("/search?q=…") cover the whole
   // path, every search on the site, so those are not used; nor are figures over 20 times the
   // keyword's volume, which cover far more than the page (a whole forum, say).
-  const rawTraffic = first?.url && !first.url.includes("?") ? firstMetrics?.page?.traffic : null;
+  const rawTraffic = firstPage && !firstPage.includes("?") ? firstMetrics?.page?.traffic : null;
   const pageTraffic = finite(rawTraffic) && (!finite(volume) || rawTraffic <= volume * 20) ? rawTraffic : null;
   const potential = finite(pageTraffic) ? pageTraffic : estimatedVisits(volume, 1);
   const top = useMemo(() => {
-    const urls = topOrganic(serp.data).map((r) => r.url as string);
+    const urls = topOrganic(serp.data).map(metricsTarget).filter(Boolean);
     const drs = (urlMetrics.data?.urls ?? []).filter((m) => urls.includes(m.url)).map((m) => m.domain?.domainRating).filter(finite);
     return { avgDr: drs.length ? Math.round(drs.reduce((a, b) => a + b, 0) / drs.length) : null };
   }, [serp.data, urlMetrics.data]);

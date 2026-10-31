@@ -43,7 +43,8 @@ import {
   type TrackerDetail,
   whereText,
 } from "@/components/tracking/rank";
-import { Badge, Button, Card, CardHeader, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Stat, Table, Textarea } from "@/components/ui";
+import { Badge, Button, Card, CardHeader, cx, EmptyState, ErrorNote, Field, Input, PageHeader, Select, Spinner, Stat, Table, Textarea, TopUpNote } from "@/components/ui";
+import { isNoCredits } from "@/lib/credits";
 import { api, dateTime, num } from "@/lib/api";
 import { downloadCsv } from "@/lib/lookup";
 import { compareValues as compare } from "@/lib/url";
@@ -814,7 +815,7 @@ function RunsTab({ runs }: { runs: RankRun[] }) {
                 {run.done} / {run.total}
               </td>
               <td className={cx("text-right font-mono tabular", run.failed > 0 && "text-neg")}>{run.failed}</td>
-              <td className="min-w-48 text-neg">{run.error ?? <span className="text-faint">—</span>}</td>
+              <td className="min-w-48 text-neg">{run.error ? <>{run.error}{isNoCredits(run.error) && <> <TopUpNote /></>}</> : <span className="text-faint">—</span>}</td>
             </tr>
           ))}
         </tbody>

@@ -11,13 +11,12 @@ import { useChangeMarket, useMarket, useToolNav } from "@/components/research/se
 import { RatingRing, Skeleton } from "@/components/research/serp-overview";
 import { domainToolLabel, OpenInTool } from "@/components/research/tool-link";
 import type { UrlMetricsData, UrlMetricsInput, UrlMetricsRow } from "@/components/research/types";
-import { csvDate, finite, splitLines } from "@/components/research/util";
+import { cleanDomain, csvDate, finite, splitLines, validDomain } from "@/components/research/util";
 import { Badge, Card, PageHeader } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { lookupMarket, type Market, marketName, toolLinks } from "@/lib/scope";
-import { hostOf } from "@/lib/url";
 
 /** The traffic endpoint takes up to 1,000 domains; the page keeps lists readable. */
 const MAX_TRAFFIC = 100;
@@ -28,8 +27,6 @@ type TrafficRow = { domain: string; organicKeywords: number; organicTraffic: num
 type TrafficData = { domains: TrafficRow[] };
 type TrafficInput = { domains: string[]; country: string; language: string };
 
-const cleanDomain = (value: string) => (hostOf(/^https?:\/\//i.test(value) ? value : `https://${value}`) ?? value).toLowerCase().replace(/^www\./, "");
-const validDomain = (value: string) => value.length >= 3 && !/\s/.test(value) && value.includes(".");
 
 /** The domains in the URL (?domains=), or the project's domain to start from. */
 function useDomains(project: Project, max: number) {

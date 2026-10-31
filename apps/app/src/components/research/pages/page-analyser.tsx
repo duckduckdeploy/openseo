@@ -11,25 +11,13 @@ import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/
 import { RatingRing, Skeleton } from "@/components/research/serp-overview";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { Backlink, BacklinksListData, DomainKeyword, DomainKeywordsData, DomainKeywordsInput, OnPageData, UrlMetricsData, UrlMetricsInput } from "@/components/research/types";
-import { csvDate, finite, money, slug, toSave } from "@/components/research/util";
+import { csvDate, finite, money, slug, toSave, toUrl } from "@/components/research/util";
 import { Badge, Card, CardHeader, PageHeader, Stat } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { lookupMarket, type Market, toolLinks } from "@/lib/scope";
 import { hostOf, safeHref } from "@/lib/url";
-
-/** A full URL from what was typed: "example.com/page" becomes "https://example.com/page". */
-function toUrl(value: string): string | null {
-  const text = value.trim();
-  if (!text) return null;
-  try {
-    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-    return url.hostname.includes(".") ? url.toString() : null;
-  } catch {
-    return null;
-  }
-}
 
 const show = (n: unknown) => (finite(n) ? num(n) : "—");
 

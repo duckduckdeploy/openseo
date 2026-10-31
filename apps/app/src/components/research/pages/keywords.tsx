@@ -11,7 +11,7 @@ import { Skeleton, suggestionsOf } from "@/components/research/serp-overview";
 import { Sparkline } from "@/components/research/sparkline";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { KeywordIdeasData, KeywordIdeasInput, KeywordMetrics, SerpData } from "@/components/research/types";
-import { csvDate, isQuestion, money, oneOf, optInt, slug, toSave } from "@/components/research/util";
+import { csvDate, isQuestion, keywordParam, money, oneOf, optInt, slug, toSave } from "@/components/research/util";
 import { Card, cx, Input, PageHeader, Select } from "@/components/ui";
 import { num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
@@ -54,7 +54,7 @@ export function KeywordResearch({ project }: { project: Project }) {
   const nav = useToolNav();
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
-  const keyword = params.get("q")?.trim() ?? "";
+  const keyword = keywordParam(params.get("q"));
   const view = oneOf(params.get("view"), VIEWS.map(([key]) => key), "all") as View;
   const filters = {
     text: params.get("include") ?? "",

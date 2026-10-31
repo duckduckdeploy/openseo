@@ -10,6 +10,7 @@ import { ApiError } from "@/lib/api";
 import { signOut } from "@/lib/auth";
 import { useMe, useProject } from "@/lib/hooks";
 import { BalanceAlert, BalanceChip, BalancePanel } from "./balance";
+import { OutOfCreditsDialog } from "./top-up";
 import { Logo } from "./logo";
 import { TOOLS } from "./research/tool-catalog";
 import { ThemeSwitcher } from "./theme";
@@ -197,6 +198,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         )}
         {!needsKey && <BalanceAlert />}
+        {!needsKey && <OutOfCreditsDialog />}
         {/* Research views use the full width, so wide tables and four-card rows fit without scrolling. */}
         <div className={cx("mx-auto px-4 py-6 lg:px-8 lg:py-8", pathname.startsWith("/tools/") || pathname.startsWith("/p/") ? "max-w-none" : "max-w-6xl")}>{children}</div>
       </main>

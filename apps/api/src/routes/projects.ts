@@ -1,3 +1,4 @@
+import { zDomainOrNull } from "@openseo/shared";
 import { and, desc, eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -9,7 +10,7 @@ import { locationInfo } from "../lib/locations";
 
 const projectInput = z.object({
   name: z.string().trim().min(1).max(120),
-  domain: z.string().trim().max(253).optional().nullable(),
+  domain: zDomainOrNull(),
   locationCode: z.number().int().positive().optional(),
   locationName: z.string().trim().max(200).optional(),
   country: z.string().trim().length(2).toLowerCase().optional(),

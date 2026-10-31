@@ -1,3 +1,4 @@
+import { zKeyword } from "@openseo/shared";
 import { and, asc, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -16,7 +17,7 @@ const metrics = {
 };
 
 const saveInput = z.object({
-  keywords: z.array(z.object({ keyword: z.string().trim().toLowerCase().min(1).max(200), ...metrics })).min(1).max(1000),
+  keywords: z.array(z.object({ keyword: zKeyword(), ...metrics })).min(1).max(1000),
   tags: z.array(z.string().trim().min(1).max(40)).max(10).default([]),
   locationCode: z.number().int().positive().optional(),
   language: z.string().min(2).max(10).optional(),

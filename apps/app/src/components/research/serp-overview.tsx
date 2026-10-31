@@ -7,7 +7,8 @@ import { cx } from "@/components/ui";
 import { compact, num } from "@/lib/api";
 import type { LookupQuery } from "@/lib/lookup";
 import { type Market, toolLinks } from "@/lib/scope";
-import { hostOf, safeHref } from "@/lib/url";
+import { serpResultHost, serpResultPageUrl } from "@openseo/shared";
+import { safeHref } from "@/lib/url";
 import { ExportButton } from "./lookup-ui";
 import type { SerpData, SerpInput, SerpResult, UrlMetricsData, UrlMetricsRow } from "./types";
 import { csvDate, estimatedVisits, finite, slug } from "./util";
@@ -152,8 +153,17 @@ export const topOrganic = (data: SerpData | undefined, limit = 10) => (data?.res
  * Input for authority metrics of a SERP's top 10, once the SERP is in. The URLs are sorted, so the
  * same pages in a new order are the same (cached) lookup.
  */
+/**
+ * What authority metrics are bought for a result: its page URL, or, when Google only gave a
+ * google.com/goto redirect link, its site (so a redirect never buys google.com's metrics). Null
+ * when the site cannot be told either.
+ */
+export const metricsTarget = (result: SerpResult): string | null => serpResultPageUrl(result) ?? serpResultHost(result);
+
+const metricsTargets = (results: SerpResult[]) => [...new Set(results.map(metricsTarget).filter((target): target is string => Boolean(target)))];
+
 export function authorityInput(serp: SerpData | undefined) {
-  const urls = topOrganic(serp).map((r) => r.url as string);
+  const urls = metricsTargets(topOrganic(serp));
   return urls.length ? { urls: [...urls].sort() } : null;
 }
 
@@ -163,7 +173,7 @@ export function authorityInput(serp: SerpData | undefined) {
  * Each chunk is sorted, so a reshuffle within a page of results does not buy its metrics again.
  */
 export function authorityInputs(serp: SerpData | undefined, limit: number) {
-  const urls = topOrganic(serp, limit).map((r) => r.url as string);
+  const urls = metricsTargets(topOrganic(serp, limit));
   return Array.from({ length: 10 }, (_, index) => {
     const chunk = urls.slice(index * 10, index * 10 + 10);
     return chunk.length ? { urls: chunk.sort() } : null;
@@ -327,10 +337,15 @@ export function SerpOverview({
                 const { result, rank } = block;
                 const url = result.url as string;
                 const href = safeHref(url);
-                const host = (result.domain || hostOf(url) || "").replace(/^www\./, "");
-                const m = byUrl.get(url);
+                // A goto redirect link has no page URL; its site comes from the result's other fields.
+                const pageUrl = serpResultPageUrl(result);
+                const host = serpResultHost(result) ?? "";
+                const target = metricsTarget(result);
+                const found = target ? byUrl.get(target) : undefined;
+                // For a redirect only the site's metrics are known: page figures would be its home page's.
+                const m = found && !pageUrl ? { ...found, page: undefined } : found;
                 const visits = visitsOf(rank);
-                const waiting = !m && !metrics.error;
+                const waiting = Boolean(target) && !found && !metrics.error;
                 const value = m?.page?.trafficValue;
                 return (
                   <tr key={`o-${rank}-${url}`} className="border-b border-line last:border-b-0 hover:bg-sunken/40">
@@ -348,13 +363,15 @@ export function SerpOverview({
                           ) : (
                             <span className="block truncate font-medium">{result.title || url}</span>
                           )}
-                          <span className="block truncate font-mono text-xs text-muted" title={url}>
+                          <span className="block truncate font-mono text-xs text-muted" title={pageUrl ?? "Google links this result through a redirect, so its page address is not shown"}>
                             {host ? (
                               <Link href={toolLinks.domain(host, market)} className="text-ink hover:underline" title={`Domain overview of ${host}`}>
                                 {host}
                               </Link>
-                            ) : null}
-                            {url.replace(/^https?:\/\/[^/]+/, "") || "/"}
+                            ) : (
+                              "Site not shown by Google"
+                            )}
+                            {pageUrl ? pageUrl.replace(/^https?:\/\/[^/]+/, "") || "/" : null}
                           </span>
                           {m?.error && <span className="block text-xs text-neg">Metrics failed: {m.error}</span>}
                         </span>
@@ -378,8 +395,8 @@ export function SerpOverview({
                     </td>
                     <td className={cell}>
                       <span className="flex justify-end gap-0.5">
-                        <ActionLink href={toolLinks.page(url, market)} label={`Analyse page ${url}`} icon={FileSearch} />
-                        <ActionLink href={toolLinks.backlinks(url)} label={`Backlinks to ${url}`} icon={Link2} />
+                        {pageUrl && <ActionLink href={toolLinks.page(pageUrl, market)} label={`Analyse page ${pageUrl}`} icon={FileSearch} />}
+                        {(pageUrl || host) && <ActionLink href={toolLinks.backlinks(pageUrl ?? host)} label={`Backlinks to ${pageUrl ?? host}`} icon={Link2} />}
                       </span>
                     </td>
                   </tr>
@@ -395,13 +412,15 @@ export function SerpOverview({
             filename={`serp-${slug(keyword)}-${csvDate()}.csv`}
             rows={() =>
               organic.map(({ result: r, rank }) => {
-                const m = byUrl.get(r.url as string);
+                const target = metricsTarget(r);
+                const found = target ? byUrl.get(target) : undefined;
+                const m = found && !serpResultPageUrl(r) ? { ...found, page: undefined } : found;
                 return {
                   position: r.position ?? "",
                   organic_rank: rank,
                   title: r.title ?? "",
                   url: r.url ?? "",
-                  domain: r.domain ?? "",
+                  domain: serpResultHost(r) ?? "",
                   est_visits: visitsOf(rank) ?? "",
                   words: m?.page?.numberOfWordsOnPage ?? "",
                   domain_rating: m?.domain?.domainRating ?? "",

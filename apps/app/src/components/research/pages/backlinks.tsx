@@ -26,7 +26,7 @@ import type {
   ReferringDomain,
   ReferringDomainsData,
 } from "@/components/research/types";
-import { csvDate, finite, oneOf, shortDate, slug, splitLines } from "@/components/research/util";
+import { cleanTarget, csvDate, finite, oneOf, shortDate, slug, splitLines, validTarget } from "@/components/research/util";
 import { Check } from "@/components/tracking/kit";
 import { Badge, Button, Card, Input, PageHeader, Stat } from "@/components/ui";
 import { compact, num } from "@/lib/api";
@@ -37,7 +37,6 @@ import { hostOf, safeHref } from "@/lib/url";
 
 const TABS = ["links", "domains", "anchors", "pages", "intersect"] as const;
 
-const validTarget = (value: string) => value.length >= 3 && !/\s/.test(value);
 const big = (value: N) => (finite(value) && Math.abs(value) >= 1_000_000 ? compact(value) : num(value));
 
 function spamTone(score: N): "pos" | "warn" | "neg" | "neutral" {
@@ -390,18 +389,6 @@ function IntersectPanel({ project, target, others }: { project: Project; target:
 
 // ── Page ────────────────────────────────────────────────────────────────────
 
-/** "https://Example.com" → "example.com"; a URL with a path stays a URL (one exact page). */
-function cleanTarget(value: string) {
-  const text = value.trim();
-  if (!text) return "";
-  try {
-    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-    const path = `${url.pathname}${url.search}`;
-    return path === "/" || path === "" ? url.hostname.toLowerCase() : url.toString();
-  } catch {
-    return text;
-  }
-}
 const isPage = (target: string) => /^https?:\/\//i.test(target);
 
 /**

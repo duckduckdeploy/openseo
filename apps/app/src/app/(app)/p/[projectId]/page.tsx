@@ -8,7 +8,8 @@ import { DifficultyPill } from "@/components/research/pills";
 import { ProjectPage } from "@/components/research/project-page";
 import type { SavedKeywordsList } from "@/components/research/types";
 import { finite, fixed, percent } from "@/components/research/util";
-import { Badge, Card, ErrorNote, Spinner, Stat } from "@/components/ui";
+import { Badge, Card, ErrorNote, Spinner, Stat, TopUpNote } from "@/components/ui";
+import { isNoCredits } from "@/lib/credits";
 import { api, dateOnly, dateTime, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 
@@ -195,7 +196,7 @@ function Overview({ project }: { project: Project }) {
                     {latest.startUrl ? ` · ${latest.startUrl.replace(/^https?:\/\//, "")}` : ""}
                   </span>
                 </p>
-                {latest.status === "failed" && latest.error && <p className="mt-1 text-xs text-neg">{latest.error}</p>}
+                {latest.status === "failed" && latest.error && <p className="mt-1 text-xs text-neg">{latest.error}{isNoCredits(latest.error) && <> <TopUpNote /></>}</p>}
               </>
             );
           }}

@@ -1,4 +1,4 @@
-import { MODEL_CATALOG } from "@openseo/shared";
+import { MODEL_CATALOG, zDomainOrNull } from "@openseo/shared";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -15,9 +15,9 @@ const name = z.string().trim().min(1).max(100);
 const settingsInput = z.object({
   brand: name.optional(),
   brandAliases: z.array(name).max(10).optional(),
-  domain: z.string().trim().max(253).nullable().optional(),
+  domain: zDomainOrNull(),
   competitors: z
-    .array(z.object({ name, domain: z.string().trim().max(253).optional(), aliases: z.array(name).max(10).optional() }))
+    .array(z.object({ name, domain: zDomainOrNull().transform((d) => d ?? undefined), aliases: z.array(name).max(10).optional() }))
     .max(20)
     .optional(),
   models: z.array(z.string().min(3).max(100)).max(20).optional(),

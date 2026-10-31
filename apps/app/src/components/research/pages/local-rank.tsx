@@ -8,7 +8,7 @@ import { ExportButton, RunPrompt, ViewErrors, ViewMeta } from "@/components/rese
 import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/research/search-bar";
 import { Skeleton } from "@/components/research/serp-overview";
 import { GridMap } from "@/components/research/grid-map";
-import { csvDate, finite, oneOf, slug } from "@/components/research/util";
+import { csvDate, finite, keywordParam, oneOf, slug } from "@/components/research/util";
 import { Card, cx, PageHeader, Select, WithIcon } from "@/components/ui";
 import { num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
@@ -54,7 +54,7 @@ export function LocalRank({ project }: { project: Project }) {
   const nav = useToolNav();
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
-  const keyword = params.get("q")?.trim() ?? "";
+  const keyword = keywordParam(params.get("q"));
   const size = oneOf(params.get("size"), SIZES, "5");
   const spacing = oneOf(params.get("spacing"), SPACINGS.map(([value]) => value), "1000");
   const input = useMemo(() => inputFor(keyword, market, size, spacing), [keyword, market, size, spacing]);

@@ -1,12 +1,11 @@
-// Normalise user input ("https://www.Example.com/path") to a bare hostname.
+import { cleanDomain } from "@openseo/shared";
+
+/**
+ * Normalise user input ("https://www.Example.com/path") to a bare hostname. Input that is no
+ * valid domain is only trimmed and lower-cased; schemas reject it earlier with zDomain().
+ */
 export function toDomain(input: string): string {
-  const trimmed = input.trim().toLowerCase();
-  try {
-    const url = new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`);
-    return url.hostname.replace(/^www\./, "");
-  } catch {
-    return trimmed.replace(/^www\./, "").replace(/\/.*$/, "");
-  }
+  return cleanDomain(input) ?? input.trim().toLowerCase().replace(/^www\./, "").replace(/\/.*$/, "");
 }
 
 export function hostOf(url: string): string | null {

@@ -13,21 +13,18 @@ import { Skeleton } from "@/components/research/serp-overview";
 import { Tabs } from "@/components/research/tabs";
 import { domainToolLabel, KeywordLink, OpenInTool } from "@/components/research/tool-link";
 import type { DomainCompetitor, DomainCompetitorsData, GapKeyword, KeywordGapData, SavedKeywordsList, SerpCompetitor, SerpCompetitorsData } from "@/components/research/types";
-import { csvDate, finite, fixed, money, oneOf, percent, slug, splitLines, toSave } from "@/components/research/util";
+import { cleanDomain, csvDate, finite, fixed, money, oneOf, percent, slug, splitKeywords, toSave, validDomain } from "@/components/research/util";
 import { Badge, Button, Card, ErrorNote, Input, PageHeader, Textarea } from "@/components/ui";
 import { api, compact, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { isToolsScope, lookupMarket, type Market, toolLinks } from "@/lib/scope";
-import { hostOf } from "@/lib/url";
 
 const TABS = ["organic", "gap", "serp"] as const;
 const COMPETITORS = 50;
 const GAP = 500;
 const MAX_URL_KEYWORDS = 1500;
 
-const validDomain = (value: string) => value.length >= 3 && !/\s/.test(value) && value.includes(".");
-const cleanDomain = (value: string) => (hostOf(/^https?:\/\//i.test(value) ? value : `https://${value}`) ?? value).toLowerCase().replace(/^www\./, "");
 /** YepAPI returns 0 for a position it does not know. */
 const position = (value: number | null | undefined) => (finite(value) && value > 0 ? value : null);
 
@@ -57,7 +54,7 @@ export function Competitors({ project }: { project: Project }) {
   const domainText = params.get("domain") ?? (inProject ? "" : project.domain) ?? "";
   const domain = domainText ? cleanDomain(domainText) : "";
   const vs = params.get("vs") ? cleanDomain(params.get("vs") as string) : "";
-  const keywords = splitLines(params.get("keywords") ?? "").slice(0, 200);
+  const keywords = splitKeywords(params.get("keywords") ?? "").slice(0, 200);
   const tab = oneOf(params.get("tab"), TABS, vs ? "gap" : keywords.length && !domain ? "serp" : "organic");
   const where = lookupMarket(market);
 
@@ -314,7 +311,7 @@ function SerpView({ project, domain, keywords, lookup }: { project: Project; dom
     mutationFn: () => api<SavedKeywordsList>(`/projects/${project.id}/saved-keywords`, { query: { limit: 200, sort: "volume", order: "desc" } }),
     onSuccess: (list) => setText(list.keywords.map((row) => row.keyword).join("\n")),
   });
-  const entered = splitLines(text);
+  const entered = splitKeywords(text);
   const rows = lookup.data?.competitors ?? [];
   const columns: Column<SerpCompetitor>[] = [
     {

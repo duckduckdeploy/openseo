@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, Wallet } from "lucide-react";
 import Link from "next/link";
 import { api, num, usd } from "@/lib/api";
+import { YEPAPI_TOP_UP_URL } from "@/lib/credits";
 import { useMe } from "@/lib/hooks";
 import { cx } from "./ui";
 
@@ -159,7 +160,7 @@ export function BalanceAlert() {
           ? "Your YepAPI balance is empty, so paid lookups and scheduled checks will fail."
           : `Your YepAPI balance is down to ${usd(balance.data?.balanceUsd)}.`}
       </span>
-      <a href="https://yepapi.com?ref=openseo" target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-2">
+      <a href={YEPAPI_TOP_UP_URL} target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-2">
         Top up at YepAPI
       </a>
     </div>

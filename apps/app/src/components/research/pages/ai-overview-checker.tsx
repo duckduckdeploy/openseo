@@ -12,13 +12,12 @@ import { useChangeMarket, useMarket, useToolNav } from "@/components/research/se
 import { featureLabel, Skeleton } from "@/components/research/serp-overview";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { SavedKeywordsList } from "@/components/research/types";
-import { csvDate, slug, splitLines } from "@/components/research/util";
+import { cleanDomain, csvDate, slug, splitKeywords, validDomain } from "@/components/research/util";
 import { Badge, Button, Card, CardHeader, ErrorNote, Input, PageHeader, Select, Stat, WithIcon } from "@/components/ui";
 import { api, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
 import { type LookupQuery, useLookupQuery } from "@/lib/lookup";
 import { isToolsScope, lookupMarket, type Market, marketName } from "@/lib/scope";
-import { hostOf } from "@/lib/url";
 
 const MAX = 100;
 const AIO = new Set(["aiOverview", "ai_overview"]);
@@ -42,8 +41,6 @@ type Data = { domain: string | null; device: "desktop" | "mobile"; keywords: Row
 type Input = { keywords: string[]; domain?: string; device: "desktop" | "mobile"; locationCode: number; language: string };
 
 const keywordKey = (row: Row) => row.keyword;
-const cleanDomain = (value: string) => (hostOf(/^https?:\/\//i.test(value) ? value : `https://${value}`) ?? value).toLowerCase().replace(/^www\./, "");
-const validDomain = (value: string) => value.length >= 3 && !/\s/.test(value) && value.includes(".");
 
 function inputFor(keywords: string[], domain: string, device: Input["device"], market: Market): Input | null {
   if (!keywords.length) return null;
@@ -61,7 +58,7 @@ export function AiOverviewChecker({ project }: { project: Project }) {
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
   const raw = params.get("keywords") ?? "";
-  const keywords = useMemo(() => splitLines(raw).slice(0, MAX), [raw]);
+  const keywords = useMemo(() => splitKeywords(raw).slice(0, MAX), [raw]);
   const domainText = params.get("domain") ?? project.domain ?? "";
   const domain = domainText ? cleanDomain(domainText) : "";
   const device: Input["device"] = params.get("device") === "mobile" ? "mobile" : "desktop";

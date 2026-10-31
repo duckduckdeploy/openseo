@@ -168,6 +168,23 @@ describe("paid lookups", () => {
     expect(res.body.error?.code).toBe("yepapi_no_credits");
   });
 
+  it("cleans pasted domains and keywords before they reach YepAPI, and refuses invalid ones for free", async () => {
+    const { api, project } = await readyUser();
+    await api.ok("POST", `/projects/${project.id}/lookups/domain_overview`, { domain: " https//www.Clean-Me.com/blog?x=1 " });
+    expect(harness.fake.requests.at(-1)?.body.domain).toBe("clean-me.com");
+
+    await api.ok("POST", `/projects/${project.id}/lookups/keyword_metrics`, { keywords: ["- SEO Tools,", "seo tools", "“best crm”​"] });
+    expect(harness.fake.requests.at(-1)?.body.keywords).toEqual(["seo tools", "best crm"]);
+
+    const before = harness.fake.requests.length;
+    const bad = await api.post(`/projects/${project.id}/lookups/domain_overview`, { domain: "exa mple" });
+    expect(bad.status).toBe(400);
+    expect(bad.body.error?.message).toMatch(/example\.com/);
+    const empty = await api.post(`/projects/${project.id}/lookups/keyword_metrics`, { keywords: [" ", "​"] });
+    expect(empty.status).toBe(400);
+    expect(harness.fake.requests.length).toBe(before);
+  });
+
   it("stops asking models once the Prompt explorer ceiling would be crossed", async () => {
     const { api, project } = await readyUser();
     const before = harness.fake.requests.length;

@@ -1,10 +1,10 @@
-import { rankCheckUsd } from "@openseo/shared";
+import { rankCheckUsd, serpResultHost } from "@openseo/shared";
 import type { GoogleSerpData } from "@openseo/yepapi";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { dataDb, db, schema } from "../db";
 import { track } from "../lib/analytics";
 import type { Device, SerpCompetitor } from "../db/schema";
-import { hostMatches, hostOf } from "../lib/domain";
+import { hostMatches } from "../lib/domain";
 import { conflict, isUniqueViolation, notFound, runInProgress } from "../lib/errors";
 import { mapLimit } from "../lib/pool";
 import { serpFeatures } from "../lib/serp";
@@ -45,7 +45,9 @@ export type ParsedSerp = {
 // Positions are counted among organic results only, so SERP features do not shift the rank.
 export function parseSerp(data: GoogleSerpData, domain: string, requestedDepth: number): ParsedSerp {
   const organic = data.results.filter((r) => r.type === "organic");
-  const ranked = organic.map((r, index) => ({ ...r, rank: index + 1, host: hostOf(r.url) ?? r.domain?.toLowerCase() ?? null }));
+  // The site comes from the URL, or, for Google goto links, from YepAPI's domain, the breadcrumb or
+  // the site name. A result whose site cannot be told keeps its place but is nobody's.
+  const ranked = organic.map((r, index) => ({ ...r, rank: index + 1, host: serpResultHost(r) }));
   const own = ranked.find((r) => hostMatches(r.host, domain));
   // An AI Overview counts as owned when it cites the domain (its sources, not its empty url).
   const { features, ownedFeatures } = serpFeatures(data, domain);

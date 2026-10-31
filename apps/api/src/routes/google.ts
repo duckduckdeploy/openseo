@@ -1,3 +1,4 @@
+import { zUrl } from "@openseo/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import type { GoogleProvider } from "../db/schema";
@@ -180,7 +181,7 @@ export async function googleRoutes(app: FastifyInstance) {
   app.post<P>("/projects/:projectId/search-console/inspect", async (request) => {
     const user = await requireUser(request);
     const project = await requireProject(user.id, request.params.projectId);
-    const { urls } = parse(z.object({ urls: z.array(z.string().url()).min(1).max(10) }), request.body);
+    const { urls } = parse(z.object({ urls: z.array(zUrl()).min(1).max(10) }), request.body);
     return { ok: true, data: await inspectUrls(project, urls) };
   });
 

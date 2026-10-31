@@ -9,7 +9,7 @@ import { SearchBar, useChangeMarket, useMarket, useToolNav } from "@/components/
 import { authorityInputs, type Device, featureLabel, SERP_RESULTS, SerpOverview, serpInput, Skeleton, topOrganic } from "@/components/research/serp-overview";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { KeywordMetrics, SerpData, SerpInput, UrlMetricsData, UrlMetricsInput } from "@/components/research/types";
-import { finite } from "@/components/research/util";
+import { finite, queryParam } from "@/components/research/util";
 import { Badge, Card, PageHeader, Select, WithIcon } from "@/components/ui";
 import { compact } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
@@ -41,7 +41,7 @@ export function SerpChecker({ project }: { project: Project }) {
   const nav = useToolNav();
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
-  const keyword = params.get("q")?.trim() ?? "";
+  const keyword = queryParam(params.get("q"));
   const device: Device = params.get("device") === "mobile" ? "mobile" : "desktop";
   const asked = Number(params.get("results"));
   const results = (SERP_RESULTS as readonly number[]).includes(asked) ? asked : 10;

@@ -56,6 +56,39 @@ describe("parseSerp", () => {
   });
 });
 
+describe("Google goto redirect links", () => {
+  // Since October 2026 Google serves many organic links as google.com/goto?url=<opaque token>.
+  const goto = (domain: string, data: unknown = null) => ({
+    ...item("organic", domain),
+    url: `https://google.com/goto?url=CAES${Math.random().toString(36).slice(2)}`,
+    data,
+  });
+
+  it("finds the tracked site through YepAPI's domain, not the google.com URL", () => {
+    const parsed = parseSerp(serp([goto("rival.com"), goto("www.acme.com")]), "acme.com", 10);
+    expect(parsed.position).toBe(2);
+    expect(parsed.competitors.map((c) => c.domain)).toEqual(["rival.com"]);
+  });
+
+  it("falls back to the breadcrumb and site name, and never counts google.com as a competitor", () => {
+    const parsed = parseSerp(
+      serp([
+        goto("google.com", { breadcrumb: "50+ comments · 5 months ago", websiteName: "Reddit · r/seo" }),
+        goto("google.com", { breadcrumb: "20+ comments", websiteName: "Some Forum" }),
+        goto("google.com", { breadcrumb: "https://www.acme.com › blog › guide" }),
+      ]),
+      "acme.com",
+      10,
+    );
+    expect(parsed.position).toBe(3);
+    expect(parsed.competitors.map((c) => [c.position, c.domain])).toEqual([[1, "reddit.com"]]);
+  });
+
+  it("does not match a tracked google.com domain on a redirect link", () => {
+    expect(parseSerp(serp([goto("google.com")]), "google.com", 10).position).toBeNull();
+  });
+});
+
 describe("AI Overview citations", () => {
   const overview = (urls: string[]) => ({
     ...item("aiOverview", ""),

@@ -1,3 +1,4 @@
+import { zKeyword } from "@openseo/shared";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import { dispatch } from "../jobs/dispatch";
 import { estimateGrid, failGrid, requireGrid } from "../services/geogrid";
 
 const gridInput = z.object({
-  keyword: z.string().trim().min(1).max(200),
+  keyword: zKeyword(),
   placeId: z.string().min(5).max(300),
   placeName: z.string().trim().min(1).max(300),
   centerLat: z.number().min(-90).max(90),

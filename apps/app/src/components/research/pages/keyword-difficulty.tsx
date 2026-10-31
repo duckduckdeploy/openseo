@@ -11,7 +11,7 @@ import { useChangeMarket, useMarket, useToolNav } from "@/components/research/se
 import { Skeleton } from "@/components/research/serp-overview";
 import { KeywordLink } from "@/components/research/tool-link";
 import type { SavedKeywordsList } from "@/components/research/types";
-import { csvDate, DIFFICULTY_BANDS, type DifficultyBand, difficultyLevel, finite, splitLines, toSave } from "@/components/research/util";
+import { csvDate, DIFFICULTY_BANDS, type DifficultyBand, difficultyLevel, finite, splitKeywords, toSave } from "@/components/research/util";
 import { Button, Card, cx, ErrorNote, PageHeader } from "@/components/ui";
 import { api, num } from "@/lib/api";
 import type { Project } from "@/lib/hooks";
@@ -44,7 +44,7 @@ export function KeywordDifficultyChecker({ project }: { project: Project }) {
   const changeMarket = useChangeMarket();
   const market = useMarket(project);
   const raw = params.get("keywords") ?? "";
-  const keywords = useMemo(() => splitLines(raw).slice(0, MAX), [raw]);
+  const keywords = useMemo(() => splitKeywords(raw).slice(0, MAX), [raw]);
   const input = useMemo(() => inputFor(keywords, market), [keywords, market]);
   const lookup = useLookupQuery<Data, Input>(project.id, "keyword_difficulty", input);
   const lookups = [lookup] as LookupQuery<unknown>[];
